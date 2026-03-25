@@ -6,8 +6,10 @@ services:
     container_name: hastane_mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 1234
-      MYSQL_DATABASE: hastane_db
+      MYSQL_ROOT_PASSWORD: "1234"
+      MYSQL_DATABASE: "hastane_db"
+      MYSQL_USER: "hospitalAdmin"
+      MYSQL_PASSWORD: "66Ram69mel"
     ports:
       - "3307:3306"
     volumes:
