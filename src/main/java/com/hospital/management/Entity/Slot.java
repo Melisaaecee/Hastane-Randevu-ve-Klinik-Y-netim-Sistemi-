@@ -19,10 +19,10 @@ public class Slot {
     private Long id;
 
     @Column(nullable = false)
-    private LocalDateTime startTime;
+    private LocalDateTime start_time;
 
     @Column(nullable = false)
-    private LocalDateTime endTime;
+    private LocalDateTime end_time;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
