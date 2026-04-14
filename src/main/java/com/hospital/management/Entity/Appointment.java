@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "appointments")
@@ -17,22 +16,15 @@ public class Appointment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private LocalDateTime appointmentDate;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AppointmentStatus status;
 
-    @ManyToOne
-    @JoinColumn(name = "doctorId", nullable = false)
-    private Doctor doctor;
+    @OneToOne
+    @JoinColumn(name = "slot_id", nullable = false, unique = true)
+    private Slot slot;
 
     @ManyToOne
-    @JoinColumn(name = "patientId", nullable = false)
+    @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
-
-    @ManyToOne
-    @JoinColumn(name = "clinicId", nullable = false)
-    private Clinic clinic;
 }

@@ -21,6 +21,6 @@ public class Patient {
     private BloodType bloodType;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "userId", nullable = false, unique = true)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 }
