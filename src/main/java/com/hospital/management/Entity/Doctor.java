@@ -1,8 +1,8 @@
 package com.hospital.management.Entity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.util.List;
 
 @Entity
 @Table(name = "doctors")
@@ -10,20 +10,22 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Doctor {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "doctorId") 
     private Long id;
 
-    @Column(name = "specialization")
     private String specialization;
 
-  
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "userId") 
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
-    @JoinColumn(name = "clinicId")
-    private Clinic clinic;
+    @ManyToMany
+    @JoinTable(
+        name = "doctor_clinic",
+        joinColumns = @JoinColumn(name = "doctor_id"),
+        inverseJoinColumns = @JoinColumn(name = "clinic_id")
+    )
+    private List<Clinic> clinics;
 }

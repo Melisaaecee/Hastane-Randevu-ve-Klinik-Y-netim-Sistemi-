@@ -1,15 +1,16 @@
 package com.hospital.management.Entity;
+
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
 
 @Entity
-@Table(name = "clinics")
+@Table(name = "districts")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Clinic {
+public class District {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,9 +20,9 @@ public class Clinic {
     private String name;
 
     @ManyToOne
-    @JoinColumn(name = "hospital_id", nullable = false)
-    private Hospital hospital;
+    @JoinColumn(name = "city_id", nullable = false)
+    private City city;
 
-    @ManyToMany(mappedBy = "clinics")
-    private List<Doctor> doctors;
+    @OneToMany(mappedBy = "district")
+    private List<Hospital> hospitals;
 }

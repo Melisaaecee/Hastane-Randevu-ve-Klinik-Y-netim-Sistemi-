@@ -1,9 +1,8 @@
 package com.hospital.management.Entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.util.List;
 
 @Entity
@@ -15,19 +14,17 @@ public class Hospital {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "hospitalId") 
-    private Long hospitalId;
+    private Long id;
 
-    @Column(name = "hospitalName", nullable = false)
+    @Column(nullable = false)
     private String name;
 
-    @Column(name = "phoneNumber")
     private String phoneNumber;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "locationId") 
-    private Location location;
+    @ManyToOne
+    @JoinColumn(name = "district_id", nullable = false)
+    private District district;
 
-    @OneToMany(mappedBy = "hospital", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "hospital", cascade = CascadeType.ALL)
     private List<Clinic> clinics;
 }
