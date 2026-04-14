@@ -22,6 +22,6 @@ public class Clinic {
     @JoinColumn(name = "hospital_id", nullable = false)
     private Hospital hospital;
 
-    @ManyToMany(mappedBy = "clinics")
+    @ManyToMany(mappedBy = "clinic")
     private List<Doctor> doctors;
 }

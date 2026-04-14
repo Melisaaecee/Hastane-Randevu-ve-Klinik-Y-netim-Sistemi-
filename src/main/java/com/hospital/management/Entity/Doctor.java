@@ -2,7 +2,7 @@ package com.hospital.management.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
+
 
 @Entity
 @Table(name = "doctors")
@@ -21,11 +21,8 @@ public class Doctor {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToMany
-    @JoinTable(
-        name = "doctor_clinic",
-        joinColumns = @JoinColumn(name = "doctor_id"),
-        inverseJoinColumns = @JoinColumn(name = "clinic_id")
-    )
-    private List<Clinic> clinics;
+    @ManyToOne
+    
+    @JoinColumn(name = "clinic_id", nullable = false)
+    private Clinic clinic;
 }
