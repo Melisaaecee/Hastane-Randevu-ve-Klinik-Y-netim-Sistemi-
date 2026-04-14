@@ -20,6 +20,7 @@ public class Hospital {
     private String name;
 
     private String phoneNumber;
+    private String address;
 
     @ManyToOne
     @JoinColumn(name = "district_id", nullable = false)
