@@ -11,18 +11,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Patient {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "patientId") 
     private Long id;
 
-    @Column(name = "tckn", unique = true)
-    private String tckn; 
-    
-    @Column(name = "bloodType")
-    private String bloodType;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private BloodType bloodType;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "userId") 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "userId", nullable = false, unique = true)
     private User user;
 }

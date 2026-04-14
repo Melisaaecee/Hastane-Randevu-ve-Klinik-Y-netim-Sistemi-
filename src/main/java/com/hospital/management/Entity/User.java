@@ -1,4 +1,5 @@
 package com.hospital.management.Entity;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,9 +22,19 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(name = "tckn", unique = true, nullable = false, length = 11)
+    private String tckn;
+
     private String firstName;
     private String lastName;
-    
-    private String role; // ROLE_DOCTOR, ROLE_PATIENT, ROLE_ADMIN
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private Role role;
+
+    @OneToOne(mappedBy = "user")
+    private Patient patient;
 }
