@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "slots", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "doctor_id", "startTime" })
+        @UniqueConstraint(columnNames = { "doctor_id", "start_time" })
 })
 @Data
 @NoArgsConstructor
@@ -18,10 +18,10 @@ public class Slot {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
-
-    @Column(nullable = false)
+    
+    @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
     @Enumerated(EnumType.STRING)

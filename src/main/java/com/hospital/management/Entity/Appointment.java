@@ -24,12 +24,9 @@ private AppointmentStatus status;
 @JoinColumn(name = "slot_id", nullable = false, unique = true)
 private Slot slot;
 
- @ManyToOne
-@JoinColumn(name = "patient_id", nullable = false)
- private Patient patient;
-
-
 @ManyToOne
-@JoinColumn(name = "clinic_id", nullable = false)
-private Clinic clinic;
+@JoinColumn(name = "patient_id", nullable = false)
+private Patient patient;
+
+
 }

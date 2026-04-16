@@ -20,8 +20,8 @@ public class Penalty {
     private Patient patient;
 
     @ManyToOne
-    @JoinColumn(name = "clinic_id", nullable = false)
-    private Clinic clinic; // Cezanın hangi bölüm için olduğunu belirtir
+    @JoinColumn(name = "appointment_id", nullable = false)
+    private Appointment appointment; // 🔥 cezanın kaynağı
 
     @Column(nullable = false)
     private LocalDateTime penaltyStartDate; // Ceza başlangıcı (Randevuya gidilmeyen an)
