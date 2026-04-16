@@ -17,9 +17,6 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
     // 2. TCKN üzerinden hastayı bulmak istersen (User tablosuyla join yapar)
     Optional<Patient> findByUserTckn(String tckn);
 
-    // 3. E-posta üzerinden hastayı bulmak için
-    Optional<Patient> findByUserEmail(String email);
-
     // 4. Bir hastanın sistemde kayıtlı olup olmadığını TCKN ile kontrol etmek için
     boolean existsByUserTckn(String tckn);
 }

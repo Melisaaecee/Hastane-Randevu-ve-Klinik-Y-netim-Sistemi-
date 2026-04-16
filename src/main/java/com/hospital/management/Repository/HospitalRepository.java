@@ -21,6 +21,5 @@ public interface HospitalRepository extends JpaRepository<Hospital, Long> {
     // (İlçe bağımsız, direkt şehirdeki tüm hastaneleri görmek istersen)
     List<Hospital> findByDistrictCityId(Long cityId);
 
-    // 4. Telefon numarasına göre hastane sorgulama (İletişim kontrolleri için)
-    Hospital findByPhoneNumber(String phoneNumber);
+    
 }

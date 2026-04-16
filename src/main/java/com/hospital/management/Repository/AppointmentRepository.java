@@ -6,19 +6,29 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 
-    // 1. Bir hastanın tüm randevularını listelemek için (Randevularım sayfası)
+    // Hastanın tüm randevuları
     List<Appointment> findByPatientId(Long patientId);
 
-    // 2. Bir hastanın durumuna göre randevularını getir (Örn: Sadece Onaylı olanlar)
-    List<Appointment> findByPatientIdAndStatus(Long patientId, AppointmentStatus status);
+    // Hastanın duruma göre randevuları
+    List<Appointment> findByPatientId(Long patientId, AppointmentStatus status);
 
-    // 3. Bir slot ID'sine göre randevu bul (Slot dolu mu kontrolü için gerekebilir)
-    Appointment findBySlotId(Long slotId);
+    // 3. Slot dolu mu?
+    Optional<Appointment> findBySlotId(Long slotId);
 
-    // 4. Hastanın kaç kere randevusuna gelmediğini saymak için (İstatistik veya ceza için)
+    // Hasta istatistik (gelmedi sayısı vs.)
     long countByPatientIdAndStatus(Long patientId, AppointmentStatus status);
+
+    // Klinik randevuları (admin)
+    List<Appointment> findBySlotDoctorClinicId(Long clinicId);
+
+    // Doktorun aktif randevuları
+    List<Appointment> findBySlotDoctorIdAndStatus(Long doctorId,  List<AppointmentStatus> statuses);
+
+    // Doktorun tüm randevuları
+    List<Appointment> findBySlotDoctorId(Long doctorId);
 }

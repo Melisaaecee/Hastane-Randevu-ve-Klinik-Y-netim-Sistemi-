@@ -20,7 +20,7 @@ public class Slot {
 
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
-    
+
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
@@ -31,4 +31,8 @@ public class Slot {
     @ManyToOne
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor doctor;
+
+    @ManyToOne
+    @JoinColumn(name = "clinic_id", nullable = false)
+    private Clinic clinic;
 }
