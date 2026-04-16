@@ -24,4 +24,7 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     // 4. Belirli bir klinikte, doktorun adına göre arama yapmak için
     // (Not: Doctor içindeki User nesnesinin firstName alanına erişir)
     List<Doctor> findByClinicIdAndUserFirstNameContainingIgnoreCase(Long clinicId, String firstName);
+
+
+    
 }
