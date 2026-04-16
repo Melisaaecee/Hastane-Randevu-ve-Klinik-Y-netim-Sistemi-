@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Table(name = "patients")
 @Data
@@ -12,15 +14,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Patient {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@Id
+@GeneratedValue(strategy = GenerationType.IDENTITY)
+private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private BloodType bloodType;
+@Enumerated(EnumType.STRING)
+@Column(nullable = false)
+private BloodType bloodType;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
+@OneToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "user_id", nullable = false, unique = true)
+private User user;
+
+ 
+@OneToMany(mappedBy = "patient", cascade = CascadeType.ALL)
+private List<Penalty> penalties;
 }
