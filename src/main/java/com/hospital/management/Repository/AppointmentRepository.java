@@ -27,7 +27,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findBySlotDoctorClinicId(Long clinicId);
 
     // Doktorun aktif randevuları
-    List<Appointment> findBySlotDoctorIdAndStatus(Long doctorId,  List<AppointmentStatus> statuses);
+    List<Appointment> findBySlotDoctorIdAndStatus(Long doctorId,AppointmentStatus status);
 
     // Doktorun tüm randevuları
     List<Appointment> findBySlotDoctorId(Long doctorId);
