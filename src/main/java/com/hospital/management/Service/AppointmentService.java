@@ -96,3 +96,6 @@ public class AppointmentService {
         appointmentRepository.save(appointment);
     }
 }
+    
+    
+

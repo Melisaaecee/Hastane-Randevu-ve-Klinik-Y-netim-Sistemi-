@@ -9,7 +9,7 @@ import java.util.Optional;
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, Long> {
 
-    // 1. User tablosundaki User ID'ye göre hastayı bulur
+    // 1.. User tablosundaki User ID'ye göre hastayı bulur
     // Sisteme giriş yapan kişinin "Patient" detaylarına (kan grubu, cezalar vb.) 
     // ulaşmak için en çok bu metodu kullanacaksın.
     Optional<Patient> findByUserId(Long userId);
