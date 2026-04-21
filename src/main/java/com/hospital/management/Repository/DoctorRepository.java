@@ -25,6 +25,5 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     // (Not: Doctor içindeki User nesnesinin firstName alanına erişir)
     List<Doctor> findByClinicIdAndUserFirstNameContainingIgnoreCase(Long clinicId, String firstName);
 
-
-    
+ 
 }
