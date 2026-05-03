@@ -12,6 +12,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 import jakarta.annotation.PostConstruct;
 
 @Configuration
@@ -30,25 +33,35 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
                 .authorizeHttpRequests(auth -> auth
 
+                        //  AUTH SERBEST
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                        //  ADMIN
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/hospitals/**").hasRole("ADMIN")
+                        .requestMatchers("/api/clinics/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
 
-                        .requestMatchers("/api/doctor/**")
-                        .hasAnyAuthority("ROLE_DOCTOR", "ROLE_ADMIN")
+                        //  DOCTOR + ADMIN
+                        .requestMatchers("/api/doctor/**").hasAnyRole("DOCTOR", "ADMIN")
+                        .requestMatchers("/api/slots/**").hasAnyRole("DOCTOR", "ADMIN")
 
+                        //  PATIENT + DOCTOR + ADMIN
                         .requestMatchers(
                                 "/api/appointments/**",
                                 "/api/patients/**",
-                                "/api/slots/**",
                                 "/api/penalties/**",
                                 "/api/districts/**",
-                                "/api/cities/**")
-                        .hasAnyAuthority("ROLE_PATIENT", "ROLE_DOCTOR", "ROLE_ADMIN")
+                                "/api/cities/**"
+                        ).hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
 
-                        .anyRequest().authenticated())
+                        .anyRequest().authenticated()
+                )
+
+                // JWT FILTER
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -65,8 +78,23 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**")
+                        .allowedOrigins("http://localhost:3000")
+                        .allowedMethods("*")
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
+            }
+        };
+    }
+
     @PostConstruct
-    public void fixThread() {
+    public void enableAuthOnAsyncThreads() {
         SecurityContextHolder.setStrategyName(
                 SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
     }
