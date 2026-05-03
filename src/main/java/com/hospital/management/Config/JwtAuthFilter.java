@@ -1,7 +1,5 @@
 package com.hospital.management.Config;
 
-import com.hospital.management.Entity.User;
-import com.hospital.management.Repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,13 +19,12 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain)
-            throws ServletException, IOException {
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+                                    throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
 
@@ -39,22 +36,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = header.substring(7);
 
         try {
-            String username = jwtUtil.extractUsername(token);
+            if (!jwtUtil.isTokenExpired(token)) {
+                String username = jwtUtil.extractUsername(token);
+                String role = jwtUtil.extractRole(token);
 
-            User user = userRepository.findByUsername(username).orElse(null);
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    // Veritabanına gitmeden rolleri doğrudan token'dan aldık
+                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                            username,
+                            null,
+                            List.of(new SimpleGrantedAuthority("ROLE_" + role)));
 
-            if (user != null) {
-
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        username,
-                        null,
-                        List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
-
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
             }
-
         } catch (Exception e) {
-            System.out.println("JWT ERROR: " + e.getMessage());
+            // Token hatalı veya süresi dolmuşsa context'i temizle
+            SecurityContextHolder.clearContext();
+            logger.error("JWT Doğrulama Hatası: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

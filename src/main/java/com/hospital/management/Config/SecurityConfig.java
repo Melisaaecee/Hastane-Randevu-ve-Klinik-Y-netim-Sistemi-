@@ -18,7 +18,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import jakarta.annotation.PostConstruct;
 
 @Configuration
-@EnableMethodSecurity
+@EnableMethodSecurity // Controller'lardaki @PreAuthorize etiketlerinin çalışması için kritik!
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -31,25 +31,27 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) // Stateless API olduğu için kapalı
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .authorizeHttpRequests(auth -> auth
 
-                        //  AUTH SERBEST
+                        // 1. HERKESE AÇIK (Auth işlemleri)
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        //  ADMIN
+                        // 2. HASTANE & KLİNİK LİSTELEME (Burası Değişti!)
+                        // Hastaların hastaneleri görmesi lazım. @PreAuthorize ile Controller'da POST/DELETE'i kısıtlayacağız.
+                        .requestMatchers("/api/hospitals/**").hasAnyRole("ADMIN", "PATIENT", "DOCTOR")
+                        .requestMatchers("/api/clinics/**").hasAnyRole("ADMIN", "PATIENT", "DOCTOR")
+                        .requestMatchers("/api/doctors/**").hasAnyRole("ADMIN", "PATIENT", "DOCTOR")
+
+                        // 3. ADMIN ÖZEL (Kritik yönetim işlemleri)
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/hospitals/**").hasRole("ADMIN")
-                        .requestMatchers("/api/clinics/**").hasRole("ADMIN")
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
 
-                        //  DOCTOR + ADMIN
-                        .requestMatchers("/api/doctor/**").hasAnyRole("DOCTOR", "ADMIN")
+                        // 4. DOCTOR + ADMIN (Randevu slotları)
                         .requestMatchers("/api/slots/**").hasAnyRole("DOCTOR", "ADMIN")
 
-                        //  PATIENT + DOCTOR + ADMIN
+                        // 5. GENEL ERİŞİM (Randevu ve Lokasyon)
                         .requestMatchers(
                                 "/api/appointments/**",
                                 "/api/patients/**",
@@ -60,8 +62,7 @@ public class SecurityConfig {
 
                         .anyRequest().authenticated()
                 )
-
-                // JWT FILTER
+                // JWT Filtresini ekle
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -78,15 +79,15 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+    // CORS AYARLARI (Frontend erişimi için)
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
-
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000")
-                        .allowedMethods("*")
+                        .allowedOrigins("http://localhost:3000") // React/Vue portu
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
             }
