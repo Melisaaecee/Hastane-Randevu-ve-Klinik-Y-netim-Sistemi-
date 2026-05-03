@@ -1,5 +1,6 @@
 package com.hospital.management.Controller;
 
+import com.hospital.management.Config.CustomUserDetails;
 import com.hospital.management.DTO.RegisterRequest;
 import com.hospital.management.DTO.UserResponse;
 import com.hospital.management.Service.UserService;
@@ -18,27 +19,25 @@ public class UserController {
 
     private final UserService userService;
 
-    
-    //  KULLANICI KENDİ PROFİLİ (/me)
+    // USER - ME
     @GetMapping("/me")
-    public UserResponse getMyProfile(@AuthenticationPrincipal String username) {
-        return userService.getByUsername(username);
+    public UserResponse getMyProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return userService.getByUsername(userDetails.getUsername());
     }
 
     @PutMapping("/me")
     public UserResponse updateMyProfile(
-            @AuthenticationPrincipal String username,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody RegisterRequest request) {
-        return userService.updateByUsername(username, request);
+        return userService.updateByUsername(userDetails.getUsername(), request);
     }
 
     @DeleteMapping("/me")
-    public void deleteMyAccount(@AuthenticationPrincipal String username) {
-        userService.deleteByUsername(username);
+    public void deleteMyAccount(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        userService.deleteByUsername(userDetails.getUsername());
     }
 
-   
-    //  ADMIN PANELİ (Yalnızca Admin)
+    // ADMIN
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public List<UserResponse> getAllUsers() {
@@ -53,8 +52,7 @@ public class UserController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public UserResponse updateUser(
-            @PathVariable Long id,
+    public UserResponse updateUser(@PathVariable Long id,
             @RequestBody RegisterRequest request) {
         return userService.updateUser(id, request);
     }

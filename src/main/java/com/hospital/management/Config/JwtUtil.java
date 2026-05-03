@@ -4,6 +4,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -13,7 +15,11 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    private final String SECRET = "hospitalSecretKey123hospitalSecretKey123"; 
+    @Value("${jwt.secret}")
+    private String SECRET;
+
+    @Value("${jwt.expiration}")
+    private long EXPIRATION_TIME;
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
@@ -25,7 +31,7 @@ public class JwtUtil {
                 .setSubject(username)
                 .claim("role", role) // Rolü token içine gömdük
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // 1 Saat
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) // 1 Saat
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
