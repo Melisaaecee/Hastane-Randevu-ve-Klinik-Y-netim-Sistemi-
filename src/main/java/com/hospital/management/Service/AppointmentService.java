@@ -17,7 +17,7 @@ public class AppointmentService {
     private final PatientRepository patientRepository;
     private final PenaltyService penaltyService; // ✅ sadece service
 
-    // 🔥 RANDEVU OLUŞTUR
+    //  RANDEVU OLUŞTUR
     public Appointment createAppointment(Long patientId, Long slotId) {
 
         Patient patient = patientRepository.findById(patientId)
@@ -30,7 +30,7 @@ public class AppointmentService {
             throw new RuntimeException("Slot dolu");
         }
 
-        // ❌ repository değil → service
+
         if (penaltyService.hasActivePenalty(patientId)) {
             throw new RuntimeException("Aktif cezanız var, randevu alamazsınız");
         }
@@ -82,7 +82,7 @@ public class AppointmentService {
         appointmentRepository.save(appointment);
     }
 
-    // 🔥 GELMEDİ → CEZA ÜRET (DOĞRU MİMARİ)
+    //  GELMEDİ → CEZA ÜRET (DOĞRU MİMARİ)
     public void markAsNotAttended(Long appointmentId) {
 
         Appointment appointment = appointmentRepository.findById(appointmentId)
@@ -90,7 +90,7 @@ public class AppointmentService {
 
         appointment.setStatus(AppointmentStatus.NOT_ATTENDED);
 
-        // 🔥 CEZA TAMAMEN SERVICE İÇİNDE
+        //  CEZA TAMAMEN SERVICE İÇİNDE
         penaltyService.createPenaltyFromAppointment(appointment);
 
         appointmentRepository.save(appointment);

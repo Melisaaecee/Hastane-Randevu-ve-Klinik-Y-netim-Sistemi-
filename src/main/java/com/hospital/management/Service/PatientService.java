@@ -16,41 +16,41 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final PenaltyService penaltyService;
 
-    // 🔥 ID ile hasta getir
+    // ID ile hasta getir
     public Patient getById(Long id) {
         return patientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Hasta bulunamadı: " + id));
     }
 
-    // 🔥 userId ile hasta getir
+    // userId ile hasta getir
     public Patient getByUserId(Long userId) {
         return patientRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Kullanıcıya bağlı hasta bulunamadı"));
     }
 
-    // 🔥 TCKN ile hasta getir
+    // TCKN ile hasta getir
     public Patient getByTckn(String tckn) {
         return patientRepository.findByUserTckn(tckn)
                 .orElseThrow(() -> new RuntimeException("Hasta bulunamadı: " + tckn));
     }
 
-    // 🔥 hasta kaydet / güncelle
+    // hasta kaydet / güncelle
     @Transactional
     public Patient save(Patient patient) {
         return patientRepository.save(patient);
     }
 
-    // 🔥 tüm cezalar
+    // tüm cezalar
     public List<Penalty> getAllPenalties(Long patientId) {
         return penaltyService.getPatientPenalties(patientId);
     }
 
-    // 🔥 aktif ceza var mı
+    // aktif ceza var mı
     public boolean hasActivePenalty(Long patientId) {
         return penaltyService.hasActivePenalty(patientId);
     }
 
-    // 🔥 aktif cezalar
+    // aktif cezalar
     public List<Penalty> getActivePenalties(Long patientId) {
         return penaltyService.getActivePenalties(patientId);
     }

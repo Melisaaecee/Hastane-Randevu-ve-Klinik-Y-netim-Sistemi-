@@ -15,47 +15,46 @@ public class PenaltyService {
 
     private final PenaltyRepository penaltyRepository;
 
-    // 🔥 1. Aktif ceza var mı?
+    // 1. Aktif ceza var mı?
     public boolean hasActivePenalty(Long patientId) {
         return penaltyRepository.existsByPatientIdAndActiveTrue(patientId);
     }
 
-    // 🔥 2. Tüm cezalar
+    // 2. Tüm cezalar
     public List<Penalty> getPatientPenalties(Long patientId) {
         return penaltyRepository.findByPatientId(patientId);
     }
 
-    // 🔥 3. Aktif cezalar
+    // 3. Aktif cezalar
     public List<Penalty> getActivePenalties(Long patientId) {
         return penaltyRepository.findByPatientIdAndActiveTrue(patientId);
     }
 
-    // 🔥 4. Geçmiş cezalar (FIXED)
+    // 4. Geçmiş cezalar (FIXED)
     public List<Penalty> getPastPenalties(Long patientId) {
         return penaltyRepository.findByPatientIdAndPenaltyEndDateBefore(
                 patientId,
                 LocalDateTime.now());
     }
 
-    // 🔥 5. Expired cezalar (FIXED - SENİN HATAN BURADAYDI)
+    // 5. Expired cezalar (FIXED - SENİN HATAN BURADAYDI)
     public List<Penalty> getAllExpiredPenalties() {
         return penaltyRepository.findByPenaltyEndDateBefore(LocalDateTime.now());
     }
 
-    // 🔥 6. TCKN ile sorgu
+    // 6. TCKN ile sorgu
     public List<Penalty> getPenaltiesByTckn(String tckn) {
         return penaltyRepository.findByPatientUserTckn(tckn);
     }
 
-    // 🔥 7. Ceza oluştur
-    // 🔥 Ceza oluştur (tek sorumluluk)
+    // 7. Ceza oluştur
+    // Ceza oluştur (tek sorumluluk)
     public Penalty createPenaltyFromAppointment(Appointment appointment) {
 
         // Aynı hastada aktif ceza varsa tekrar üretme
         if (hasActivePenalty(appointment.getPatient().getId())) {
             throw new RuntimeException("Aktif ceza zaten var");
         }
-
 
         Penalty penalty = new Penalty();
         penalty.setPatient(appointment.getPatient());
@@ -67,7 +66,7 @@ public class PenaltyService {
         return penaltyRepository.save(penalty);
     }
 
-    // 🔥 8. Süresi dolanları kapat (FIXED)
+    // 8. Süresi dolanları kapat (FIXED)
     public void deactivateExpiredPenalties() {
 
         List<Penalty> expiredPenalties = penaltyRepository.findByPenaltyEndDateBefore(LocalDateTime.now());

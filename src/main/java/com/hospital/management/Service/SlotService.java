@@ -18,7 +18,7 @@ public class SlotService {
 
     private final SlotRepository slotRepository;
 
-    // 🔥 GELECEK MÜSAİT SLOTLAR
+    // GELECEK MÜSAİT SLOTLAR
     public List<Slot> getFutureAvailableSlots(Long doctorId) {
         return slotRepository
                 .findByDoctorIdAndStatusAndStartTimeAfter(
@@ -30,7 +30,7 @@ public class SlotService {
                 .collect(Collectors.toList());
     }
 
-    // 🔥 SLOT OLUŞTUR (CLEAN VERSION)
+    // SLOT OLUŞTUR (CLEAN VERSION)
     @Transactional
     public Slot createSlot(Slot slot) {
 
@@ -38,17 +38,17 @@ public class SlotService {
         LocalDateTime start = slot.getStartTime();
         LocalDateTime end = slot.getEndTime();
 
-        // ❌ geçmiş kontrolü
+        // geçmiş kontrolü
         if (start.isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Geçmiş tarihe slot oluşturulamaz");
         }
 
-        // ❌ zaman kontrolü
+        // zaman kontrolü
         if (!start.isBefore(end)) {
             throw new RuntimeException("Başlangıç zamanı bitişten önce olmalı");
         }
 
-        // 🔥 TEK GERÇEK ÇAKIŞMA KONTROLÜ (DB LEVEL)
+        // ÇAKIŞMA KONTROLÜ
         List<Slot> conflicts = slotRepository.findConflictingSlots(doctorId, start, end);
 
         if (!conflicts.isEmpty()) {
@@ -60,7 +60,7 @@ public class SlotService {
         return slotRepository.save(slot);
     }
 
-    // 🔥 SLOT İPTAL
+    // SLOT İPTAL
     @Transactional
     public void cancelSlot(Long slotId) {
 

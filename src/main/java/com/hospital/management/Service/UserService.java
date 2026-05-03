@@ -22,9 +22,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PatientRepository patientRepository;
 
-    // =========================
-    // 🔥 REGISTER
-    // =========================
+    // REGISTER
     @Transactional
     public UserResponse register(RegisterRequest request) {
 
@@ -41,9 +39,7 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
 
-        // =========================
-        // 🔥 PATIENT OLUŞTURMA
-        // =========================
+        // PATIENT OLUŞTURMA
         Patient patient = new Patient();
         patient.setUser(savedUser);
         patient.setBirthDate(request.getBirthDate());
@@ -55,9 +51,7 @@ public class UserService {
 
     }
 
-    // =========================
-    // 🔥 LOGIN
-    // =========================
+    // LOGIN
     public UserResponse login(LoginRequest request) {
 
         User user = userRepository.findByUsername(request.getUsername())
@@ -70,9 +64,7 @@ public class UserService {
         return mapToResponse(user);
     }
 
-    // =========================
-    // 🔥 UPDATE
-    // =========================
+    // UPDATE
     @Transactional
     public UserResponse updateUser(Long id, RegisterRequest request) {
 
@@ -96,9 +88,7 @@ public class UserService {
         return mapToResponse(userRepository.save(user));
     }
 
-    // =========================
-    // 🔥 DELETE
-    // =========================
+    // DELETE
     @Transactional
     public void deleteUser(Long id) {
 
@@ -108,9 +98,7 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    // =========================
-    // 🔥 GET ALL
-    // =========================
+    // GET ALL
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
                 .stream()
@@ -118,9 +106,7 @@ public class UserService {
                 .toList();
     }
 
-    // =========================
-    // 🔥 VALIDATION
-    // =========================
+    // VALIDATION
     private void validateUser(String username, String email, String tckn) {
 
         if (userRepository.existsByUsername(username)) {
@@ -136,9 +122,7 @@ public class UserService {
         }
     }
 
-    // =========================
-    // UPDATE CHECKS
-    // =========================
+     // UPDATE CHECKS
     private void checkEmailUpdate(User user, String newEmail) {
         if (newEmail == null || newEmail.equals(user.getEmail()))
             return;

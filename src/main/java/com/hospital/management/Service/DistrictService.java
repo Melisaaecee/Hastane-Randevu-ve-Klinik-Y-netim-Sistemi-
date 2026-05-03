@@ -14,9 +14,7 @@ public class DistrictService {
 
     private final DistrictRepository districtRepository;
 
-    // =========================
-    // 🔥 GET BY CITY
-    // =========================
+    //  GET BY CITY
     // Seçilen şehre ait ilçeleri alfabetik (A-Z) getirir
     public List<District> getDistrictsByCity(Long cityId) {
         return districtRepository.findByCityId(cityId).stream()
@@ -24,17 +22,14 @@ public class DistrictService {
                 .toList();
     }
 
-    // =========================
-    // 🔥 GET BY ID
-    // =========================
+   
+    //  GET BY ID
     public District getById(Long id) {
         return districtRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("İlçe bulunamadı"));
     }
 
-    // =========================
-    // 🔥 CRITICAL VALIDATION (Kritik Ekleme)
-    // =========================
+    //  CRITICAL VALIDATION 
     /**
      * Bir ilçenin gerçekten belirtilen şehre ait olup olmadığını kontrol eder.
      * Randevu alırken veya hastane eklerken yanlış eşleşmeleri önler.
