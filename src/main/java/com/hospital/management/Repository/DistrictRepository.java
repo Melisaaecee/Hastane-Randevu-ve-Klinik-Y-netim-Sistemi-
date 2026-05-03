@@ -18,4 +18,7 @@ public interface DistrictRepository extends JpaRepository<District, Long> {
 
     // 3. Bir şehrin toplam kaç ilçesi olduğunu döndürür
     long countByCityId(Long cityId);
+
+    // 4. Bir ilçenin gerçekten belirtilen şehre ait olup olmadığını kontrol eder (Kritik metot)
+     boolean existsByIdAndCityId(Long districtId, Long cityId);
 }
