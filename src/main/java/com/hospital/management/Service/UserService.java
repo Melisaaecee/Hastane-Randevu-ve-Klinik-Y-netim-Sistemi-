@@ -1,13 +1,8 @@
 package com.hospital.management.Service;
 
-import com.hospital.management.DTO.LoginRequest;
 import com.hospital.management.DTO.RegisterRequest;
 import com.hospital.management.DTO.UserResponse;
-import com.hospital.management.Entity.BloodType;
-import com.hospital.management.Entity.Patient;
-import com.hospital.management.Entity.Role;
 import com.hospital.management.Entity.User;
-import com.hospital.management.Repository.PatientRepository;
 import com.hospital.management.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,60 +15,112 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final PatientRepository patientRepository;
 
-    // REGISTER
-    @Transactional
-    public UserResponse register(RegisterRequest request) {
-
-        validateUser(request.getUsername(), request.getEmail(), request.getTckn());
-
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setPassword(request.getPassword()); // BCrypt sonra
-        user.setEmail(request.getEmail());
-        user.setTckn(request.getTckn());
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setRole(Role.PATIENT);
-
-        User savedUser = userRepository.save(user);
-
-        // PATIENT OLUŞTURMA
-        Patient patient = new Patient();
-        patient.setUser(savedUser);
-        patient.setBirthDate(request.getBirthDate());
-        patient.setBloodType(request.getBloodType());
-
-        patientRepository.save(patient);
-
-        return mapToResponse(savedUser);
-
+    // =========================
+    // GET ALL (ADMIN)
+    // =========================
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
-    // LOGIN
-    public UserResponse login(LoginRequest request) {
+    // =========================
+    // GET BY ID (ADMIN)
+    // =========================
+    public UserResponse getById(Long id) {
+        return mapToResponse(getUserById(id));
+    }
 
-        User user = userRepository.findByUsername(request.getUsername())
+    private User getUserById(Long id) {
+        return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı"));
-
-        if (!user.getPassword().equals(request.getPassword())) {
-            throw new RuntimeException("Şifre hatalı");
-        }
-
-        return mapToResponse(user);
     }
 
-    // UPDATE
+    // =========================
+    // UPDATE BY ID (ADMIN)
+    // =========================
     @Transactional
     public UserResponse updateUser(Long id, RegisterRequest request) {
 
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı"));
+        User user = getUserById(id);
 
-        checkEmailUpdate(user, request.getEmail());
-        checkUsernameUpdate(user, request.getUsername());
-        checkTcknUpdate(user, request.getTckn());
+        validateUpdate(user, request);
+
+        applyUpdates(user, request);
+
+        return mapToResponse(userRepository.save(user));
+    }
+
+    // =========================
+    // DELETE BY ID (ADMIN)
+    // =========================
+    @Transactional
+    public void deleteUser(Long id) {
+        userRepository.delete(getUserById(id));
+    }
+
+    // =========================
+    // GET BY USERNAME (USER /me)
+    // =========================
+    public UserResponse getByUsername(String username) {
+        return mapToResponse(getUserByUsername(username));
+    }
+
+    private User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı"));
+    }
+
+    // =========================
+    // UPDATE BY USERNAME (/me)
+    // =========================
+    @Transactional
+    public UserResponse updateByUsername(String username, RegisterRequest request) {
+
+        User user = getUserByUsername(username);
+
+        validateUpdate(user, request);
+
+        applyUpdates(user, request);
+
+        return mapToResponse(userRepository.save(user));
+    }
+
+    // =========================
+    // DELETE BY USERNAME (/me)
+    // =========================
+    @Transactional
+    public void deleteByUsername(String username) {
+        userRepository.delete(getUserByUsername(username));
+    }
+
+    // =========================
+    // VALIDATION
+    // =========================
+    private void validateUpdate(User user, RegisterRequest request) {
+
+        if (!user.getEmail().equals(request.getEmail())
+                && userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email kullanımda");
+        }
+
+        if (!user.getUsername().equals(request.getUsername())
+                && userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException("Username kullanımda");
+        }
+
+        if (!user.getTckn().equals(request.getTckn())
+                && userRepository.existsByTckn(request.getTckn())) {
+            throw new RuntimeException("TCKN kullanımda");
+        }
+    }
+
+    // =========================
+    // APPLY UPDATE
+    // =========================
+    private void applyUpdates(User user, RegisterRequest request) {
 
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
@@ -84,74 +131,10 @@ public class UserService {
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
             user.setPassword(request.getPassword());
         }
-
-        return mapToResponse(userRepository.save(user));
-    }
-
-    // DELETE
-    @Transactional
-    public void deleteUser(Long id) {
-
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı"));
-
-        userRepository.delete(user);
-    }
-
-    // GET ALL
-    public List<UserResponse> getAllUsers() {
-        return userRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
-
-    // VALIDATION
-    private void validateUser(String username, String email, String tckn) {
-
-        if (userRepository.existsByUsername(username)) {
-            throw new RuntimeException("Username kullanımda");
-        }
-
-        if (userRepository.existsByEmail(email)) {
-            throw new RuntimeException("Email kullanımda");
-        }
-
-        if (userRepository.existsByTckn(tckn)) {
-            throw new RuntimeException("TCKN kullanımda");
-        }
-    }
-
-     // UPDATE CHECKS
-    private void checkEmailUpdate(User user, String newEmail) {
-        if (newEmail == null || newEmail.equals(user.getEmail()))
-            return;
-
-        if (userRepository.existsByEmail(newEmail)) {
-            throw new RuntimeException("Email kullanımda");
-        }
-    }
-
-    private void checkUsernameUpdate(User user, String newUsername) {
-        if (newUsername == null || newUsername.equals(user.getUsername()))
-            return;
-
-        if (userRepository.existsByUsername(newUsername)) {
-            throw new RuntimeException("Username kullanımda");
-        }
-    }
-
-    private void checkTcknUpdate(User user, String newTckn) {
-        if (newTckn == null || newTckn.equals(user.getTckn()))
-            return;
-
-        if (userRepository.existsByTckn(newTckn)) {
-            throw new RuntimeException("TCKN kullanımda");
-        }
     }
 
     // =========================
-    // 🔥 MAPPER
+    // MAPPER
     // =========================
     private UserResponse mapToResponse(User user) {
 
