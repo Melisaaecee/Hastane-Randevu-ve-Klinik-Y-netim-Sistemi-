@@ -23,7 +23,7 @@ public class AppointmentService {
     private final DoctorRepository doctorRepository;
     private final PenaltyService penaltyService;
 
-    // CREATE APPOINTMENT
+    // CREATE
     @Transactional
     public Appointment createAppointment(Long patientId, Long slotId) {
 
@@ -52,7 +52,7 @@ public class AppointmentService {
         return appointmentRepository.save(appointment);
     }
 
-    // PATIENT APPOINTMENTS
+    // PATIENT
     public List<Appointment> getPatientAppointments(Long patientId) {
 
         Patient patient = patientRepository.findById(patientId)
@@ -65,20 +65,16 @@ public class AppointmentService {
 
     public List<Appointment> getPatientPastAppointments(Long patientId) {
 
-        patientRepository.findById(patientId)
+        Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new EntityNotFoundException("Hasta yok"));
 
-        assertOwnerOrAdmin(
-                patientRepository.findById(patientId)
-                        .get()
-                        .getUser()
-                        .getId());
+        assertOwnerOrAdmin(patient.getUser().getId());
 
         return appointmentRepository.findByPatientIdAndSlotStartTimeBefore(
                 patientId, LocalDateTime.now());
     }
 
-    // DOCTOR APPOINTMENTS
+    // DOCTOR
     public List<Appointment> getDoctorAppointments(Long doctorId) {
 
         Doctor doctor = doctorRepository.findById(doctorId)
@@ -106,8 +102,7 @@ public class AppointmentService {
 
         Appointment appointment = getAppointmentOrThrow(appointmentId);
 
-        assertOwnerOrAdmin(
-                appointment.getPatient().getUser().getId());
+        assertOwnerOrAdmin(appointment.getPatient().getUser().getId());
 
         LocalDateTime start = appointment.getSlot().getStartTime();
 
