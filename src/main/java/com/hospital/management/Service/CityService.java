@@ -4,8 +4,6 @@ import com.hospital.management.Entity.City;
 import com.hospital.management.Repository.CityRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -14,15 +12,25 @@ public class CityService {
 
     private final CityRepository cityRepository;
 
-    // Tüm şehirleri alfabetik (A-Z) getirir
     public List<City> getAllCities() {
-        return cityRepository.findAll().stream()
-                .sorted(Comparator.comparing(City::getName))
-                .toList();
+        return cityRepository.findAllByOrderByNameAsc();
     }
 
     public City getById(Long id) {
         return cityRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Şehir bulunamadı"));
+                .orElseThrow(() -> new RuntimeException("Şehir bulunamadı: " + id));
+    }
+
+    // 🔥 YENİ: Şehir Ekleme veya Güncelleme
+    public City saveOrUpdateCity(City city) {
+        return cityRepository.save(city);
+    }
+
+    // 🔥 YENİ: Şehir Silme
+    public void deleteCity(Long id) {
+        if (!cityRepository.existsById(id)) {
+            throw new RuntimeException("Silinmek istenen şehir bulunamadı!");
+        }
+        cityRepository.deleteById(id);
     }
 }

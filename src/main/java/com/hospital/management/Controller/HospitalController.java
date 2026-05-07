@@ -4,6 +4,7 @@ import com.hospital.management.Entity.Hospital;
 import com.hospital.management.Service.HospitalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -67,6 +68,7 @@ public class HospitalController {
      * POST http://localhost:8080/api/hospitals
      */
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Hospital> saveOrUpdate(@RequestBody Hospital hospital) {
         return ResponseEntity.ok(hospitalService.saveOrUpdate(hospital));
     }
@@ -76,6 +78,7 @@ public class HospitalController {
      * DELETE http://localhost:8080/api/hospitals/{id}
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteHospital(@PathVariable Long id) {
         hospitalService.deleteHospital(id);
         return ResponseEntity.ok("Hastane başarıyla silindi.");

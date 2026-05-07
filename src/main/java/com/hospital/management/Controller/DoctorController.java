@@ -4,6 +4,7 @@ import com.hospital.management.Entity.Doctor;
 import com.hospital.management.Service.DoctorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class DoctorController {
      * GET http://localhost:8080/api/doctors/clinic/{clinicId}/admin
      */
     @GetMapping("/clinic/{clinicId}/admin")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Doctor>> getAllDoctorsInClinicForAdmin(@PathVariable Long clinicId) {
         return ResponseEntity.ok(doctorService.getAllDoctorsInClinicForAdmin(clinicId));
     }
@@ -48,6 +50,7 @@ public class DoctorController {
      * GET http://localhost:8080/api/doctors/user/{userId}
      */
     @GetMapping("/user/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<Doctor> getDoctorByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(doctorService.getDoctorByUserId(userId));
     }
@@ -68,6 +71,7 @@ public class DoctorController {
      * POST http://localhost:8080/api/doctors
      */
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Doctor> saveOrUpdate(@RequestBody Doctor doctor) {
         return ResponseEntity.ok(doctorService.saveOrUpdateDoctor(doctor));
     }
@@ -77,6 +81,7 @@ public class DoctorController {
      * DELETE http://localhost:8080/api/doctors/{id}
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteDoctor(@PathVariable Long id) {
         doctorService.deleteDoctor(id);
         return ResponseEntity.ok("Doktor kaydı başarıyla silindi.");

@@ -3,6 +3,8 @@ package com.hospital.management.Controller;
 import com.hospital.management.Entity.Slot;
 import com.hospital.management.Service.SlotService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,12 +24,14 @@ public class SlotController {
 
     //  SLOT OLUŞTUR
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('DOCTOR') and #slot.doctor.user.username == principal.username)")
     public Slot create(@RequestBody Slot slot) {
         return slotService.createSlot(slot);
     }
 
     //  SLOT İPTAL
     @PutMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('ADMIN') or @slotService.isSlotOwner(#id, principal.username)")
     public void cancel(@PathVariable Long id) {
         slotService.cancelSlot(id);
     }
