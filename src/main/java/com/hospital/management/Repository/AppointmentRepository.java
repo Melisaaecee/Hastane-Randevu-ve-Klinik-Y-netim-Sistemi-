@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
-
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 
@@ -15,22 +14,22 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findByPatientId(Long patientId);
 
     // Hastanın duruma göre randevuları
-    List<Appointment> findByPatientId(Long patientId, AppointmentStatus status);
+    List<Appointment> findByPatientIdAndStatus(Long patientId, AppointmentStatus status);
 
     // Hastanın geçmiş randevuları
-    List<Appointment> findByPatientIdAndSlotStartTimeBefore(Long patientId, LocalDateTime now);
+    List<Appointment> findByPatientIdAndSlotStartTimeBefore( Long patientId,LocalDateTime now);
 
     // Doktorun geçmiş randevuları
-    List<Appointment> findBySlotDoctorIdAndSlotStartTimeBefore(Long doctorId, LocalDateTime now);
+    List<Appointment> findBySlotDoctorIdAndSlotStartTimeBefore(Long doctorId,LocalDateTime now);
 
-    // Hasta istatistik (gelmedi sayısı vs.)
-    long countByPatientIdAndStatus(Long patientId, AppointmentStatus status);
+    // Hasta istatistik
+    long countByPatientIdAndStatus(Long patientId,AppointmentStatus status);
 
-    // Klinik randevuları (admin)
+    // Klinik randevuları
     List<Appointment> findBySlotDoctorClinicId(Long clinicId);
 
     // Doktorun aktif randevuları
-    List<Appointment> findBySlotDoctorIdAndStatus(Long doctorId, AppointmentStatus status);
+    List<Appointment> findBySlotDoctorIdAndStatus( Long doctorId, AppointmentStatus status);
 
     // Doktorun tüm randevuları
     List<Appointment> findBySlotDoctorId(Long doctorId);

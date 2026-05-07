@@ -13,7 +13,9 @@ public interface PenaltyRepository extends JpaRepository<Penalty, Long> {
     // 1. Hastanın belirli bir klinikte aktif bir cezası var mı? (En Kritik Sorgu)
     // endDate şu anki tarihten (now) büyükse ve active true ise ceza devam
     // ediyordur.
-    boolean existsByPatientIdAndClinicIdAndPenaltyEndDateAfterAndActiveTrue(Long patientId, Long clinicId,
+    boolean existsByPatient_IdAndAppointment_Slot_Doctor_Clinic_IdAndPenaltyEndDateAfterAndActiveTrue(
+            Long patientId,
+            Long clinicId,
             LocalDateTime now);
 
     // aktif ceza var mı?
