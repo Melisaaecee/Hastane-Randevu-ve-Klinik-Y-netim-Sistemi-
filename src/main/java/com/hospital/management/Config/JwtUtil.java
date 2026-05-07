@@ -25,42 +25,41 @@ public class JwtUtil {
     }
 
     // TOKEN ÜRET
-    public String generateToken(String username, String role) {
+    public String generateToken(Long userId, String username, String role) {
         return Jwts.builder()
                 .setSubject(username)
-                .claim("role", "ROLE_" + role) 
+                .claim("userId", userId)
+                .claim("role", "ROLE_" + role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // USERNAME
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // ROLE
+    public Long extractUserId(String token) {
+        return getClaims(token).get("userId", Long.class);
+    }
+
     public String extractRole(String token) {
         return getClaims(token).get("role", String.class);
     }
 
-    // EXPIRATION CHECK
     public boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
 
-    // VALIDATION
     public boolean isTokenValid(String token) {
         try {
-            String username = extractUsername(token);
-            return username != null && !isTokenExpired(token);
+            return extractUsername(token) != null && !isTokenExpired(token);
         } catch (Exception e) {
             return false;
         }
     }
 
-    // CLAIM HELPER
     private <T> T extractClaim(String token, Function<Claims, T> resolver) {
         return resolver.apply(getClaims(token));
     }

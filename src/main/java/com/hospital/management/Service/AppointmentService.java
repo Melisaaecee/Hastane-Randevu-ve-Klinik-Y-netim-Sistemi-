@@ -1,8 +1,11 @@
 package com.hospital.management.Service;
 
+import com.hospital.management.Config.SecurityUtil;
 import com.hospital.management.Entity.*;
 import com.hospital.management.Repository.*;
-import com.hospital.management.Config.SecurityUtil;
+import com.hospital.management.Exception.AccessDeniedException;
+import com.hospital.management.Exception.BadRequestException;
+import com.hospital.management.Exception.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,25 +23,23 @@ public class AppointmentService {
     private final DoctorRepository doctorRepository;
     private final PenaltyService penaltyService;
 
-    // --------------------------
     // CREATE APPOINTMENT
-    // --------------------------
     @Transactional
     public Appointment createAppointment(Long patientId, Long slotId) {
 
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new RuntimeException("Hasta bulunamadı"));
+                .orElseThrow(() -> new EntityNotFoundException("Hasta bulunamadı"));
 
-        assertOwnerOrAdmin(patient.getUser().getUsername());
+        assertOwnerOrAdmin(patient.getUser().getId());
 
         Slot slot = slotRepository.findById(slotId)
-                .orElseThrow(() -> new RuntimeException("Slot bulunamadı"));
+                .orElseThrow(() -> new EntityNotFoundException("Slot bulunamadı"));
 
         if (slot.getStatus() != SlotStatus.AVAILABLE)
-            throw new RuntimeException("Slot dolu");
+            throw new BadRequestException("Slot dolu");
 
         if (penaltyService.hasActivePenalty(patientId))
-            throw new RuntimeException("Ceza var");
+            throw new BadRequestException("Aktif ceza var");
 
         Appointment appointment = new Appointment();
         appointment.setPatient(patient);
@@ -51,39 +52,39 @@ public class AppointmentService {
         return appointmentRepository.save(appointment);
     }
 
-    // --------------------------
-    // PATIENT (SELF OR ADMIN)
-    // --------------------------
+    // PATIENT APPOINTMENTS
     public List<Appointment> getPatientAppointments(Long patientId) {
 
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new RuntimeException("Hasta yok"));
+                .orElseThrow(() -> new EntityNotFoundException("Hasta yok"));
 
-        assertOwnerOrAdmin(patient.getUser().getUsername());
+        assertOwnerOrAdmin(patient.getUser().getId());
 
         return appointmentRepository.findByPatientId(patientId);
     }
 
     public List<Appointment> getPatientPastAppointments(Long patientId) {
 
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new RuntimeException("Hasta yok"));
+        patientRepository.findById(patientId)
+                .orElseThrow(() -> new EntityNotFoundException("Hasta yok"));
 
-        assertOwnerOrAdmin(patient.getUser().getUsername());
+        assertOwnerOrAdmin(
+                patientRepository.findById(patientId)
+                        .get()
+                        .getUser()
+                        .getId());
 
         return appointmentRepository.findByPatientIdAndSlotStartTimeBefore(
                 patientId, LocalDateTime.now());
     }
 
-    // --------------------------
-    // DOCTOR (SELF OR ADMIN)
-    // --------------------------
+    // DOCTOR APPOINTMENTS
     public List<Appointment> getDoctorAppointments(Long doctorId) {
 
         Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new RuntimeException("Doktor yok"));
+                .orElseThrow(() -> new EntityNotFoundException("Doktor yok"));
 
-        assertOwnerOrAdmin(doctor.getUser().getUsername());
+        assertOwnerOrAdmin(doctor.getUser().getId());
 
         return appointmentRepository.findBySlotDoctorId(doctorId);
     }
@@ -91,32 +92,30 @@ public class AppointmentService {
     public List<Appointment> getDoctorActiveAppointments(Long doctorId) {
 
         Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new RuntimeException("Doktor yok"));
+                .orElseThrow(() -> new EntityNotFoundException("Doktor yok"));
 
-        assertOwnerOrAdmin(doctor.getUser().getUsername());
+        assertOwnerOrAdmin(doctor.getUser().getId());
 
         return appointmentRepository.findBySlotDoctorIdAndStatus(
                 doctorId, AppointmentStatus.APPROVED);
     }
 
-    // --------------------------
     // CANCEL
-    // --------------------------
     @Transactional
     public void cancelAppointment(Long appointmentId) {
 
         Appointment appointment = getAppointmentOrThrow(appointmentId);
 
         assertOwnerOrAdmin(
-                appointment.getPatient().getUser().getUsername());
+                appointment.getPatient().getUser().getId());
 
         LocalDateTime start = appointment.getSlot().getStartTime();
 
         if (start.isBefore(LocalDateTime.now()))
-            throw new RuntimeException("Geçmiş iptal edilemez");
+            throw new BadRequestException("Geçmiş iptal edilemez");
 
         if (start.isBefore(LocalDateTime.now().plusHours(24)))
-            throw new RuntimeException("24 saat kuralı");
+            throw new BadRequestException("24 saat kuralı");
 
         appointment.setStatus(AppointmentStatus.CANCELED);
 
@@ -127,22 +126,20 @@ public class AppointmentService {
         appointmentRepository.save(appointment);
     }
 
-    // --------------------------
     // NOT ATTENDED
-    // --------------------------
     @Transactional
     public void markAsNotAttended(Long appointmentId) {
 
         Appointment appointment = getAppointmentOrThrow(appointmentId);
 
         boolean isDoctor = SecurityUtil.isOwner(
-                appointment.getSlot().getDoctor().getUser().getUsername());
+                appointment.getSlot().getDoctor().getUser().getId());
 
         if (!SecurityUtil.isAdmin() && !isDoctor)
-            throw new RuntimeException("Yetkisiz");
+            throw new AccessDeniedException("Yetkisiz işlem");
 
         if (appointment.getSlot().getStartTime().isAfter(LocalDateTime.now()))
-            throw new RuntimeException("Gelecek işaretlenemez");
+            throw new BadRequestException("Gelecek randevu işaretlenemez");
 
         appointment.setStatus(AppointmentStatus.NOT_ATTENDED);
 
@@ -151,54 +148,49 @@ public class AppointmentService {
         appointmentRepository.save(appointment);
     }
 
-    // --------------------------
     // ADMIN ONLY
-    // --------------------------
     public List<Appointment> getClinicAppointments(Long clinicId) {
 
         if (!SecurityUtil.isAdmin())
-            throw new RuntimeException("Sadece admin");
+            throw new AccessDeniedException("Sadece admin erişebilir");
 
         return appointmentRepository.findBySlotDoctorClinicId(clinicId);
     }
 
-    // --------------------------
-    // CURRENT USER - PATIENT
-    // --------------------------
+    // MY APPOINTMENTS
     public List<Appointment> getMyAppointments() {
 
         String username = SecurityUtil.getCurrentUsername();
 
         Patient patient = patientRepository.findByUserUsername(username)
-                .orElseThrow(() -> new RuntimeException("Hasta yok"));
+                .orElseThrow(() -> new EntityNotFoundException("Hasta yok"));
 
         return appointmentRepository.findByPatientId(patient.getId());
     }
 
-    // --------------------------
-    // CURRENT USER - DOCTOR
-    // --------------------------
     public List<Appointment> getMyDoctorAppointments() {
 
         String username = SecurityUtil.getCurrentUsername();
 
         Doctor doctor = doctorRepository.findByUserUsername(username)
-                .orElseThrow(() -> new RuntimeException("Doktor yok"));
+                .orElseThrow(() -> new EntityNotFoundException("Doktor yok"));
 
         return appointmentRepository.findBySlotDoctorId(doctor.getId());
     }
 
-    // --------------------------
     // HELPERS
-    // --------------------------
-    private void assertOwnerOrAdmin(String entityUsername) {
-        if (!SecurityUtil.isAdmin() && !SecurityUtil.isOwner(entityUsername)) {
-            throw new RuntimeException("Yetkisiz işlem");
+    private void assertOwnerOrAdmin(Long userId) {
+
+        if (SecurityUtil.isAdmin())
+            return;
+
+        if (!SecurityUtil.isOwner(userId)) {
+            throw new AccessDeniedException("Yetkisiz işlem");
         }
     }
 
     private Appointment getAppointmentOrThrow(Long id) {
         return appointmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Randevu yok"));
+                .orElseThrow(() -> new EntityNotFoundException("Randevu yok"));
     }
 }
