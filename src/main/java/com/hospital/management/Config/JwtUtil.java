@@ -4,7 +4,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -25,32 +24,45 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
-    // TOKEN ÜRET (Rol bilgisi eklendi)
+    // TOKEN ÜRET
     public String generateToken(String username, String role) {
         return Jwts.builder()
                 .setSubject(username)
-                .claim("role", role) // Rolü token içine gömdük
+                .claim("role", "ROLE_" + role) 
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) // 1 Saat
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
+    // USERNAME
     public String extractUsername(String token) {
-        return getClaim(token, Claims::getSubject);
+        return extractClaim(token, Claims::getSubject);
     }
 
+    // ROLE
     public String extractRole(String token) {
         return getClaims(token).get("role", String.class);
     }
 
+    // EXPIRATION CHECK
     public boolean isTokenExpired(String token) {
-        return getClaim(token, Claims::getExpiration).before(new Date());
+        return extractClaim(token, Claims::getExpiration).before(new Date());
     }
 
-    private <T> T getClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = getClaims(token);
-        return claimsResolver.apply(claims);
+    // VALIDATION
+    public boolean isTokenValid(String token) {
+        try {
+            String username = extractUsername(token);
+            return username != null && !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // CLAIM HELPER
+    private <T> T extractClaim(String token, Function<Claims, T> resolver) {
+        return resolver.apply(getClaims(token));
     }
 
     private Claims getClaims(String token) {

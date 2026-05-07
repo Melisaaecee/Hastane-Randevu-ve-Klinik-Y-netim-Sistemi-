@@ -1,5 +1,6 @@
 package com.hospital.management.Config;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,13 +13,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import jakarta.annotation.PostConstruct;
 
 @Configuration
-@EnableMethodSecurity // Controller'lardaki @PreAuthorize etiketlerinin çalışması için kritik!
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -31,38 +29,31 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                .csrf(csrf -> csrf.disable()) // Stateless API olduğu için kapalı
+                .csrf(csrf -> csrf.disable())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
-                        // 1. HERKESE AÇIK (Auth işlemleri)
+                        // AUTH ENDPOINTS
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // 2. HASTANE & KLİNİK LİSTELEME (Burası Değişti!)
-                        // Hastaların hastaneleri görmesi lazım. @PreAuthorize ile Controller'da POST/DELETE'i kısıtlayacağız.
-                        .requestMatchers("/api/hospitals/**").hasAnyRole("ADMIN", "PATIENT", "DOCTOR")
-                        .requestMatchers("/api/clinics/**").hasAnyRole("ADMIN", "PATIENT", "DOCTOR")
-                        .requestMatchers("/api/doctors/**").hasAnyRole("ADMIN", "PATIENT", "DOCTOR")
-
-                        // 3. ADMIN ÖZEL (Kritik yönetim işlemleri)
+                        // ADMIN ONLY
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
 
-                        // 4. DOCTOR + ADMIN (Randevu slotları)
+                        // DOCTOR + ADMIN
                         .requestMatchers("/api/slots/**").hasAnyRole("DOCTOR", "ADMIN")
 
-                        // 5. GENEL ERİŞİM (Randevu ve Lokasyon)
+                        // AUTHENTICATED USERS
                         .requestMatchers(
-                                "/api/appointments/**",
+                                "/api/hospitals/**",
+                                "/api/clinics/**",
+                                "/api/doctors/**",
                                 "/api/patients/**",
-                                "/api/penalties/**",
-                                "/api/districts/**",
-                                "/api/cities/**"
-                        ).hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
+                                "/api/appointments/**")
+                        .authenticated()
 
-                        .anyRequest().authenticated()
-                )
-                // JWT Filtresini ekle
+                        // fallback
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -77,21 +68,6 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
-    }
-
-    // CORS AYARLARI (Frontend erişimi için)
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000") // React/Vue portu
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*")
-                        .allowCredentials(true);
-            }
-        };
     }
 
     @PostConstruct

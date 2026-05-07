@@ -22,13 +22,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
+            HttpServletResponse response,
+            FilterChain filterChain)
             throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
 
-        // TOKEN YOKSA GEÇ
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -37,29 +36,30 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = header.substring(7);
 
         try {
+            // 1. TOKEN GEÇERLİ Mİ?
+            if (!jwtUtil.isTokenValid(token)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // 2. USERNAME AL
             String username = jwtUtil.extractUsername(token);
 
-           
-            if (username != null &&
-                    SecurityContextHolder.getContext().getAuthentication() == null) {
-
-                // DB'den user çek → UserDetails oluştur
-                UserDetails userDetails =
-                        userDetailsService.loadUserByUsername(username);
-
-                // token süresi kontrolü
-                if (!jwtUtil.isTokenExpired(token)) {
-
-                    UsernamePasswordAuthenticationToken auth =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );
-
-                    SecurityContextHolder.getContext().setAuthentication(auth);
-                }
+            if (username == null || SecurityContextHolder.getContext().getAuthentication() != null) {
+                filterChain.doFilter(request, response);
+                return;
             }
+
+            // 3. USER LOAD
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            // 4. AUTH CONTEXT SET
+            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities());
+
+            SecurityContextHolder.getContext().setAuthentication(auth);
 
         } catch (Exception e) {
             SecurityContextHolder.clearContext();

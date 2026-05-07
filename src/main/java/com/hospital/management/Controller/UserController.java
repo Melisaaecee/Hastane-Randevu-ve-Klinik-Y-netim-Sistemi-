@@ -20,12 +20,15 @@ public class UserController {
     private final UserService userService;
 
     // USER - ME
+
     @GetMapping("/me")
+    @PreAuthorize("hasRole('PATIENT')")
     public UserResponse getMyProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
         return userService.getByUsername(userDetails.getUsername());
     }
 
     @PutMapping("/me")
+    @PreAuthorize("hasRole('PATIENT')")
     public UserResponse updateMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody RegisterRequest request) {
@@ -33,6 +36,7 @@ public class UserController {
     }
 
     @DeleteMapping("/me")
+    @PreAuthorize("hasRole('PATIENT')")
     public void deleteMyAccount(@AuthenticationPrincipal CustomUserDetails userDetails) {
         userService.deleteByUsername(userDetails.getUsername());
     }

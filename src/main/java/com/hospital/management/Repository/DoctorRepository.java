@@ -1,6 +1,7 @@
 package com.hospital.management.Repository;
 
 import com.hospital.management.Entity.Doctor;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -20,6 +21,9 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     // 3. User tablosundaki User ID'ye göre doktoru bulur
     // (Giriş yapan doktorun kendi bilgilerini görmesi için)
     Optional<Doctor> findByUserId(Long userId);
+
+
+    Optional<Doctor> findByUserUsername(String username);
 
     // 4. Belirli bir klinikte, doktorun adına göre arama yapmak için
     // (Not: Doctor içindeki User nesnesinin firstName alanına erişir)

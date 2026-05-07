@@ -10,12 +10,14 @@ import java.util.Optional;
 public interface PatientRepository extends JpaRepository<Patient, Long> {
 
     // 1.. User tablosundaki User ID'ye göre hastayı bulur
-    // Sisteme giriş yapan kişinin "Patient" detaylarına (kan grubu, cezalar vb.) 
+    // Sisteme giriş yapan kişinin "Patient" detaylarına (kan grubu, cezalar vb.)
     // ulaşmak için en çok bu metodu kullanacaksın.
     Optional<Patient> findByUserId(Long userId);
 
     // 2. TCKN üzerinden hastayı bulmak istersen (User tablosuyla join yapar)
     Optional<Patient> findByUserTckn(String tckn);
+
+    Optional<Patient> findByUserUsername(String username);
 
     // 4. Bir hastanın sistemde kayıtlı olup olmadığını TCKN ile kontrol etmek için
     boolean existsByUserTckn(String tckn);
