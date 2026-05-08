@@ -17,55 +17,54 @@ public class DistrictController {
 
     private final DistrictService districtService;
 
-    // --- OKUMA İŞLEMLERİ (HERKESE AÇIK) ---
+    // --- LİSTELEME VE DOĞRULAMA (HERKESE AÇIK) ---
 
+    
+    // Belirli bir şehre (City) ait tüm ilçeleri listeler.
     @GetMapping("/city/{cityId}")
-    public List<District> getDistrictsByCity(@PathVariable Long cityId) {
-        return districtService.getDistrictsByCity(cityId);
+    public ResponseEntity<List<District>> getDistrictsByCity(@PathVariable Long cityId) {
+        return ResponseEntity.ok(districtService.getDistrictsByCity(cityId));
     }
 
+    
+    // ID ile ilçe sorgular.
     @GetMapping("/{id}")
-    public District getById(@PathVariable Long id) {
-        return districtService.getById(id);
+    public ResponseEntity<District> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(districtService.getById(id));
     }
 
+    
+    // İlçe ve şehir eşleşmesini doğrular. (Randevu akışında hastaların kullanımı için uygundur).
     @GetMapping("/validate")
-    public ResponseEntity<String> validateDistrictInCity(@RequestParam Long districtId,
-                                                       @RequestParam Long cityId) {
+    public ResponseEntity<String> validateDistrictInCity(
+            @RequestParam Long districtId,
+            @RequestParam Long cityId) {
         districtService.validateDistrictInCity(districtId, cityId);
-        return ResponseEntity.ok("Valid district-city match");
+        return ResponseEntity.ok("İlçe ve şehir eşleşmesi doğrulandı.");
     }
 
-    // --- YAZMA İŞLEMLERİ (SADECE ADMIN) ---
+    // --- YÖNETİMSEL İŞLEMLER (SADECE ADMIN) ---
 
-    /**
-     * Yeni bir ilçe ekler.
-     * POST http://localhost:8080/api/districts
-     */
+    // Yeni bir ilçe ekler.
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<District> createDistrict(@RequestBody District district) {
+    public ResponseEntity<District> create(@RequestBody District district) {
         return ResponseEntity.ok(districtService.saveOrUpdate(district));
     }
 
-    /**
-     * Mevcut bir ilçeyi günceller.
-     * PUT http://localhost:8080/api/districts/{id}
-     */
+    
+    // Belirli bir ilçeyi günceller.
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<District> updateDistrict(@PathVariable Long id, @RequestBody District district) {
-        district.setId(id); // URL'deki ID'nin entity'e set edildiğinden emin oluyoruz
+    public ResponseEntity<District> update(@PathVariable Long id, @RequestBody District district) {
+        district.setId(id); // Güvenlik için URL'deki ID'yi modele set ediyoruz.
         return ResponseEntity.ok(districtService.saveOrUpdate(district));
     }
 
-    /**
-     * Bir ilçeyi siler.
-     * DELETE http://localhost:8080/api/districts/{id}
-     */
+    // Belirli bir ilçeyi siler.
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> deleteDistrict(@PathVariable Long id) {
+    public ResponseEntity<String> delete(@PathVariable Long id) {
         districtService.delete(id);
         return ResponseEntity.ok("İlçe başarıyla silindi.");
     }

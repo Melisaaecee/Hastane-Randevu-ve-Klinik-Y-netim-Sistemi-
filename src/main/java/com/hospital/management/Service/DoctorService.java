@@ -1,79 +1,80 @@
 package com.hospital.management.Service;
 
+import com.hospital.management.Config.SecurityUtil;
 import com.hospital.management.Entity.Doctor;
+import com.hospital.management.Exception.AccessDeniedException;
+import com.hospital.management.Exception.BadRequestException;
+import com.hospital.management.Exception.EntityNotFoundException;
 import com.hospital.management.Repository.DoctorRepository;
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Comparator;
 
 @Service
-@RequiredArgsConstructor // Constructor Injection için (Lombok)
+@RequiredArgsConstructor
 public class DoctorService {
 
     private final DoctorRepository doctorRepository;
 
-    // 1. Tüm doktorları listele
+    // Tüm doktorları listele (Halka açık)
     public List<Doctor> getAllDoctors() {
         return doctorRepository.findAll();
     }
 
-  /** 2. belirli bir klinikteki doktorları getirir, alfabetik sıralar ve isimlerine unvan ekler.
-     * SADECE ADMIN GÖREBİLİR:
-     * Kliniğe göre doktorları getirir, alfabetik sıralar ve isimlerine unvan ekler.
-     */
-    @PreAuthorize("hasRole('ADMIN')")
-    public List<Doctor> getAllDoctorsInClinicForAdmin(Long clinicId) {
-        // 1. Veritabanından ham listeyi al
+    // Kliniğe göre doktorları getirir, alfabetik sıralar ve unvan ekler.
+    public List<Doctor> getAllDoctorsInClinic(Long clinicId) {
         List<Doctor> doctors = doctorRepository.findByClinicId(clinicId);
 
         if (doctors.isEmpty()) {
-            throw new RuntimeException("Bu klinikte kayıtlı doktor bulunamadı.");
+            throw new EntityNotFoundException("Bu klinikte kayıtlı doktor bulunamadı.");
         }
 
-        // 2. Stream API ile işlemleri yap
         return doctors.stream()
-                // Alfabetik sıralama (A'dan Z'ye - İsim bazlı)
                 .sorted(Comparator.comparing(doc -> doc.getUser().getFirstName()))
-                // İsimlerin başına unvan ekleme ve listeyi hazırlama
                 .peek(doc -> {
-                    String originalFirstName = doc.getUser().getFirstName();
-                    if (!originalFirstName.startsWith("Uzm. Dr.")) {
-                        doc.getUser().setFirstName("Uzm. Dr. " + originalFirstName);
+                    String firstName = doc.getUser().getFirstName();
+                    if (firstName != null && !firstName.startsWith("Uzm. Dr.")) {
+                        doc.getUser().setFirstName("Uzm. Dr. " + firstName);
                     }
                 })
                 .collect(Collectors.toList());
     }
 
-    // 4. Uzmanlık alanına göre filtrele
     public List<Doctor> getDoctorsBySpecialization(String specialization) {
         return doctorRepository.findBySpecialization(specialization);
     }
 
-    // 5. Giriş yapan kullanıcının "Doktor" profilini getir
+    //  Sadece doktor kendi profilini veya Admin herkesi görebilir
     public Doctor getDoctorByUserId(Long userId) {
+        if (!SecurityUtil.isOwner(userId) && !SecurityUtil.isAdmin()) {
+            throw new AccessDeniedException("Bu doktor profiline erişim yetkiniz yok.");
+        }
         return doctorRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Bu kullanıcıya ait bir doktor profili bulunamadı!"));
+                .orElseThrow(() -> new EntityNotFoundException("Bu kullanıcıya ait bir doktor profili bulunamadı!"));
     }
 
-    // 6. Klinik içinde isimle arama yap
     public List<Doctor> searchDoctorInClinic(Long clinicId, String name) {
         return doctorRepository.findByClinicIdAndUserFirstNameContainingIgnoreCase(clinicId, name);
     }
 
-    // 7. Yeni doktor ekle veya güncelle
+    //  Sadece doktor kendi bilgilerini güncelleyebilir
+    @Transactional
     public Doctor saveOrUpdateDoctor(Doctor doctor) {
+        if (doctor.getUser() != null && !SecurityUtil.isOwner(doctor.getUser().getId()) && !SecurityUtil.isAdmin()) {
+            throw new AccessDeniedException("Bu doktor profilini güncelleme yetkiniz yok.");
+        }
         return doctorRepository.save(doctor);
     }
 
-    // 8. Doktor sil
+    // Sadece Admin Silebilir
+    @Transactional
     public void deleteDoctor(Long id) {
         if (!doctorRepository.existsById(id)) {
-            throw new RuntimeException("Silinmek istenen doktor bulunamadı!");
+            throw new EntityNotFoundException("Silinmek istenen doktor bulunamadı (ID: " + id + ")");
         }
         doctorRepository.deleteById(id);
     }

@@ -19,51 +19,52 @@ public class UserController {
 
     private final UserService userService;
 
-    // USER - ME
+    // --- KENDİ PROFİL İŞLEMLERİ (ME) ---
 
+    // Kullanıcılar kendi profillerini görebilir.
     @GetMapping("/me")
-    @PreAuthorize("hasRole('PATIENT')")
+    @PreAuthorize("isAuthenticated()")
     public UserResponse getMyProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
         return userService.getByUsername(userDetails.getUsername());
     }
 
+    // Kullanıcılar kendi profillerini güncelleyebilir.
     @PutMapping("/me")
-    @PreAuthorize("hasRole('PATIENT')")
+    @PreAuthorize("isAuthenticated()")
     public UserResponse updateMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody RegisterRequest request) {
         return userService.updateByUsername(userDetails.getUsername(), request);
     }
 
+    // Kullanıcılar kendi hesaplarını silebilir.
     @DeleteMapping("/me")
-    @PreAuthorize("hasRole('PATIENT')")
+    @PreAuthorize("isAuthenticated()")
     public void deleteMyAccount(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        userService.deleteByUsername(userDetails.getUsername());
+        userService.deleteById(userDetails.getUser().getId());
     }
 
-    // ADMIN
+    // --- YÖNETİMSEL VE ÖZEL ERİŞİM İŞLEMLERİ ---
+
+    // Admin tüm kullanıcıları görebilir.
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public List<UserResponse> getAllUsers() {
         return userService.getAllUsers();
     }
 
+    // Admin ve Doktorlar, ID'si verilen kullanıcıyı görebilir. Kendi bilgilerini de
+    // görebilirler.
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public UserResponse getById(@PathVariable Long id) {
         return userService.getById(id);
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public UserResponse updateUser(@PathVariable Long id,
-            @RequestBody RegisterRequest request) {
-        return userService.updateUser(id, request);
-    }
-
+    // Admin herhangi bir kullanıcıyı ID üzerinden silebilir.
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+        userService.deleteById(id);
     }
 }

@@ -21,50 +21,35 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final CustomUserDetailsService userDetailsService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        String header = request.getHeader("Authorization");
+        final String header = request.getHeader("Authorization");
+        final String token;
+        final String username;
 
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = header.substring(7);
-
+        token = header.substring(7);
         try {
-            // 1. TOKEN GEÇERLİ Mİ?
-            if (!jwtUtil.isTokenValid(token)) {
-                filterChain.doFilter(request, response);
-                return;
+            username = jwtUtil.extractUsername(token);
+
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                if (jwtUtil.isTokenValid(token)) {
+                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            token, // Credentials kısmına token'ı koyarsan SecurityUtil'de eski yöntemin çalışır
+                            userDetails.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
             }
-
-            // 2. USERNAME AL
-            String username = jwtUtil.extractUsername(token);
-
-            if (username == null || SecurityContextHolder.getContext().getAuthentication() != null) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
-            // 3. USER LOAD
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-            // 4. AUTH CONTEXT SET
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    null,
-                    userDetails.getAuthorities());
-
-            SecurityContextHolder.getContext().setAuthentication(auth);
-
         } catch (Exception e) {
-            SecurityContextHolder.clearContext();
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
+            // Loglama yapılması önerilir: logger.error("JWT Authentication failed");
         }
 
         filterChain.doFilter(request, response);

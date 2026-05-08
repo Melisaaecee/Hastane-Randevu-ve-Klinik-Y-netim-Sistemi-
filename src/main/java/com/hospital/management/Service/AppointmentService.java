@@ -33,13 +33,19 @@ public class AppointmentService {
         assertOwnerOrAdmin(patient.getUser().getId());
 
         Slot slot = slotRepository.findById(slotId)
-                .orElseThrow(() -> new EntityNotFoundException("Slot bulunamadı"));
+                .orElseThrow(() -> new EntityNotFoundException("Seçilen randevu saati bulunamadı."));
+
+        boolean hasConflict = appointmentRepository.existsByPatientIdAndSlotStartTime(patientId, slot.getStartTime());
+        if (hasConflict) {
+            throw new BadRequestException("Bu tarih ve saatte zaten başka bir randevunuz bulunuyor.");
+        }
 
         if (slot.getStatus() != SlotStatus.AVAILABLE)
-            throw new BadRequestException("Slot dolu");
+            throw new BadRequestException("Bu randevu saati az önce başkası tarafından alındı.");
 
         if (penaltyService.hasActivePenalty(patientId))
-            throw new BadRequestException("Aktif ceza var");
+            throw new BadRequestException(
+                    "Sisteme gelmediğiniz randevular nedeniyle geçici süreyle randevu alamazsınız.");
 
         Appointment appointment = new Appointment();
         appointment.setPatient(patient);
@@ -47,7 +53,6 @@ public class AppointmentService {
         appointment.setStatus(AppointmentStatus.APPROVED);
 
         slot.setStatus(SlotStatus.BOOKED);
-
         slotRepository.save(slot);
         return appointmentRepository.save(appointment);
     }

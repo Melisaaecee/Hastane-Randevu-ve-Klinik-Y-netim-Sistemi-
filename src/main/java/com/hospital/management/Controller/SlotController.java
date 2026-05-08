@@ -16,22 +16,19 @@ public class SlotController {
 
     private final SlotService slotService;
 
-    //  MÜSAİT SLOTLAR
     @GetMapping("/doctor/{doctorId}")
     public List<Slot> getAvailable(@PathVariable Long doctorId) {
         return slotService.getFutureAvailableSlots(doctorId);
     }
 
-    //  SLOT OLUŞTUR
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('DOCTOR') and #slot.doctor.user.username == principal.username)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public Slot create(@RequestBody Slot slot) {
         return slotService.createSlot(slot);
     }
 
-    //  SLOT İPTAL
     @PutMapping("/{id}/cancel")
-    @PreAuthorize("hasRole('ADMIN') or @slotService.isSlotOwner(#id, principal.username)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public void cancel(@PathVariable Long id) {
         slotService.cancelSlot(id);
     }

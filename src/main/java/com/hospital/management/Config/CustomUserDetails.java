@@ -20,8 +20,7 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(
-                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
-        );
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
     }
 
     @Override
@@ -31,10 +30,10 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getUsername(); 
+        return user.getUsername();
     }
 
-    // HESAP DURUMU  
+    // HESAP DURUMU
     @Override
     public boolean isAccountNonExpired() {
         return true;
@@ -55,7 +54,6 @@ public class CustomUserDetails implements UserDetails {
         return true;
     }
 
-    //  EKSTRA ERİŞİM  
     public User getUser() {
         return user;
     }

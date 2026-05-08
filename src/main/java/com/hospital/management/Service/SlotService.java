@@ -1,7 +1,11 @@
 package com.hospital.management.Service;
 
+import com.hospital.management.Config.SecurityUtil;
 import com.hospital.management.Entity.Slot;
 import com.hospital.management.Entity.SlotStatus;
+import com.hospital.management.Exception.AccessDeniedException;
+import com.hospital.management.Exception.BadRequestException;
+import com.hospital.management.Exception.EntityNotFoundException;
 import com.hospital.management.Repository.SlotRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,7 +22,7 @@ public class SlotService {
 
     private final SlotRepository slotRepository;
 
-    // GELECEK MÜSAİT SLOTLAR
+    // GELECEK MÜSAİT SLOTLAR (Halka Açık Sorgu)
     public List<Slot> getFutureAvailableSlots(Long doctorId) {
         return slotRepository
                 .findByDoctorIdAndStatusAndStartTimeAfter(
@@ -30,46 +34,54 @@ public class SlotService {
                 .collect(Collectors.toList());
     }
 
-    // SLOT OLUŞTUR (CLEAN VERSION)
+    // SLOT OLUŞTUR (IDOR Korumalı)
     @Transactional
     public Slot createSlot(Slot slot) {
+        
+        if (!SecurityUtil.isOwner(slot.getDoctor().getUser().getId()) && !SecurityUtil.isAdmin()) {
+            throw new AccessDeniedException("Başka bir doktor adına çalışma saati (slot) oluşturamazsınız.");
+        }
 
-        Long doctorId = slot.getDoctor().getId();
         LocalDateTime start = slot.getStartTime();
         LocalDateTime end = slot.getEndTime();
 
-        // geçmiş kontrolü
+        // Geçmiş kontrolü - BadRequestException kullanımı
         if (start.isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Geçmiş tarihe slot oluşturulamaz");
+            throw new BadRequestException("Geçmiş bir tarihe çalışma saati eklenemez.");
         }
 
-        // zaman kontrolü
+        // Zaman kontrolü
         if (!start.isBefore(end)) {
-            throw new RuntimeException("Başlangıç zamanı bitişten önce olmalı");
+            throw new BadRequestException("Başlangıç zamanı bitişten önce olmalıdır.");
         }
 
-        // ÇAKIŞMA KONTROLÜ
-        List<Slot> conflicts = slotRepository.findConflictingSlots(doctorId, start, end);
+        // ÇAKIŞMA KONTROLÜ (Repository @Query kullanılıyor)
+        List<Slot> conflicts = slotRepository.findConflictingSlots(slot.getDoctor().getId(), start, end);
 
         if (!conflicts.isEmpty()) {
-            throw new RuntimeException("Bu zaman aralığında zaten bir slot var");
+            throw new BadRequestException("Bu saat aralığında doktorun zaten mevcut bir planı/slotu bulunuyor.");
         }
 
         slot.setStatus(SlotStatus.AVAILABLE);
-
         return slotRepository.save(slot);
     }
 
-    // SLOT İPTAL
+    // SLOT İPTAL (IDOR Korumalı)
     @Transactional
     public void cancelSlot(Long slotId) {
-
         Slot slot = slotRepository.findById(slotId)
-                .orElseThrow(() -> new RuntimeException("Slot bulunamadı"));
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "İptal edilmek istenen slot bulunamadı (ID: " + slotId + ")"));
 
-        // randevu alınmış slot direkt iptal edilmez
+        // IDOR Kontrolü: Sadece slotun sahibi olan doktor veya admin iptal edebilir
+        if (!SecurityUtil.isOwner(slot.getDoctor().getUser().getId()) && !SecurityUtil.isAdmin()) {
+            throw new AccessDeniedException("Başkasına ait bir çalışma saatini iptal etme yetkiniz yok.");
+        }
+
+        // Randevu kontrolü
         if (slot.getStatus() == SlotStatus.BOOKED) {
-            throw new RuntimeException("Randevu alınmış slot iptal edilemez");
+            throw new BadRequestException(
+                    "Üzerinde aktif randevu bulunan bir saati iptal edemezsiniz. Lütfen önce randevuyu iptal edin.");
         }
 
         slot.setStatus(SlotStatus.CANCELLED);

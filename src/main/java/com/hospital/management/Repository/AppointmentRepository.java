@@ -17,20 +17,23 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findByPatientIdAndStatus(Long patientId, AppointmentStatus status);
 
     // Hastanın geçmiş randevuları
-    List<Appointment> findByPatientIdAndSlotStartTimeBefore( Long patientId,LocalDateTime now);
+    List<Appointment> findByPatientIdAndSlotStartTimeBefore(Long patientId, LocalDateTime now);
 
     // Doktorun geçmiş randevuları
-    List<Appointment> findBySlotDoctorIdAndSlotStartTimeBefore(Long doctorId,LocalDateTime now);
+    List<Appointment> findBySlotDoctorIdAndSlotStartTimeBefore(Long doctorId, LocalDateTime now);
 
     // Hasta istatistik
-    long countByPatientIdAndStatus(Long patientId,AppointmentStatus status);
+    long countByPatientIdAndStatus(Long patientId, AppointmentStatus status);
 
     // Klinik randevuları
     List<Appointment> findBySlotDoctorClinicId(Long clinicId);
 
     // Doktorun aktif randevuları
-    List<Appointment> findBySlotDoctorIdAndStatus( Long doctorId, AppointmentStatus status);
+    List<Appointment> findBySlotDoctorIdAndStatus(Long doctorId, AppointmentStatus status);
 
     // Doktorun tüm randevuları
     List<Appointment> findBySlotDoctorId(Long doctorId);
+
+    // Hastanın o saatte başka randevusu var mı?
+    boolean existsByPatientIdAndSlotStartTime(Long patientId, LocalDateTime startTime);
 }

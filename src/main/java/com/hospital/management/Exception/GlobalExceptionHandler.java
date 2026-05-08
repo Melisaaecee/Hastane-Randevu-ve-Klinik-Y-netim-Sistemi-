@@ -2,12 +2,13 @@ package com.hospital.management.Exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
+import com.hospital.management.Exception.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -34,18 +35,25 @@ public class GlobalExceptionHandler {
 
         @ExceptionHandler(AccessDeniedException.class)
         public ResponseEntity<ApiError> handleAccess(AccessDeniedException ex) {
-                return build(HttpStatus.FORBIDDEN, "Yetkin yok");
+                return build(HttpStatus.FORBIDDEN,
+                                ex.getMessage() != null ? ex.getMessage() : "Bu işlem için yetkiniz bulunmamaktadır.");
         }
 
+      
         @ExceptionHandler(MethodArgumentNotValidException.class)
         public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) {
-                String msg = ex.getBindingResult().getFieldError().getDefaultMessage();
+                String msg = ex.getBindingResult()
+                                .getFieldErrors()
+                                .stream()
+                                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                                .collect(Collectors.joining(", "));
                 return build(HttpStatus.BAD_REQUEST, msg);
         }
 
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ApiError> handleGeneral(Exception ex) {
-                return build(HttpStatus.INTERNAL_SERVER_ERROR, "Sistem hatası");
+                ex.printStackTrace(); // loglama için
+                return build(HttpStatus.INTERNAL_SERVER_ERROR, "Beklenmedik bir sistem hatası oluştu.");
         }
 
         private ResponseEntity<ApiError> build(HttpStatus status, String message) {

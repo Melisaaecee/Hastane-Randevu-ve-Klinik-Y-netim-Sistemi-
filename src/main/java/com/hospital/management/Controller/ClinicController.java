@@ -12,64 +12,49 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/clinics")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // Frontend entegrasyonu için
+@CrossOrigin(origins = "*")
 public class ClinicController {
 
     private final ClinicService clinicService;
 
-    /**
-     * Tüm klinikleri listeler.
-     * GET http://localhost:8080/api/clinics
-     */
+    // --- LİSTELEME VE SORGULAMA (HERKESE AÇIK) ---
+
+    // Tüm klinikleri listeler.
     @GetMapping
     public ResponseEntity<List<Clinic>> getAllClinics() {
         return ResponseEntity.ok(clinicService.getAllClinics());
     }
 
-    /**
-     * Belirli bir hastaneye ait klinikleri alfabetik getirir.
-     * Randevu akışında hastane seçildikten sonra poliklinik listesini doldurur.
-     * GET http://localhost:8080/api/clinics/hospital/{hospitalId}
-     */
+    // Belirli bir hastaneye (Hospital) ait tüm klinikleri listeler.
     @GetMapping("/hospital/{hospitalId}")
     public ResponseEntity<List<Clinic>> getClinicsByHospital(@PathVariable Long hospitalId) {
         return ResponseEntity.ok(clinicService.getClinicsByHospitalId(hospitalId));
     }
 
-    /**
-     * Hastane içinde isme göre klinik arar (Örn: "Göz", "Dahiliye").
-     * GET http://localhost:8080/api/clinics/search?hospitalId=1&name=Göz
-     */
+    // Hastane içinde isme göre klinik araması yapar
     @GetMapping("/search")
     public ResponseEntity<List<Clinic>> searchClinics(
-            @RequestParam Long hospitalId, 
+            @RequestParam Long hospitalId,
             @RequestParam String name) {
         return ResponseEntity.ok(clinicService.searchClinicsInHospital(hospitalId, name));
     }
 
-    /**
-     * Belirli bir hastanedeki toplam klinik sayısını döner.
-     * GET http://localhost:8080/api/clinics/count/{hospitalId}
-     */
-    @GetMapping("/count/{hospitalId}")
+    // Belirli bir hastaneye ait klinik sayısını getirir
+    @GetMapping("/hospital/{hospitalId}/count")
     public ResponseEntity<Long> getClinicCount(@PathVariable Long hospitalId) {
         return ResponseEntity.ok(clinicService.getClinicCountByHospital(hospitalId));
     }
 
-    /**
-     * Yeni klinik oluşturur veya günceller (Admin Paneli için).
-     * POST http://localhost:8080/api/clinics
-     */
+    // --- YÖNETİMSEL İŞLEMLER (SADECE ADMIN) ---
+
+    // yeni bir klinik ekler veya mevcut bir kliniği günceller.
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Clinic> saveOrUpdate(@RequestBody Clinic clinic) {
         return ResponseEntity.ok(clinicService.saveOrUpdateClinic(clinic));
     }
 
-    /**
-     * Kliniği siler.
-     * DELETE http://localhost:8080/api/clinics/{id}
-     */
+    // Belirli bir kliniği siler.
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteClinic(@PathVariable Long id) {

@@ -17,30 +17,35 @@ public class CityController {
 
     private final CityService cityService;
 
-    // 🌍 HERKESE AÇIK: Randevu alırken herkes şehir seçebilmeli
+    // --- LİSTELEME İŞLEMLERİ (HERKESE AÇIK) ---
+
+    // Tüm şehirleri listeler.
     @GetMapping
     public ResponseEntity<List<City>> getAllCities() {
         return ResponseEntity.ok(cityService.getAllCities());
     }
 
-    // 🌍 HERKESE AÇIK: Detaylı bilgi
+    // Belirli bir ID'ye sahip şehri getirir.
     @GetMapping("/{id}")
-    public ResponseEntity<City> getCityById(@PathVariable Long id) {
+    public ResponseEntity<City> getById(@PathVariable Long id) {
         return ResponseEntity.ok(cityService.getById(id));
     }
 
-    // 🛡️ SADECE ADMIN: Yeni şehir ekleme
+    // --- YÖNETİMSEL İŞLEMLER (SADECE ADMIN) ---
+
+    // Yeni bir şehir ekler veya mevcut bir şehri günceller.
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<City> createCity(@RequestBody City city) {
+    public ResponseEntity<City> saveOrUpdate(@RequestBody City city) {
         return ResponseEntity.ok(cityService.saveOrUpdateCity(city));
     }
 
-    // 🛡️ SADECE ADMIN: Şehir silme
+   
+    // Belirli bir şehri siler.
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteCity(@PathVariable Long id) {
+    public ResponseEntity<String> deleteCity(@PathVariable Long id) {
         cityService.deleteCity(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Şehir başarıyla silindi.");
     }
 }

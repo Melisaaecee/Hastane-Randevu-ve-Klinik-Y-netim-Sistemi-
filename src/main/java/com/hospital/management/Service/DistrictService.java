@@ -1,6 +1,8 @@
 package com.hospital.management.Service;
 
 import com.hospital.management.Entity.District;
+import com.hospital.management.Exception.BadRequestException;
+import com.hospital.management.Exception.EntityNotFoundException;
 import com.hospital.management.Repository.DistrictRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,31 +25,28 @@ public class DistrictService {
 
     public District getById(Long id) {
         return districtRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("İlçe bulunamadı"));
+                .orElseThrow(() -> new EntityNotFoundException("İlçe bulunamadı (ID: " + id + ")"));
     }
 
     public void validateDistrictInCity(Long districtId, Long cityId) {
         boolean exists = districtRepository.existsByIdAndCityId(districtId, cityId);
         if (!exists) {
-            throw new RuntimeException("Seçilen ilçe belirtilen şehre ait değil!");
+            throw new BadRequestException("Seçilen ilçe belirtilen şehre ait değil!");
         }
     }
 
-    //  İlçe Ekle veya Güncelle
     @Transactional
     public District saveOrUpdate(District district) {
-        // Eğer güncelleme yapılıyorsa ve ilçe yoksa hata fırlatabilirsin
         if (district.getId() != null && !districtRepository.existsById(district.getId())) {
-            throw new RuntimeException("Güncellenmek istenen ilçe bulunamadı!");
+            throw new EntityNotFoundException("Güncellenmek istenen ilçe bulunamadı.");
         }
         return districtRepository.save(district);
     }
 
-    // İlçe Sil
     @Transactional
     public void delete(Long id) {
         if (!districtRepository.existsById(id)) {
-            throw new RuntimeException("Silinmek istenen ilçe bulunamadı!");
+            throw new EntityNotFoundException("Silinmek istenen ilçe bulunamadı.");
         }
         districtRepository.deleteById(id);
     }

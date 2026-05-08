@@ -1,6 +1,7 @@
 package com.hospital.management.Config;
 
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,36 +15,39 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-
 @Configuration
-@EnableMethodSecurity
+@EnableMethodSecurity // Controller'lardaki @PreAuthorize notasyonlarını aktif eder
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
-        this.jwtAuthFilter = jwtAuthFilter;
-    }
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
         http
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .csrf(csrf -> csrf.disable()) // Stateless API olduğu için kapatıldı
+                .cors(cors -> cors.configure(http)) // Frontend bağlantısı için CORS aktif
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT
+                                                                                                        // kullandığımız
+                                                                                                        // için session
+                                                                                                        // tutmuyoruz
                 .authorizeHttpRequests(auth -> auth
 
-                        // AUTH ENDPOINTS
+                        // 1. TAMAMEN AÇIK ENDPOINTLER (Giriş yapmadan erişilebilir)
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/cities/**", "/api/districts/**").permitAll() // Şehir ve ilçe listesi
+                                                                                            // randevu öncesi lazım
 
-                        // ADMIN ONLY
+                        // 2. SADECE ADMIN ERİŞİMİ
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
 
-                        // DOCTOR + ADMIN
+                        // 3. DOKTOR VE ADMIN ERİŞİMİ
                         .requestMatchers("/api/slots/**").hasAnyRole("DOCTOR", "ADMIN")
 
-                        // AUTHENTICATED USERS
+                        // 4. DİĞER TÜM API'LER (Giriş zorunlu, detay yetkiler Controller'da)
+                        // Hastaneler, Klinikler, Doktorlar ve Randevular login olan herkes tarafından
+                        // görülmeli
                         .requestMatchers(
                                 "/api/hospitals/**",
                                 "/api/clinics/**",
@@ -52,7 +56,7 @@ public class SecurityConfig {
                                 "/api/appointments/**")
                         .authenticated()
 
-                        // fallback
+                        // 5. Geri kalan her şey
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -65,14 +69,13 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
     @PostConstruct
     public void enableAuthOnAsyncThreads() {
-        SecurityContextHolder.setStrategyName(
-                SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+        // Asenkron işlemlerde güvenlik bağlamını korur
+        SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
     }
 }

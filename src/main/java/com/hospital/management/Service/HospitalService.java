@@ -1,6 +1,7 @@
 package com.hospital.management.Service;
 
 import com.hospital.management.Entity.Hospital;
+import com.hospital.management.Exception.EntityNotFoundException;
 import com.hospital.management.Repository.HospitalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,47 +17,44 @@ public class HospitalService {
 
     private final HospitalRepository hospitalRepository;
 
-    // Tüm hastaneleri alfabetik (A-Z) olarak getirir.
-
+    // Tüm hastaneleri alfabetik getirir
     public List<Hospital> getAllHospitals() {
         return hospitalRepository.findAll().stream()
                 .sorted(Comparator.comparing(Hospital::getName))
                 .collect(Collectors.toList());
     }
 
-    // Seçilen ilçedeki hastaneleri alfabetik sıralı getirir.
-    // Randevu akışında ilçe seçiminden sonra kullanılır.
+    // Seçilen ilçedeki hastaneler
     public List<Hospital> getHospitalsByDistrict(Long districtId) {
-        List<Hospital> hospitals = hospitalRepository.findByDistrictId(districtId);
-
-        return hospitals.stream()
+        return hospitalRepository.findByDistrictId(districtId).stream()
                 .sorted(Comparator.comparing(Hospital::getName))
                 .collect(Collectors.toList());
     }
 
-    // Şehirdeki tüm hastaneleri (ilçe fark etmeksizin) alfabetik getirir.
+    // Şehirdeki tüm hastaneler
     public List<Hospital> getHospitalsByCity(Long cityId) {
         return hospitalRepository.findByDistrictCityId(cityId).stream()
                 .sorted(Comparator.comparing(Hospital::getName))
                 .collect(Collectors.toList());
     }
 
-    // İlçe içinde isme göre hastane filtrelemesi yapar.
+    // Filtreleme
     public List<Hospital> searchHospitalsInDistrict(Long districtId, String name) {
         return hospitalRepository.findByDistrictIdAndNameContainingIgnoreCase(districtId, name);
     }
 
-    // Yeni hastane ekler veya mevcut olanı günceller.
+    // Kaydet / Güncelle
     @Transactional
     public Hospital saveOrUpdate(Hospital hospital) {
+        // Not: Controller katmanında Admin kontrolü yapılması önerilir.
         return hospitalRepository.save(hospital);
     }
 
-    // Hastaneyi sistemden siler.
+    // Sil 
     @Transactional
     public void deleteHospital(Long id) {
         if (!hospitalRepository.existsById(id)) {
-            throw new RuntimeException("Silinecek hastane bulunamadı!");
+            throw new EntityNotFoundException("Silinmek istenen hastane sistemde bulunamadı (ID: " + id + ")");
         }
         hospitalRepository.deleteById(id);
     }
