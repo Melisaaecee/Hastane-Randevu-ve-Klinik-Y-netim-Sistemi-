@@ -1,9 +1,8 @@
 package com.hospital.management.Controller;
 
-import com.hospital.management.DTO.AuthResponse;
-import com.hospital.management.DTO.LoginRequest;
-import com.hospital.management.DTO.RegisterRequest;
+import com.hospital.management.DTO.*; // Tüm DTO'ları kapsar
 import com.hospital.management.Service.AuthService;
+import com.hospital.management.Service.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,19 +15,33 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     // --- KAYIT VE GİRİŞ İŞLEMLERİ ---
-   
-    // Kullanıcı kayıt işlemi. Yeni bir kullanıcı oluşturur ve JWT token döner.
+    
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
     }
 
-   
-    // Kullanıcı giriş işlemi. Kullanıcı adı ve şifre doğrulaması yapar, başarılı ise JWT token döner.
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    // --- ŞİFRE SIFIRLAMA İŞLEMLERİ ---
+
+    // Şifremi Unuttum Talebi (E-posta JSON gövdesinden gelir)
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.createResetToken(request.getEmail());
+        return ResponseEntity.ok("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.");
+    }
+
+    // Yeni Şifreyi Kaydetme (Token ve Şifre JSON gövdesinden gelir)
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok("Şifreniz başarıyla güncellendi. Yeni şifrenizle giriş yapabilirsiniz.");
     }
 }
