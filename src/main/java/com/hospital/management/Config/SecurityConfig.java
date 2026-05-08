@@ -1,6 +1,7 @@
 package com.hospital.management.Config;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +17,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableMethodSecurity // Controller'lardaki @PreAuthorize notasyonlarını aktif eder
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -25,44 +26,34 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Stateless API olduğu için kapatıldı
-                .cors(cors -> cors.configure(http)) // Frontend bağlantısı için CORS aktif
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT
-                                                                                                        // kullandığımız
-                                                                                                        // için session
-                                                                                                        // tutmuyoruz
+                .csrf(csrf -> csrf.disable()) // JWT/Header bazlı auth olduğu için CSRF devre dışı (Yönerge 9.3)
+                .cors(cors -> cors.configure(http))
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .headers(headers -> headers
+                        // XSS Koruması (Yönerge 9.2)
+                        .xssProtection(xss -> xss.headerValue(
+                                org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+                        .contentSecurityPolicy(cps -> cps.policyDirectives("script-src 'self'")))
                 .authorizeHttpRequests(auth -> auth
-
-                        // 1. TAMAMEN AÇIK ENDPOINTLER (Giriş yapmadan erişilebilir)
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/cities/**", "/api/districts/**").permitAll() // Şehir ve ilçe listesi
-                                                                                            // randevu öncesi lazım
-
-                        // 2. SADECE ADMIN ERİŞİMİ
+                        .requestMatchers("/api/cities/**", "/api/districts/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
-
-                        // 3. DOKTOR VE ADMIN ERİŞİMİ
-                        .requestMatchers("/api/slots/**").hasAnyRole("DOCTOR", "ADMIN")
-
-                        // 4. DİĞER TÜM API'LER (Giriş zorunlu, detay yetkiler Controller'da)
-                        // Hastaneler, Klinikler, Doktorlar ve Randevular login olan herkes tarafından
-                        // görülmeli
-                        .requestMatchers(
-                                "/api/hospitals/**",
-                                "/api/clinics/**",
-                                "/api/doctors/**",
-                                "/api/patients/**",
-                                "/api/appointments/**")
-                        .authenticated()
-
-                        // 5. Geri kalan her şey
                         .anyRequest().authenticated())
+                // Sistem bilgisi sızdırmayan genel hata mesajı (Yönerge 9.7)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter()
+                                    .write("{\"message\": \"Kimlik dogrulama basarisiz veya oturum suresi doldu.\"}");
+                        }))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+
+    
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

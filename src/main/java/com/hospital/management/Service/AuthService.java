@@ -10,6 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -18,6 +20,10 @@ public class AuthService {
         private final PatientRepository patientRepository;
         private final PasswordEncoder passwordEncoder;
         private final JwtUtil jwtUtil;
+
+       
+        private static final int MAX_FAILED_ATTEMPTS = 5;
+        private static final int LOCK_TIME_DURATION = 15; // dakika
 
         @Transactional
         public AuthResponse register(RegisterRequest request) {
@@ -31,6 +37,10 @@ public class AuthService {
                 user.setFirstName(request.getFirstName());
                 user.setLastName(request.getLastName());
                 user.setRole(Role.PATIENT);
+
+               
+                user.setAccountNonLocked(true);
+                user.setFailedAttempt(0);
 
                 User savedUser = userRepository.save(user);
 
@@ -49,12 +59,44 @@ public class AuthService {
                 User user = userRepository.findByUsername(request.getUsername())
                                 .orElseThrow(() -> new BadRequestException("Kullanıcı adı veya şifre hatalı"));
 
+                // 1. Hesap kilitli mi kontrol et (Boolean null kontrolü ile birlikte)
+                if (Boolean.FALSE.equals(user.getAccountNonLocked())) {
+                        if (user.getLockTime() != null && user.getLockTime().plusMinutes(LOCK_TIME_DURATION)
+                                        .isBefore(LocalDateTime.now())) {
+                                // Kilit süresi dolmuş, hesabı aç ve devam et
+                                user.setAccountNonLocked(true);
+                                user.setFailedAttempt(0);
+                                user.setLockTime(null);
+                                userRepository.save(user);
+                        } else {
+                                throw new BadRequestException(
+                                                "Çok fazla hatalı giriş denemesi. Hesabınız geçici olarak kilitlendi.");
+                        }
+                }
+
+                // 2. Şifre kontrolü
                 if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                        processFailedAttempt(user);
                         throw new BadRequestException("Kullanıcı adı veya şifre hatalı");
                 }
 
+                // 3. Başarılı giriş - Sayacı sıfırla
+                user.setFailedAttempt(0);
+                userRepository.save(user);
+
                 String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole().name());
                 return new AuthResponse(token, mapToUserResponse(user));
+        }
+
+        private void processFailedAttempt(User user) {
+                int newAttempts = user.getFailedAttempt() + 1;
+                user.setFailedAttempt(newAttempts);
+
+                if (newAttempts >= MAX_FAILED_ATTEMPTS) {
+                        user.setAccountNonLocked(false);
+                        user.setLockTime(LocalDateTime.now());
+                }
+                userRepository.save(user);
         }
 
         private void validateUser(String username, String email, String tckn) {

@@ -40,16 +40,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                if (jwtUtil.isTokenValid(token)) {
+                if (jwtUtil.isTokenValid(token, userDetails)) {
                     UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                             userDetails,
-                            token, // Credentials kısmına token'ı koyarsan SecurityUtil'de eski yöntemin çalışır
+                            null,
                             userDetails.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             }
         } catch (Exception e) {
-            // Loglama yapılması önerilir: logger.error("JWT Authentication failed");
+            logger.error("JWT Authentication failed");
         }
 
         filterChain.doFilter(request, response);

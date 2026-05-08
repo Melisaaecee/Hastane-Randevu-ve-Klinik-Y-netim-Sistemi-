@@ -3,7 +3,6 @@ package com.hospital.management.Service;
 import com.hospital.management.Config.SecurityUtil;
 import com.hospital.management.Entity.Doctor;
 import com.hospital.management.Exception.AccessDeniedException;
-import com.hospital.management.Exception.BadRequestException;
 import com.hospital.management.Exception.EntityNotFoundException;
 import com.hospital.management.Repository.DoctorRepository;
 import lombok.RequiredArgsConstructor;
