@@ -20,7 +20,7 @@ public class PasswordResetService {
     private final PasswordResetTokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final MailService mailService;
-    private final PasswordEncoder passwordEncoder; // SecurityConfig'deki BCrypt'i otomatik alır
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public void createResetToken(String email) {
@@ -46,19 +46,25 @@ public class PasswordResetService {
         PasswordResetToken resetToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Geçersiz veya kullanılmış şifre sıfırlama linki!"));
 
-        // Süre Kontrolü
+        // 1. Süre Kontrolü
         if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
             tokenRepository.delete(resetToken);
             throw new RuntimeException("Şifre sıfırlama linkinin süresi dolmuş, lütfen tekrar talep edin.");
         }
 
         User user = resetToken.getUser();
+
+        // 2. Eski Şifre Kontrolü (Yeni şifre eskisiyle aynı olamaz)
+        // matches(ham_şifre, hashlenmiş_şifre)
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new RuntimeException("Yeni şifreniz mevcut şifrenizle aynı olamaz. Lütfen farklı bir şifre seçin.");
+        }
         
-        // 🔥 KRİTİK: SecurityConfig'deki BCrypt ile yeni şifreyi hash'liyoruz
+        // 3. Şifreyi Hashleyerek Kaydetme
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        // Güvenlik: Kullanılan token'ı imha et (Tek kullanımlık link)
+        // 4. Güvenlik: Kullanılan token'ı imha et (Tek kullanımlık link)
         tokenRepository.delete(resetToken);
     }
 }
