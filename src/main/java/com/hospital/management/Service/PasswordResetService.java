@@ -2,6 +2,7 @@ package com.hospital.management.Service;
 
 import com.hospital.management.Entity.PasswordResetToken;
 import com.hospital.management.Entity.User;
+import com.hospital.management.Exception.BadRequestException;
 import com.hospital.management.Exception.EntityNotFoundException;
 import com.hospital.management.Repository.PasswordResetTokenRepository;
 import com.hospital.management.Repository.UserRepository;
@@ -34,7 +35,7 @@ public class PasswordResetService {
         PasswordResetToken resetToken = new PasswordResetToken();
         resetToken.setToken(token);
         resetToken.setUser(user);
-        resetToken.setExpiryDate(LocalDateTime.now().plusMinutes(15)); // 15 dakika limit
+        resetToken.setExpiryDate(LocalDateTime.now().plusMinutes(15));
 
         tokenRepository.save(resetToken);
 
@@ -43,28 +44,28 @@ public class PasswordResetService {
 
     @Transactional
     public void resetPassword(String token, String newPassword) {
+        // Token bulunamazsa kendi özel exception sınıfını kullanıyoruz
         PasswordResetToken resetToken = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Geçersiz veya kullanılmış şifre sıfırlama linki!"));
+                .orElseThrow(() -> new EntityNotFoundException("Geçersiz veya kullanılmış şifre sıfırlama linki!"));
 
         // 1. Süre Kontrolü
         if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
             tokenRepository.delete(resetToken);
-            throw new RuntimeException("Şifre sıfırlama linkinin süresi dolmuş, lütfen tekrar talep edin.");
+            throw new BadRequestException("Şifre sıfırlama linkinin süresi dolmuş, lütfen tekrar talep edin.");
         }
 
         User user = resetToken.getUser();
 
-        // 2. Eski Şifre Kontrolü (Yeni şifre eskisiyle aynı olamaz)
-        // matches(ham_şifre, hashlenmiş_şifre)
+        // 2. Eski Şifre Kontrolü (BadRequestException kullanımı)
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            throw new RuntimeException("Yeni şifreniz mevcut şifrenizle aynı olamaz. Lütfen farklı bir şifre seçin.");
+            throw new BadRequestException("Yeni şifreniz mevcut şifrenizle aynı olamaz. Lütfen farklı bir şifre seçin.");
         }
         
         // 3. Şifreyi Hashleyerek Kaydetme
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        // 4. Güvenlik: Kullanılan token'ı imha et (Tek kullanımlık link)
+        // 4. Güvenlik: Kullanılan token'ı imha et
         tokenRepository.delete(resetToken);
     }
 }
