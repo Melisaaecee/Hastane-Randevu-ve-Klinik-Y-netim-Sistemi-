@@ -26,7 +26,6 @@ public class UserService {
     }
 
     public UserResponse getById(Long id) {
-
         if (!SecurityUtil.isOwner(id) && !SecurityUtil.isAdmin()) {
             throw new AccessDeniedException("Bu kullanıcı bilgilerine erişim yetkiniz yok.");
         }
@@ -34,8 +33,8 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse updateByUsername(String username, RegisterRequest request) {
-        User user = getUserByUsername(username);
+    public UserResponse updateByTckn(String tckn, RegisterRequest request) {
+        User user = getUserByTckn(tckn);
         if (!SecurityUtil.isOwner(user.getId()) && !SecurityUtil.isAdmin()) {
             throw new AccessDeniedException("Sadece kendi profilinizi güncelleyebilirsiniz.");
         }
@@ -44,22 +43,19 @@ public class UserService {
         return mapToResponse(userRepository.save(user));
     }
 
-    public UserResponse getByUsername(String username) {
-        User user = getUserByUsername(username); // Mevcut private metodunu kullanıyoruz
-        return mapToResponse(user); // Mevcut mapping metodunu kullanıyoruz
+    public UserResponse getByTckn(String tckn) {
+        User user = getUserByTckn(tckn);
+        return mapToResponse(user);
     }
 
     @Transactional
     public void deleteById(Long id) {
-      
         if (!SecurityUtil.isOwner(id) && !SecurityUtil.isAdmin()) {
             throw new AccessDeniedException("Bu hesabı silme yetkiniz yok.");
         }
-
         if (!userRepository.existsById(id)) {
             throw new EntityNotFoundException("Silinmek istenen kullanıcı bulunamadı (ID: " + id + ")");
         }
-
         userRepository.deleteById(id);
     }
 
@@ -68,20 +64,21 @@ public class UserService {
                 .orElseThrow(() -> new EntityNotFoundException("Kullanıcı bulunamadı (ID: " + id + ")"));
     }
 
-    private User getUserByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Kullanıcı bulunamadı: " + username));
+    private User getUserByTckn(String tckn) {
+        return userRepository.findByTckn(tckn)
+                .orElseThrow(() -> new EntityNotFoundException("Kullanıcı bulunamadı (TCKN: " + tckn + ")"));
     }
 
     private void validateUpdate(User user, RegisterRequest request) {
         if (!user.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail()))
             throw new BadRequestException("Email kullanımda");
-        if (!user.getUsername().equals(request.getUsername()) && userRepository.existsByUsername(request.getUsername()))
-            throw new BadRequestException("Username kullanımda");
+        if (!user.getTckn().equals(request.getTckn()) && userRepository.existsByTckn(request.getTckn()))
+            throw new BadRequestException("Bu TC Kimlik Numarası zaten kayıtlı.");
     }
 
     private void applyUpdates(User user, RegisterRequest request) {
-        user.setUsername(request.getUsername());
+        user.setTckn(request.getTckn());
+        user.setUsername(request.getTckn()); // Username'i TCKN ile senkron tutuyoruz
         user.setEmail(request.getEmail());
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
@@ -91,11 +88,12 @@ public class UserService {
     }
 
     private UserResponse mapToResponse(User user) {
-        UserResponse res = new UserResponse();
-        res.setId(user.getId());
-        res.setUsername(user.getUsername());
-        res.setEmail(user.getEmail());
-        res.setRole(user.getRole().name());
-        return res;
+        return new UserResponse(
+                user.getId(),
+                user.getTckn(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getRole().name());
     }
 }

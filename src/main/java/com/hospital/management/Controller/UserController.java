@@ -25,7 +25,7 @@ public class UserController {
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public UserResponse getMyProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        return userService.getByUsername(userDetails.getUsername());
+        return userService.getByTckn(userDetails.getUsername());
     }
 
     // Kullanıcılar kendi profillerini güncelleyebilir.
@@ -34,7 +34,7 @@ public class UserController {
     public UserResponse updateMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody RegisterRequest request) {
-        return userService.updateByUsername(userDetails.getUsername(), request);
+        return userService.updateByTckn(userDetails.getUsername(), request);
     }
 
     // Kullanıcılar kendi hesaplarını silebilir.

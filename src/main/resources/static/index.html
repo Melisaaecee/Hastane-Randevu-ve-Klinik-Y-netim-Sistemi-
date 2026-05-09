@@ -3,64 +3,41 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Hastane Yönetim Sistemi - Giriş</title>
+    <title>Giriş | Sağlık Sistemi</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
-    <div class="auth-card">
-        <h2>Hastane<span>Sistemi</span></h2>
-        <div id="errorBox" class="error-box"></div>
-        <form id="loginForm">
-            <div class="input-group">
-                <label>Kullanıcı Adı</label>
-                <input type="text" id="username" placeholder="Kullanıcı adınızı giriniz" required>
+    <div class="center-wrapper">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Giriş<span>Yap</span></h1>
+    
             </div>
-            <div class="input-group">
-                <label>Şifre</label>
-                <input type="password" id="password" placeholder="••••••••" required>
+
+            <div id="errorBox" class="error-box" style="display: none;"></div>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <label>TC KİMLİK NO</label>
+                    <input type="text" id="tckn" placeholder="11 haneli TC numaranız" maxlength="11" required>
+                </div>
+
+                <div class="input-group">
+                    <label>ŞİFRE</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="btn-primary">Sisteme Giriş Yap</button>
+            </form>
+
+            <div class="auth-footer">
+                Yeni misiniz? <a href="register.html">Hesap Oluştur</a>
             </div>
-            <button type="submit">Sisteme Giriş Yap</button>
-        </form>
-        <p class="toggle-text">Yeni misiniz? <a href="register.html">Hesap Oluştur</a></p>
+        </div>
     </div>
 
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const errorBox = document.getElementById('errorBox');
-
-            const payload = {
-                username: document.getElementById('username').value,
-                password: document.getElementById('password').value
-            };
-
-            try {
-                const response = await fetch('http://localhost:8080/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await response.json();
-                if (response.ok) {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-
-                    // Role göre yönlendirme mantığı
-                    if (data.user.role === 'ADMIN') window.location.href = 'admin.html';
-                    else if (data.user.role === 'DOCTOR') window.location.href = 'doctor.html';
-                    else window.location.href = 'patient.html';
-                } else {
-                    errorBox.textContent = data.message;
-                    errorBox.style.display = 'block';
-                }
-            } catch (err) {
-                errorBox.textContent = "Bağlantı hatası!";
-                errorBox.style.display = 'block';
-            }
-        });
-    </script>
+    <script src="javascript/index.js"></script>
 </body>
 
 </html>

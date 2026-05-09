@@ -1,7 +1,11 @@
-/* 
-    HAY (Hastane Yönetim Sistemi) - Global Style Sheet 
-    Palette: Açık Mavi, Koyu Mavi, Beyaz, Gri ve Tıbbi Kırmızı
-*/
+/* Login ve Register sayfalarını ortalamak için */
+.center-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+}
 
 :root {
     --primary-blue: #007bff;
@@ -53,18 +57,25 @@ body {
 }
 
 /* --- KART YAPILARI (CAM EFEKTİ) --- */
-
-.auth-card, .selection-card {
+.auth-card,
+.selection-card {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-    padding: 2.5rem;
+    padding: 3rem;
+    /* İç boşluğu biraz artırdık (2.5rem idi) */
     border-radius: 24px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.5);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    /* GENİŞLİK AYARI */
+    width: 100%;
+    max-width: 500px;
+    /* Burayı 420px'den 500px'e çıkardık */
 }
 
-.auth-card:hover, .selection-card:hover {
+.auth-card:hover,
+.selection-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.12);
 }
@@ -88,6 +99,12 @@ p.subtitle {
     font-size: 0.9rem;
 }
 
+.auth-header {
+    margin-bottom: 3rem;
+    /* Bu değer tüm başlık grubunu aşağı itecektir */
+    text-align: center;
+}
+
 /* --- FORM ELEMANLARI --- */
 
 .input-group {
@@ -105,7 +122,8 @@ label {
     letter-spacing: 0.5px;
 }
 
-input, select {
+input,
+select {
     width: 100%;
     padding: 0.9rem 1.2rem;
     border: 2px solid #e2e8f0;
@@ -124,7 +142,8 @@ select {
     background-size: 1em;
 }
 
-input:focus, select:focus {
+input:focus,
+select:focus {
     outline: none;
     border-color: var(--primary-blue);
     box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.1);
@@ -256,9 +275,20 @@ tr:hover {
     font-weight: 700;
 }
 
-.badge-success { background: #dcfce7; color: #166534; }
-.badge-pending { background: #fef9c3; color: #854d0e; }
-.badge-danger { background: #fee2e2; color: #991b1b; }
+.badge-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-pending {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
 
 /* --- DİĞER --- */
 

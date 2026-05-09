@@ -4,8 +4,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hasta Paneli</title>
+    <title>Hasta Paneli | Sağlık Sistemi</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Dashboard Sayfasına Özel Ek Düzenlemeler */
+        body {
+            display: block;
+            /* Flex-center'ı iptal et */
+            padding-top: 50px;
+            background-attachment: fixed;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 30px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Profil Alanı */
+        .user-profile {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .avatar {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary-blue), #0056b3);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 0 auto 15px;
+        }
+
+        .info-box {
+            background: var(--light-blue);
+            padding: 12px;
+            border-radius: 12px;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        /* Buton ve Linkler */
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nav-link {
+            padding: 12px 15px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--dark-blue);
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .nav-link:hover {
+            background: var(--light-blue);
+            color: var(--primary-blue);
+        }
+
+        .nav-link.active {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .logout {
+            color: var(--medical-red) !important;
+            cursor: pointer;
+        }
+
+        .logout:hover {
+            background: #fff5f5 !important;
+        }
+
+        /* Tablo Alanı */
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .appointment-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .appointment-table th {
+            text-align: left;
+            padding: 12px;
+            color: var(--text-gray);
+            border-bottom: 2px solid var(--light-blue);
+        }
+
+        .appointment-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--light-blue);
+        }
+    </style>
 </head>
 
 <body>
@@ -16,42 +155,45 @@
                 <div class="avatar" id="avatarInitial">?</div>
                 <h3 id="patientFullName">Yükleniyor...</h3>
 
-                <div class="user-info-box">
-                    <div class="info-item">
-                        <strong>Kan Grubu:</strong> <span id="patientBlood">--</span>
-                    </div>
-                    <div class="info-item">
-                        <strong>Yaş:</strong> <span id="patientAge">--</span>
-                    </div>
+                <div class="info-box">
+                    <div class="info-item"><strong>Kan Grubu:</strong> <span id="patientBlood">--</span></div>
+                    <div class="info-item"><strong>Yaş:</strong> <span id="patientAge">--</span></div>
                 </div>
-
-                <p class="account-type">Hasta Profili</p>
             </div>
 
             <nav class="nav-menu">
                 <a href="#" class="nav-link active">Randevularım</a>
-                <a href="#" class="nav-link">Yeni Randevu Al</a>
-                <a href="#" onclick="logout()" class="nav-link logout">Çıkış Yap</a>
+                <a href="#" class="nav-link">Profilim</a>
+                <a href="#" onclick="window.logout()" class="nav-link logout">Çıkış Yap</a>
             </nav>
         </aside>
 
         <main class="glass-card">
-            <h1>Hoş Geldiniz, <span id="welcomeName" style="color: var(--primary-blue);">Hasta</span></h1>
-            <div class="appointment-section">
-                <h3>Randevularınız</h3>
-                <table class="appointment-table">
-                    <thead>
-                        <tr>
-                            <th>Doktor</th>
-                            <th>Branş</th>
-                            <th>Tarih</th>
-                            <th>Durum</th>
-                        </tr>
-                    </thead>
-                    <tbody id="appointmentTableBody">
-                    </tbody>
-                </table>
+            <div class="header-flex">
+                <div>
+                    <h1>Merhaba, <span id="welcomeName" style="color: var(--primary-blue);">Hasta</span></h1>
+                    <p style="color: var(--text-gray);">Randevularını buradan kontrol edebilirsin.</p>
+                </div>
+                <button class="btn-primary" onclick="window.openNewAppointment()">+ Yeni Randevu</button>
             </div>
+
+            <table class="appointment-table">
+                <thead>
+                    <tr>
+                        <th>Doktor</th>
+                        <th>Bölüm</th>
+                        <th>Tarih</th>
+                        <th>Durum</th>
+                    </tr>
+                </thead>
+                <tbody id="appointmentTableBody">
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #94a3b8; padding: 40px;">
+                            Gelecek randevunuz bulunmuyor.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </main>
     </div>
 

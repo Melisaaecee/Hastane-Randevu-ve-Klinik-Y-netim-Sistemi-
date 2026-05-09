@@ -21,24 +21,24 @@ public class AuthService {
         private final PasswordEncoder passwordEncoder;
         private final JwtUtil jwtUtil;
 
-       
         private static final int MAX_FAILED_ATTEMPTS = 5;
         private static final int LOCK_TIME_DURATION = 15; // dakika
 
         @Transactional
         public AuthResponse register(RegisterRequest request) {
-                validateUser(request.getUsername(), request.getEmail(), request.getTckn());
+
+                validateUser(request.getEmail(), request.getTckn());
 
                 User user = new User();
-                user.setUsername(request.getUsername());
+
+                user.setUsername(request.getTckn());
+                user.setTckn(request.getTckn());
                 user.setPassword(passwordEncoder.encode(request.getPassword()));
                 user.setEmail(request.getEmail());
-                user.setTckn(request.getTckn());
                 user.setFirstName(request.getFirstName());
                 user.setLastName(request.getLastName());
                 user.setRole(Role.PATIENT);
 
-               
                 user.setAccountNonLocked(true);
                 user.setFailedAttempt(0);
 
@@ -50,41 +50,40 @@ public class AuthService {
                 patient.setBloodType(request.getBloodType());
                 patientRepository.save(patient);
 
-                String token = jwtUtil.generateToken(savedUser.getId(), savedUser.getUsername(),
+                String token = jwtUtil.generateToken(savedUser.getId(), savedUser.getTckn(),
                                 savedUser.getRole().name());
                 return new AuthResponse(token, mapToUserResponse(savedUser));
         }
 
         public AuthResponse login(LoginRequest request) {
-                User user = userRepository.findByUsername(request.getUsername())
-                                .orElseThrow(() -> new BadRequestException("Kullanıcı adı veya şifre hatalı"));
 
-                // 1. Hesap kilitli mi kontrol et (Boolean null kontrolü ile birlikte)
+                User user = userRepository.findByTckn(request.getTckn())
+                                .orElseThrow(() -> new BadRequestException("TC Kimlik No veya şifre hatalı"));
+
+                // Hesap kilitli mi kontrolü
                 if (Boolean.FALSE.equals(user.getAccountNonLocked())) {
                         if (user.getLockTime() != null && user.getLockTime().plusMinutes(LOCK_TIME_DURATION)
                                         .isBefore(LocalDateTime.now())) {
-                                // Kilit süresi dolmuş, hesabı aç ve devam et
                                 user.setAccountNonLocked(true);
                                 user.setFailedAttempt(0);
                                 user.setLockTime(null);
                                 userRepository.save(user);
                         } else {
                                 throw new BadRequestException(
-                                                "Çok fazla hatalı giriş denemesi. Hesabınız geçici olarak kilitlendi.");
+                                                "Çok fazla hatalı deneme. Hesabınız geçici olarak kilitlendi.");
                         }
                 }
 
-                // 2. Şifre kontrolü
+                // Şifre kontrolü
                 if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
                         processFailedAttempt(user);
-                        throw new BadRequestException("Kullanıcı adı veya şifre hatalı");
+                        throw new BadRequestException("TC Kimlik No veya şifre hatalı");
                 }
 
-                // 3. Başarılı giriş - Sayacı sıfırla
                 user.setFailedAttempt(0);
                 userRepository.save(user);
 
-                String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole().name());
+                String token = jwtUtil.generateToken(user.getId(), user.getTckn(), user.getRole().name());
                 return new AuthResponse(token, mapToUserResponse(user));
         }
 
@@ -99,16 +98,24 @@ public class AuthService {
                 userRepository.save(user);
         }
 
-        private void validateUser(String username, String email, String tckn) {
-                if (userRepository.existsByUsername(username))
-                        throw new BadRequestException("Username kullanımda");
-                if (userRepository.existsByEmail(email))
-                        throw new BadRequestException("Email kullanımda");
+        private void validateUser(String email, String tckn) {
                 if (userRepository.existsByTckn(tckn))
-                        throw new BadRequestException("TCKN kullanımda");
+                        throw new BadRequestException("Bu TC Kimlik Numarası ile zaten bir kayıt mevcut.");
+                if (userRepository.existsByEmail(email))
+                        throw new BadRequestException("Bu Email adresi zaten kullanımda.");
         }
+private UserResponse mapToUserResponse(User user) {
+    return new UserResponse(
+            user.getId(),
+            user.getTckn(),
+            user.getEmail(),
+            user.getFirstName(),
+            user.getLastName(),
+            user.getRole().name(),
+            user.getBloodType(), 
+                 
+    );
+}
 
-        private UserResponse mapToUserResponse(User user) {
-                return new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole().name());
-        }
+
 }

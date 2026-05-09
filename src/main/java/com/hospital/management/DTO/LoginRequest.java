@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LoginRequest {
 
-    @NotBlank(message = "Kullanıcı adı boş olamaz")
-    private String username;
+    @NotBlank(message = "TC Kimlik no boş olamaz")
+    private String tckn;
 
     @NotBlank(message = "Şifre boş olamaz")
     private String password;
