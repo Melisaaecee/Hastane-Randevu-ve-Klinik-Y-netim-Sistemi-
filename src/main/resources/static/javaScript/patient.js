@@ -136,50 +136,150 @@ window.handlePasswordUpdate = async function () {
 };
 
 // 5. SAYFA YÜKLENDİĞİNDE ÇALIŞACAK KISIM
-document.addEventListener('DOMContentLoaded', function () {
-    const sendCodeBtn = document.getElementById('send-code-btn');
-    const emailInput = document.getElementById('new-email');
-
-    if (sendCodeBtn) {
-        sendCodeBtn.addEventListener('click', async function () {
-            const newEmail = emailInput.value.trim();
-
-            if (!newEmail || !newEmail.includes('@')) {
-                alert('Lütfen geçerli bir e-posta adresi giriniz.');
-                return;
-            }
-
-            sendCodeBtn.disabled = true;
-            sendCodeBtn.innerText = 'Gönderiliyor...';
-
-            try {
-              
-                console.log("Kod gönderiliyor:", newEmail);
-
-                // Simülasyon (Gerçek API geldiğinde burayı güncelleyeceksiniz)
-                setTimeout(() => {
-                    alert('Doğrulama kodu e-posta adresinize gönderildi!');
-                    sendCodeBtn.disabled = false;
-                    sendCodeBtn.innerText = 'Kod Gönder';
-                }, 1500);
-
-            } catch (error) {
-                console.error("Hata:", error);
-                alert('Bir hata oluştu, lütfen tekrar deneyin.');
-                sendCodeBtn.disabled = false;
-                sendCodeBtn.innerText = 'Kod Gönder';
-            }
-        });
+document.addEventListener('DOMContentLoaded', () => {
+    const authData = JSON.parse(localStorage.getItem('user'));
+    if (!authData || !authData.user) {
+        window.location.href = 'index.html';
+        return;
     }
+
+    const user = authData.user;
+
+    // --- YENİ EKLEDİĞİMİZ FORMATLAMA YARDIMCILARI ---
+    const capitalize = (str) => str ? str.toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) : "";
+    const formatBloodGroup = (bg) => {
+        const mapping = {
+            'A_POSITIVE': 'A+', 'A_NEGATIVE': 'A-', 'B_POSITIVE': 'B+', 'B_NEGATIVE': 'B-',
+            'AB_POSITIVE': 'AB+', 'AB_NEGATIVE': 'AB-', 'O_POSITIVE': '0+', 'O_NEGATIVE': '0-'
+        };
+        return mapping[bg] || bg;
+    };
+
+    // İsimleri formatlayarak birleştir
+    const fullName = capitalize(`${user.firstName} ${user.lastName}`);
+
+    if (document.getElementById('patientFullName')) {
+        document.getElementById('patientFullName').textContent = fullName;
+    }
+    if (document.getElementById('infoName')) {
+        document.getElementById('infoName').textContent = fullName;
+    }
+
+    if (document.getElementById('avatarInitial') && user.firstName) {
+        document.getElementById('avatarInitial').textContent = user.firstName.charAt(0).toUpperCase();
+    }
+
+    // --- KİŞİSEL BİLGİLERİ DOLDURMA (GÜNCELLENDİ) ---
+    const fields = {
+        'infoTckn': user.tckn,
+        'infoEmail': user.email,
+        'infoBlood': formatBloodGroup(user.bloodGroup), // A_POSITIVE -> A+ çevrimi
+        'infoAge': user.age || "--"
+    };
+
+    Object.entries(fields).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value || "--";
+    });
 });
 
 window.logout = function () {
     localStorage.clear();
     window.location.href = 'index.html';
 };
+// 1. ADIM: DOĞRULAMA KODU GÖNDERME
+window.sendEmailVerification = async function () {
+    const emailInput = document.getElementById('newEmail');
+    const sendCodeBtn = document.getElementById('send-code-btn');
+    const newEmail = emailInput.value.trim();
 
+    // LocalStorage'dan kullanıcı verilerini al (TCKN için)
+    const authData = JSON.parse(localStorage.getItem('user'));
 
+    if (!newEmail || !newEmail.includes('@')) {
+        alert('Lütfen geçerli bir e-posta adresi giriniz.');
+        return;
+    }
 
+    if (!authData || !authData.user.tckn) {
+        alert('Oturum bilgileri bulunamadı, lütfen tekrar giriş yapın.');
+        return;
+    }
+
+    sendCodeBtn.disabled = true;
+    sendCodeBtn.innerText = 'Gönderiliyor...';
+
+    try {
+        const response = await fetch('http://localhost:8080/api/auth/send-verification-code', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authData.token
+            },
+            body: JSON.stringify({
+                email: newEmail,
+                tckn: authData.user.tckn // Backend tckn bekliyor
+            })
+        });
+
+        if (response.ok) {
+            alert('Doğrulama kodu ' + newEmail + ' adresine gönderildi!');
+            document.getElementById('emailStep1').style.display = 'none';
+            document.getElementById('emailStep2').style.display = 'block';
+        } else {
+            const error = await response.json();
+            alert("Hata: " + (error.message || "Kod gönderilemedi"));
+        }
+    } catch (error) {
+        console.error("Hata:", error);
+        alert('Sunucuya bağlanılamadı.');
+    } finally {
+        sendCodeBtn.disabled = false;
+        sendCodeBtn.innerText = 'Kod Gönder';
+    }
+};
+
+// 2. ADIM: KODU DOĞRULAMA VE E-POSTA GÜNCELLEME
+window.confirmEmailUpdate = async function () {
+    const incomingCode = document.getElementById('emailVerifyCode').value;
+    const newEmail = document.getElementById('newEmail').value;
+    const authData = JSON.parse(localStorage.getItem('user'));
+
+    if (!incomingCode) {
+        alert("Lütfen doğrulama kodunu giriniz.");
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:8080/api/auth/verify-email-update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authData.token
+            },
+            body: JSON.stringify({
+                code: incomingCode,      // Backend "code" bekliyor
+                newEmail: newEmail,    // Backend "newEmail" bekliyor
+                tckn: authData.user.tckn // Backend "tckn" bekliyor
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("E-posta adresiniz başarıyla güncellendi.");
+            // LocalStorage'daki kullanıcı bilgisini de güncelle ki arayüzde değişsin
+            authData.user.email = newEmail;
+            localStorage.setItem('user', JSON.stringify(authData));
+            location.reload();
+        } else {
+            alert("Hata: " + (data.message || "Doğrulama başarısız."));
+        }
+    } catch (error) {
+        console.error("Hata:", error);
+        alert("Bağlantı hatası.");
+    }
+};
 // RANDEVU İPTAL ETME FONKSİYONU
 window.cancelAppointment = async function (appointmentId) {
     if (!confirm("Bu randevuyu iptal etmek istediğinize emin misiniz? (24 saat kuralı geçerlidir)")) return;
