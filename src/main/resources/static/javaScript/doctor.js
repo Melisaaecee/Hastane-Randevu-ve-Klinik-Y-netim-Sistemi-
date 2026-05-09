@@ -1,207 +1,165 @@
 window.doctorApp = {
     activeDoctor: null,
-    // Test için sabit bir kullanıcı verisi (Daha önce oluşturduğumuz id:6 üzerinden güncelledim)
-    currentUser: {
+    currentUser: JSON.parse(localStorage.getItem('user'))?.user || {
         id: 6, 
         firstName: "Ahmet",
         lastName: "Yılmaz",
+        tckn: "12345678901",
+        email: "ahmet@hastane.com",
         role: "DOCTOR"
     },
     
     init: async function() {
         console.log("Doktor Paneli Başlatıldı...");
-        const userData = this.currentUser; 
-        await this.fetchDoctorDetails(userData.id);
-        
-        // İlk açılışta verileri çek
+        const nameHeader = document.getElementById('userNameDisplay');
+        if (nameHeader) nameHeader.innerText = `Dr. ${this.currentUser.firstName} ${this.currentUser.lastName}`;
+
+        await this.fetchDoctorDetails(this.currentUser.id);
         this.fetchSlots();
         this.fetchAppointments();
-        
         this.setupEventListeners();
     },
 
     fetchDoctorDetails: async function(userId) {
         try {
             const response = await fetch(`http://localhost:8080/api/doctors/user/${userId}`);
-            if (!response.ok) throw new Error("Doktor bilgileri alınamadı");
-            
-            this.activeDoctor = await response.json();
-            console.log("Aktif Doktor:", this.activeDoctor);
-            
+            if (!response.ok) {
+                this.activeDoctor = { id: 99, specialization: "Uzmanlık Belirtilmemiş", clinic: { id: 1, name: "Genel Klinik" }, user: this.currentUser };
+            } else {
+                this.activeDoctor = await response.json();
+            }
             this.renderProfile();
         } catch (error) {
-            console.error("Hata:", error);
-            // Hata durumunda test verisi göster (Opsiyonel)
-            this.activeDoctor = {
-                id: 1,
-                specialization: "Dahiliye",
-                clinic: { id: 1, name: "Merkez Klinik" },
-                user: this.currentUser
-            };
+            this.activeDoctor = { id: 99, specialization: "Bağlantı Yok", clinic: { id: 0, name: "Sunucuya Bağlanılamadı" }, user: this.currentUser };
             this.renderProfile();
         }
     },
 
     renderProfile: function() {
-        if (!this.activeDoctor) return;
-        const user = this.activeDoctor.user;
+        const user = this.currentUser;
         const container = document.getElementById('doctor-details');
-        const nameHeader = document.getElementById('userNameDisplay');
-
-        if (nameHeader) nameHeader.innerText = `Dr. ${user.firstName} ${user.lastName}`;
-        
-        if (container) {
+        if (container && this.activeDoctor) {
             container.innerHTML = `
                 <div class="profile-grid">
-                    <div class="info-item"><strong>TCKN:</strong> <span>${user.tckn || '12345678901'}</span></div>
-                    <div class="info-item"><strong>E-posta:</strong> <span>${user.email || 'test@hastane.com'}</span></div>
-                    <div class="info-item"><strong>Uzmanlık:</strong> <span>${this.activeDoctor.specialization}</span></div>
-                    <div class="info-item"><strong>Klinik:</strong> <span>${this.activeDoctor.clinic.name}</span></div>
+                    <div class="info-box"><i class="fas fa-id-card"></i><strong>TC Kimlik No</strong><span>${user.tckn}</span></div>
+                    <div class="info-box"><i class="fas fa-envelope"></i><strong>E-posta Adresi</strong><span>${user.email}</span></div>
+                    <div class="info-box"><i class="fas fa-stethoscope"></i><strong>Uzmanlık Alanı</strong><span>${this.activeDoctor.specialization}</span></div>
+                    <div class="info-box"><i class="fas fa-hospital"></i><strong>Görevli Klinik</strong><span>${this.activeDoctor.clinic?.name || 'Belirtilmemiş'}</span></div>
                 </div>`;
         }
     },
 
-    // YENİ: Giriş yapan doktorun randevularını çeken fonksiyon
     fetchAppointments: async function() {
+        const tbody = document.getElementById('appointments-table-body');
+        if (!tbody) return;
         try {
             const response = await fetch('http://localhost:8080/api/appointments/doctor/my');
-            if (!response.ok) throw new Error("Randevular yüklenemedi");
-            
+            if (!response.ok) throw new Error();
             const appointments = await response.json();
-            this.renderAppointments(appointments);
-        } catch (error) {
-            console.error("Randevu listeleme hatası:", error);
-            const tbody = document.getElementById('appointments-table-body');
-            if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Randevular getirilemedi.</td></tr>';
+            
+            if (appointments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Randevu bulunamadı.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = appointments.map(app => `
+                <tr>
+                    <td>${app.patient.firstName} ${app.patient.lastName}</td>
+                    <td>${app.patient.tckn}</td>
+                    <td>${this.formatDate(app.slot.startTime)}</td>
+                    <td><span class="status-badge status-${app.status.toLowerCase()}">${app.status}</span></td>
+                    <td>
+                        ${app.status === 'SCHEDULED' ? 
+                            `<button class="btn-not-attended" onclick="window.doctorApp.markAsNotAttended(${app.id})">Gelmedi</button>` 
+                            : `<span style="color:gray; font-size:0.8rem;">İşlem Kapalı</span>`}
+                    </td>
+                </tr>`).join('');
+        } catch (e) { 
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Liste alınamadı (Yetki Hatası veya Bağlantı Yok).</td></tr>';
         }
     },
 
-    // YENİ: Randevuları tabloya basan fonksiyon
-    renderAppointments: function(appointments) {
-        const tbody = document.getElementById('appointments-table-body');
-        if (!tbody) return;
-
-        if (appointments.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Size alınmış aktif bir randevu bulunmamaktadır.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = appointments.map(app => `
-            <tr>
-                <td>${app.patient.firstName} ${app.patient.lastName}</td>
-                <td>${app.patient.tckn}</td>
-                <td>${this.formatDate(app.slot.startTime)}</td>
-                <td><span class="status-badge status-${app.status.toLowerCase()}">${app.status}</span></td>
-            </tr>
-        `).join('');
+    markAsNotAttended: async function(appointmentId) {
+        if (!confirm("Hasta gelmedi olarak işaretlensin mi? (Ceza uygulanır)")) return;
+        try {
+            const response = await fetch(`http://localhost:8080/api/appointments/${appointmentId}/not-attended`, {
+                method: 'PUT'
+            });
+            if (response.ok) {
+                alert("İşaretlendi!");
+                this.fetchAppointments();
+            } else {
+                alert("Hata oluştu.");
+            }
+        } catch (e) { alert("Sunucu hatası."); }
     },
 
     fetchSlots: async function() {
-        if (!this.activeDoctor) return;
+        const tbody = document.getElementById('slot-table-body');
+        if (!tbody || !this.activeDoctor) return;
         try {
             const response = await fetch(`http://localhost:8080/api/slots/doctor/${this.activeDoctor.id}`);
+            if (!response.ok) throw new Error();
             const slots = await response.json();
-            
-            const tbody = document.getElementById('slot-table-body');
-            if (!tbody) return;
-
-            if (slots.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Henüz tanımlı slot yok.</td></tr>';
-                return;
-            }
-
             tbody.innerHTML = slots.map(slot => `
                 <tr>
                     <td>${this.formatDate(slot.startTime)}</td>
                     <td>${this.formatDate(slot.endTime)}</td>
-                    <td><span class="status-badge status-${slot.status.toLowerCase()}">${slot.status}</span></td>
-                    <td>
-                        <button class="btn-cancel" onclick="window.doctorApp.cancelSlot(${slot.id})">
-                            <i class="fas fa-times"></i> İptal Et
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        } catch (error) {
-            console.error("Slot listeleme hatası:", error);
-        }
+                    <td>${slot.status}</td>
+                    <td><button class="btn-cancel" onclick="alert('İptal sistemi hazır değil')">İptal</button></td>
+                </tr>`).join('');
+        } catch (e) { tbody.innerHTML = '<tr><td colspan="4">Slotlar yüklenemedi.</td></tr>'; }
     },
 
-    createSlot: async function(e) {
-        e.preventDefault();
-        
-        if (!this.activeDoctor) {
-            alert("Doktor bilgileri yüklenemedi, lütfen sayfayı yenileyin.");
-            return;
-        }
-
-        const slotData = {
-            startTime: document.getElementById('startTime').value,
-            endTime: document.getElementById('endTime').value,
-            status: "AVAILABLE",
-            doctor: { id: this.activeDoctor.id },
-            clinic: { id: this.activeDoctor.clinic.id }
-        };
-
+    handlePasswordUpdate: async function () {
+        const curPass = document.getElementById('currentPassword').value;
+        const newPass = document.getElementById('newPassword').value;
+        const confPass = document.getElementById('confirmPassword').value;
+        if (newPass !== confPass) return alert("Şifreler eşleşmiyor!");
         try {
-            const response = await fetch('http://localhost:8080/api/slots', {
+            const response = await fetch('http://localhost:8080/api/auth/reset-password-logged-in', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(slotData)
+                body: JSON.stringify({ tckn: this.currentUser.tckn, currentPassword: curPass, newPassword: newPass })
             });
-
-            if (response.ok) {
-                alert("Slot başarıyla oluşturuldu!");
-                e.target.reset(); 
-                this.fetchSlots(); 
-            } else {
-                const err = await response.json();
-                alert("Hata: " + (err.message || "Slot oluşturulamadı"));
-            }
-        } catch (error) {
-            alert("Sunucuya bağlanılamadı.");
-        }
+            if (response.ok) { alert("Şifre değişti."); this.logout(); } else { alert("Hata!"); }
+        } catch (e) { alert("Bağlantı hatası!"); }
     },
 
-    cancelSlot: async function(slotId) {
-        if (!confirm("Bu slotu iptal etmek istediğinize emin misiniz?")) return;
-
+    sendEmailVerification: async function () {
+        const email = document.getElementById('newEmail').value;
         try {
-            const response = await fetch(`http://localhost:8080/api/slots/${slotId}/cancel`, { 
-                method: 'PUT'
+            const res = await fetch('http://localhost:8080/api/auth/send-verification-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, tckn: this.currentUser.tckn })
             });
-
-            if (response.ok) {
-                alert("Slot başarıyla iptal edildi.");
-                this.fetchSlots(); 
-            } else {
-                alert("İptal işlemi başarısız.");
-            }
-        } catch (error) {
-            alert("Sunucuya bağlanılamadı.");
-        }
+            if (res.ok) { document.getElementById('emailStep1').style.display = 'none'; document.getElementById('emailStep2').style.display = 'block'; }
+        } catch (e) { alert("Hata!"); }
     },
 
-    setupEventListeners: function() {
-        const form = document.getElementById('slot-form');
-        if (form) {
-            form.onsubmit = (e) => this.createSlot(e);
-        }
-    },
-
-    formatDate: function(dateStr) {
-        return new Date(dateStr).toLocaleString('tr-TR');
+    confirmEmailUpdate: async function () {
+        const code = document.getElementById('emailVerifyCode').value;
+        const email = document.getElementById('newEmail').value;
+        try {
+            const res = await fetch('http://localhost:8080/api/auth/verify-email-update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code, newEmail: email, tckn: this.currentUser.tckn })
+            });
+            if (res.ok) { alert("E-posta güncellendi."); location.reload(); }
+        } catch (e) { alert("Hata!"); }
     },
 
     showTab: function(tabId, element) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
-        
-        if(element) {
-            document.querySelectorAll('.sidebar nav ul li').forEach(l => l.classList.remove('active'));
-            element.classList.add('active');
-        }
-    }
+        document.querySelectorAll('.sidebar nav ul li').forEach(l => l.classList.remove('active'));
+        if(element) element.classList.add('active');
+    },
+
+    logout: function() { localStorage.clear(); window.location.href = 'index.html'; },
+    formatDate: function(d) { return d ? new Date(d).toLocaleString('tr-TR') : "-"; },
+    setupEventListeners: function() { }
 };
 
 document.addEventListener('DOMContentLoaded', () => window.doctorApp.init());

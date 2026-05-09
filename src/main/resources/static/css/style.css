@@ -132,12 +132,12 @@ body {
 }
 
 /* --- SECTION SİSTEMİ --- */
-.content-section {
+.tab-content {
     display: none;
     animation: fadeIn 0.4s ease-out;
 }
 
-.content-section.active {
+.tab-content.active {
     display: block;
 }
 
