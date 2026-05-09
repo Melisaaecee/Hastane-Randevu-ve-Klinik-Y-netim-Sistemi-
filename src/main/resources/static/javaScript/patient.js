@@ -19,10 +19,8 @@ window.initializePatientPage = function () {
     document.getElementById('patientFullName').textContent = `${firstName} ${lastName}`;
     document.getElementById('welcomeName').textContent = firstName;
     document.getElementById('avatarInitial').textContent = firstName.charAt(0).toUpperCase();
-    document.getElementById('patientBlood').textContent = user.bloodType || "Belirtilmedi";
-
-    // Yaş hesaplama işlemini window üzerinden çağır
-    document.getElementById('patientAge').textContent = window.calculateAge(user.birthDate);
+    document.getElementById('patientBlood').textContent = user.bloodGroup || "Belirtilmedi";
+    document.getElementById('patientAge').textContent = user.age !== null ? user.age : "??";
 };
 
 // Yaş hesaplama işlemini global yapalım

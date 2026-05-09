@@ -55,6 +55,7 @@ public class AuthService {
                 return new AuthResponse(token, mapToUserResponse(savedUser));
         }
 
+        @Transactional
         public AuthResponse login(LoginRequest request) {
 
                 User user = userRepository.findByTckn(request.getTckn())
@@ -104,18 +105,29 @@ public class AuthService {
                 if (userRepository.existsByEmail(email))
                         throw new BadRequestException("Bu Email adresi zaten kullanımda.");
         }
-private UserResponse mapToUserResponse(User user) {
-    return new UserResponse(
-            user.getId(),
-            user.getTckn(),
-            user.getEmail(),
-            user.getFirstName(),
-            user.getLastName(),
-            user.getRole().name(),
-            user.getBloodType(), 
-                 
-    );
-}
 
+        private UserResponse mapToUserResponse(User user) {
+                String bloodGroup = "Belirtilmedi";
+                Integer age = 0;
+
+                // Eğer kullanıcı bir hastaysa, Patient entity'sinden verileri çek
+                if (user.getPatient() != null) {
+                        bloodGroup = user.getPatient().getBloodType() != null ? user.getPatient().getBloodType().name()
+                                        : "Belirtilmedi";
+                        age = user.getPatient().getAge();
+                }
+
+                return new UserResponse(
+                                user.getId(),
+                                user.getTckn(),
+                                user.getEmail(),
+                                user.getFirstName(),
+                                user.getLastName(),
+                                user.getRole().name(),
+                                bloodGroup,
+                                age);
+        }
+
+        
 
 }

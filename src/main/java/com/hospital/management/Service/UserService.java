@@ -85,15 +85,33 @@ public class UserService {
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
-    }
 
+    }
     private UserResponse mapToResponse(User user) {
+        // Varsayılan değerler
+        String bloodGroup = "Belirtilmedi";
+        Integer age = null;
+
+        // Eğer kullanıcı bir hastaysa, ilişkili Patient nesnesinden bilgileri al
+        if (user.getPatient() != null) {
+            // BloodType bir Enum olduğu için .name() ile String'e çeviriyoruz
+            if (user.getPatient().getBloodType() != null) {
+                bloodGroup = user.getPatient().getBloodType().name();
+            }
+            // Patient içindeki getAge() metodunu çağırıyoruz
+            age = user.getPatient().getAge();
+        }
+
         return new UserResponse(
                 user.getId(),
                 user.getTckn(),
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
-                user.getRole().name());
+                user.getRole().name(),
+                bloodGroup, // Yeni alan
+                age // Yeni alan
+        );
     }
+
 }
