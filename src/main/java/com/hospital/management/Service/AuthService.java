@@ -15,30 +15,26 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-
         private final UserRepository userRepository;
         private final PatientRepository patientRepository;
         private final PasswordEncoder passwordEncoder;
         private final JwtUtil jwtUtil;
 
-        private static final int MAX_FAILED_ATTEMPTS = 5;
-        private static final int LOCK_TIME_DURATION = 15; // dakika
+        private static final int MAX_FAILED_ATTEMPTS = 3;
+        private static final int LOCK_TIME_DURATION = 15;
 
         @Transactional
         public AuthResponse register(RegisterRequest request) {
-
                 validateUser(request.getEmail(), request.getTckn());
 
                 User user = new User();
-
-                user.setUsername(request.getTckn());
                 user.setTckn(request.getTckn());
+                user.setUsername(null); // Hastalar kullanıcı adı almaz
                 user.setPassword(passwordEncoder.encode(request.getPassword()));
                 user.setEmail(request.getEmail());
                 user.setFirstName(request.getFirstName());
                 user.setLastName(request.getLastName());
                 user.setRole(Role.PATIENT);
-
                 user.setAccountNonLocked(true);
                 user.setFailedAttempt(0);
 
@@ -57,11 +53,12 @@ public class AuthService {
 
         @Transactional
         public AuthResponse login(LoginRequest request) {
-
+                // TCKN veya Username ile bul
                 User user = userRepository.findByTckn(request.getTckn())
-                                .orElseThrow(() -> new BadRequestException("TC Kimlik No veya şifre hatalı"));
+                                .orElseGet(() -> userRepository.findByUsername(request.getTckn())
+                                                .orElseThrow(() -> new BadRequestException("Giriş bilgileri hatalı.")));
 
-                // Hesap kilitli mi kontrolü
+                // Hesap kilitli mi kontrol et
                 if (Boolean.FALSE.equals(user.getAccountNonLocked())) {
                         if (user.getLockTime() != null && user.getLockTime().plusMinutes(LOCK_TIME_DURATION)
                                         .isBefore(LocalDateTime.now())) {
@@ -70,8 +67,7 @@ public class AuthService {
                                 user.setLockTime(null);
                                 userRepository.save(user);
                         } else {
-                                throw new BadRequestException(
-                                                "Çok fazla hatalı deneme. Hesabınız geçici olarak kilitlendi.");
+                                throw new BadRequestException("Hesabınız kilitli.");
                         }
                 }
 
@@ -110,7 +106,7 @@ public class AuthService {
                 String bloodGroup = "Belirtilmedi";
                 Integer age = 0;
 
-                // Eğer kullanıcı bir hastaysa, Patient entity'sinden verileri çek
+               
                 if (user.getPatient() != null) {
                         bloodGroup = user.getPatient().getBloodType() != null ? user.getPatient().getBloodType().name()
                                         : "Belirtilmedi";
@@ -127,7 +123,5 @@ public class AuthService {
                                 bloodGroup,
                                 age);
         }
-
-        
 
 }

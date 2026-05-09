@@ -3,6 +3,7 @@ package com.hospital.management.Service;
 import com.hospital.management.Config.SecurityUtil;
 import com.hospital.management.DTO.RegisterRequest;
 import com.hospital.management.DTO.UserResponse;
+import com.hospital.management.Entity.Role; // Role importu eklendi
 import com.hospital.management.Entity.User;
 import com.hospital.management.Exception.AccessDeniedException;
 import com.hospital.management.Exception.BadRequestException;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -33,14 +35,63 @@ public class UserService {
     }
 
     @Transactional
+    public void updatePassword(String tckn, String currentPassword, String newPassword) {
+       
+        User user = userRepository.findByTckn(tckn)
+                .orElseThrow(() -> new EntityNotFoundException("Kullanıcı bulunamadı"));
+
+        // 2. Mevcut şifre doğruluğunu kontrol et (BCrypt matches kullanımı)
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new RuntimeException("Mevcut şifreniz hatalı!");
+        }
+
+        // 3. Yeni şifre eski şifreyle aynı mı kontrolü (Opsiyonel ama iyi bir pratik)
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new RuntimeException("Yeni şifre eskisinden farklı olmalıdır!");
+        }
+
+        // 4. Yeni şifreyi hashleyerek kaydet
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    @Transactional
     public UserResponse updateByTckn(String tckn, RegisterRequest request) {
         User user = getUserByTckn(tckn);
+
         if (!SecurityUtil.isOwner(user.getId()) && !SecurityUtil.isAdmin()) {
-            throw new AccessDeniedException("Sadece kendi profilinizi güncelleyebilirsiniz.");
+            throw new AccessDeniedException("Yetkiniz yok.");
         }
+
         validateUpdate(user, request);
-        applyUpdates(user, request);
+
+        if (user.getRole() != Role.PATIENT && request.getUsername() != null) {
+            user.setUsername(request.getUsername());
+        }
+
+        user.setTckn(request.getTckn());
+        user.setEmail(request.getEmail());
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
         return mapToResponse(userRepository.save(user));
+    }
+
+    @Transactional
+    public void updateEmailByTckn(String tckn, String newEmail) {
+
+        User user = getUserByTckn(tckn);
+
+        // 2. Yeni email başka bir kullanıcıda var mı kontrol et (Güvenlik için)
+        if (userRepository.existsByEmail(newEmail)) {
+            throw new BadRequestException("Bu e-posta adresi zaten başka bir kullanıcı tarafından kullanılıyor.");
+        }
+        user.setEmail(newEmail);
+        userRepository.save(user);
     }
 
     public UserResponse getByTckn(String tckn) {
@@ -76,29 +127,14 @@ public class UserService {
             throw new BadRequestException("Bu TC Kimlik Numarası zaten kayıtlı.");
     }
 
-    private void applyUpdates(User user, RegisterRequest request) {
-        user.setTckn(request.getTckn());
-        user.setUsername(request.getTckn()); // Username'i TCKN ile senkron tutuyoruz
-        user.setEmail(request.getEmail());
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
-        }
-
-    }
     private UserResponse mapToResponse(User user) {
-        // Varsayılan değerler
         String bloodGroup = "Belirtilmedi";
         Integer age = null;
 
-        // Eğer kullanıcı bir hastaysa, ilişkili Patient nesnesinden bilgileri al
         if (user.getPatient() != null) {
-            // BloodType bir Enum olduğu için .name() ile String'e çeviriyoruz
             if (user.getPatient().getBloodType() != null) {
                 bloodGroup = user.getPatient().getBloodType().name();
             }
-            // Patient içindeki getAge() metodunu çağırıyoruz
             age = user.getPatient().getAge();
         }
 
@@ -109,9 +145,7 @@ public class UserService {
                 user.getFirstName(),
                 user.getLastName(),
                 user.getRole().name(),
-                bloodGroup, // Yeni alan
-                age // Yeni alan
-        );
+                bloodGroup,
+                age);
     }
-
 }

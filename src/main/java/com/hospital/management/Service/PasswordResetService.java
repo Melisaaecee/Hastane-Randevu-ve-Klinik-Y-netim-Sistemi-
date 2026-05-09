@@ -28,23 +28,24 @@ public class PasswordResetService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Bu e-posta ile kayıtlı kullanıcı bulunamadı."));
 
-        // Güvenlik: Kullanıcının bekleyen eski talepleri varsa temizle
+        
         tokenRepository.deleteByUser(user);
+        tokenRepository.flush();
 
+        
         String token = UUID.randomUUID().toString();
         PasswordResetToken resetToken = new PasswordResetToken();
-        resetToken.setToken(token);
         resetToken.setUser(user);
-        resetToken.setExpiryDate(LocalDateTime.now().plusMinutes(15));
+        resetToken.setToken(token);
+        resetToken.setExpiryDate(LocalDateTime.now().plusHours(1));
 
         tokenRepository.save(resetToken);
-
         mailService.sendPasswordResetMail(user.getEmail(), token);
     }
 
     @Transactional
     public void resetPassword(String token, String newPassword) {
-       
+
         PasswordResetToken resetToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new EntityNotFoundException("Geçersiz veya kullanılmış şifre sıfırlama linki!"));
 
@@ -56,11 +57,12 @@ public class PasswordResetService {
 
         User user = resetToken.getUser();
 
-        // 2. Eski Şifre Kontrolü 
+        // 2. Eski Şifre Kontrolü
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            throw new BadRequestException("Yeni şifreniz mevcut şifrenizle aynı olamaz. Lütfen farklı bir şifre seçin.");
+            throw new BadRequestException(
+                    "Yeni şifreniz mevcut şifrenizle aynı olamaz. Lütfen farklı bir şifre seçin.");
         }
-        
+
         // 3. Şifreyi Hashleyerek Kaydetme
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);

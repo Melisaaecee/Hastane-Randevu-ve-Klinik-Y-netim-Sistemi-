@@ -10,11 +10,11 @@ public class PasswordResetToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String token; // UUID.randomUUID().toString() ile oluşturacağız
+    private String token; 
 
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private User user; // Hangi kullanıcıya ait?
+    private User user; 
 
     private LocalDateTime expiryDate; // 15 dakika sonra geçerliliğini yitirecek
 }

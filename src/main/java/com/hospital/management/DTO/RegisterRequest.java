@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class RegisterRequest {
 
-    @NotBlank
+
     @Size(min = 3, max = 30)
     private String username;
 

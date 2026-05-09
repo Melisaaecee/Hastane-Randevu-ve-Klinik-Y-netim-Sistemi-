@@ -20,7 +20,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = true)
     private String username;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -46,10 +46,13 @@ public class User {
     @Column(name = "account_non_locked")
     private Boolean accountNonLocked = true;
 
+    @Column(name = "verification_code")
+    private String verificationCode; //e-posta güncellemesi için  rastgele üretilen kodu saklar 
+
     @Column(name = "lock_time")
     private LocalDateTime lockTime;
 
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Patient patient;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

@@ -7,10 +7,7 @@
     <title>Hasta Paneli | Sağlık Sistemi</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Dashboard Sayfasına Özel Ek Düzenlemeler */
         body {
-            display: block;
-            /* Flex-center'ı iptal et */
             padding-top: 50px;
             background-attachment: fixed;
         }
@@ -20,7 +17,7 @@
             margin: 0 auto;
             padding: 0 20px;
             display: grid;
-            grid-template-columns: 320px 1fr;
+            grid-template-columns: 280px 1fr;
             gap: 30px;
         }
 
@@ -33,116 +30,102 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        /* Profil Alanı */
         .user-profile {
             text-align: center;
             margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
         }
 
         .avatar {
-            width: 70px;
-            height: 70px;
-            background: linear-gradient(135deg, var(--primary-blue), #0056b3);
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #2563eb, #0056b3);
             color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: bold;
             margin: 0 auto 15px;
         }
 
-        .info-box {
-            background: var(--light-blue);
-            padding: 12px;
-            border-radius: 12px;
-            margin: 15px 0;
-            font-size: 0.9rem;
-            text-align: left;
-        }
-
-        .info-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-
-        /* Buton ve Linkler */
         .nav-menu {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
         .nav-link {
             padding: 12px 15px;
-            border-radius: 10px;
+            border-radius: 12px;
             text-decoration: none;
-            color: var(--dark-blue);
+            color: #475569;
             font-weight: 500;
             transition: 0.3s;
+            cursor: pointer;
         }
 
         .nav-link:hover {
-            background: var(--light-blue);
-            color: var(--primary-blue);
+            background: #f1f5f9;
+            color: #2563eb;
         }
 
         .nav-link.active {
-            background: var(--primary-blue);
+            background: #2563eb;
             color: white;
         }
 
-        .logout {
-            color: var(--medical-red) !important;
-            cursor: pointer;
+        .nav-link.logout {
+            color: #dc2626;
+            margin-top: 20px;
         }
 
-        .logout:hover {
-            background: #fff5f5 !important;
+        .content-section {
+            display: none;
         }
 
-        /* Tablo Alanı */
-        .header-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
         }
 
-        .btn-primary {
-            background: var(--primary-blue);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .btn-primary:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
         }
 
-        .appointment-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        .appointment-table th {
-            text-align: left;
-            padding: 12px;
-            color: var(--text-gray);
-            border-bottom: 2px solid var(--light-blue);
-        }
-
-        .appointment-table td {
+        .data-item {
+            background: #f8fafc;
             padding: 15px;
-            border-bottom: 1px solid var(--light-blue);
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .data-item label {
+            display: block;
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        .data-item span {
+            font-weight: 600;
+            color: #1e293b;
         }
     </style>
 </head>
@@ -152,48 +135,115 @@
     <div class="dashboard-container">
         <aside class="glass-card">
             <div class="user-profile">
-                <div class="avatar" id="avatarInitial">?</div>
+                <div class="avatar" id="avatarInitial">M</div>
                 <h3 id="patientFullName">Yükleniyor...</h3>
-
-                <div class="info-box">
-                    <div class="info-item"><strong>Kan Grubu:</strong> <span id="patientBlood">--</span></div>
-                    <div class="info-item"><strong>Yaş:</strong> <span id="patientAge">--</span></div>
-                </div>
+                <p id="patientRole" style="font-size: 0.8rem; color: #64748b;">Hasta Paneli</p>
             </div>
 
             <nav class="nav-menu">
-                <a href="#" class="nav-link active">Randevularım</a>
-                <a href="#" class="nav-link">Profilim</a>
-                <a href="#" onclick="window.logout()" class="nav-link logout">Çıkış Yap</a>
+                <a onclick="showSection('appointments')" id="link-appointments" class="nav-link active">📅 Randevularım</a>
+                <a onclick="showSection('get-appointment')" id="link-get-appointment" class="nav-link">➕ Randevu Al</a>
+                <a onclick="showSection('my-info')" id="link-my-info" class="nav-link">📋 Bilgilerim</a>
+                <a onclick="showSection('profile-settings')" id="link-profile-settings" class="nav-link">⚙️ Profil Ayarları</a>
+                <a onclick="showSection('my-penalties')" id="link-my-penalties" class="nav-link">⚠️ Cezalarım</a>
+                <a onclick="window.logout()" class="nav-link logout">🚪 Çıkış Yap</a>
             </nav>
         </aside>
 
         <main class="glass-card">
-            <div class="header-flex">
-                <div>
-                    <h1>Merhaba, <span id="welcomeName" style="color: var(--primary-blue);">Hasta</span></h1>
-                    <p style="color: var(--text-gray);">Randevularını buradan kontrol edebilirsin.</p>
-                </div>
-                <button class="btn-primary" onclick="window.openNewAppointment()">+ Yeni Randevu</button>
-            </div>
 
-            <table class="appointment-table">
-                <thead>
-                    <tr>
-                        <th>Doktor</th>
-                        <th>Bölüm</th>
-                        <th>Tarih</th>
-                        <th>Durum</th>
-                    </tr>
-                </thead>
-                <tbody id="appointmentTableBody">
-                    <tr>
-                        <td colspan="4" style="text-align: center; color: #94a3b8; padding: 40px;">
-                            Gelecek randevunuz bulunmuyor.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <section id="appointments" class="content-section active">
+                <h1>Randevularım</h1>
+                <p>Aktif ve geçmiş randevularınız listelenmektedir.</p>
+                <table class="appointment-table">
+                    <thead>
+                        <tr>
+                            <th>Doktor</th>
+                            <th>Bölüm</th>
+                            <th>Tarih</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appointmentTableBody">
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 40px; color: #94a3b8;">Randevu bulunamadı.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="get-appointment" class="content-section">
+                <h1>Randevu Al</h1>
+                <p>Bölüm ve doktor seçerek randevunuzu oluşturun.</p>
+                <div style="padding: 40px; border: 2px dashed #e2e8f0; border-radius: 15px; text-align: center;">
+                    Randevu modülü yükleniyor...
+                </div>
+            </section>
+
+            <section id="my-info" class="content-section">
+                <h1>Kişisel Bilgilerim</h1>
+                <div class="info-grid">
+                    <div class="data-item"><label>Ad Soyad</label><span id="infoName">--</span></div>
+                    <div class="data-item"><label>TC Kimlik No</label><span id="infoTckn">--</span></div>
+                    <div class="data-item"><label>E-Posta</label><span id="infoEmail">--</span></div>
+                    <div class="data-item"><label>Kan Grubu</label><span id="infoBlood">--</span></div>
+                    <div class="data-item"><label>Yaş</label><span id="infoAge">--</span></div>
+                </div>
+            </section>
+
+            <section id="profile-settings" class="content-section">
+                <h1>Profil Ayarları</h1>
+                
+                <div class="info-grid" style="margin-top: 20px;">
+                    <div class="data-item">
+                        <h3 style="font-size: 1rem; margin-bottom: 15px; color: #1e293b;">🔑 Şifre Değiştir</h3>
+                        <div class="input-group">
+                            <label>Eski Şifre</label>
+                            <input type="password" id="currentPassword" placeholder="Mevcut şifreniz">
+                        </div>
+                        <div class="input-group">
+                            <label>Yeni Şifre</label>
+                            <input type="password" id="newPassword" placeholder="Yeni şifreniz">
+                        </div>
+                        <div class="input-group">
+                            <label>Yeni Şifre (Tekrar)</label>
+                            <input type="password" id="confirmPassword" placeholder="Yeni şifreniz tekrar">
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="handlePasswordUpdate()"
+                            style="width: 100%; margin-top: 10px;">Şifreyi Güncelle</button>
+                    </div>
+
+                    <div class="data-item">
+                        <h3 style="font-size: 1rem; margin-bottom: 15px; color: #1e293b;">📧 E-posta Güncelle</h3>
+                        <div id="emailStep1">
+                            <div class="input-group">
+                                <label>Yeni E-posta Adresi</label>
+                                <input type="email" id="newEmail" placeholder="yeni@eposta.com">
+                            </div>
+                            <button class="btn-primary" onclick="window.sendEmailVerification()" style="width: 100%; margin-top: 10px; background: #059669;">Kod Gönder</button>
+                        </div>
+                        
+                        <div id="emailStep2" style="display: none; margin-top: 10px;">
+                            <div class="input-group">
+                                <label>Doğrulama Kodu</label>
+                                <input type="text" id="emailVerifyCode" placeholder="6 Haneli Kod" maxlength="6">
+                            </div>
+                            <button class="btn-primary" onclick="window.confirmEmailUpdate()" style="width: 100%; margin-top: 10px;">E-postayı Onayla</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="my-penalties" class="content-section">
+                <h1>Cezalarım</h1>
+                <p>Gitmediğiniz randevular nedeniyle uygulanan kısıtlamalar.</p>
+                <div id="penaltyList" style="margin-top: 20px;">
+                    <div class="data-item" style="border-left: 4px solid #dc2626;">
+                        <span>Şu an aktif bir cezanız bulunmamaktadır.</span>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 

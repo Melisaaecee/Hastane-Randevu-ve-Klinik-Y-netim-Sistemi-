@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Kayıt Ol | Sağlık Sistemi</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="center-wrapper">
+        <div class="auth-card" style="max-width: 500px;">
+            <div class="auth-header">
+                <h1>Yeni<span>Hesap</span></h1>
+                <p>Lütfen bilgilerinizi eksiksiz doldurunuz.</p>
+            </div>
+
+            <div id="errorBox" class="error-box" style="display: none; color: red; margin-bottom: 10px;"></div>
+
+            <form id="registerForm">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="input-group">
+                        <label>AD</label>
+                        <input type="text" id="firstName" placeholder="Adınız" required>
+                    </div>
+                    <div class="input-group">
+                        <label>SOYAD</label>
+                        <input type="text" id="lastName" placeholder="Soyadınız" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>TC KİMLİK NO</label>
+                    <input type="text" id="tckn" maxlength="11" placeholder="11 haneli TCKN" required>
+                </div>
+
+                <div class="input-group">
+                    <label>E-POSTA</label>
+                    <input type="email" id="email" placeholder="ornek@mail.com" required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="input-group">
+                        <label>DOĞUM TARİHİ</label>
+                        <input type="date" id="birthDate" required>
+                    </div>
+                    <div class="input-group">
+                        <label>KAN GRUBU</label>
+                        <select id="bloodType" required>
+                            <option value="">Seçiniz</option>
+                            <option value="A_POSITIVE">A Rh+</option>
+                            <option value="A_NEGATIVE">A Rh-</option>
+                            <option value="B_POSITIVE">B Rh+</option>
+                            <option value="B_NEGATIVE">B Rh-</option>
+                            <option value="AB_POSITIVE">AB Rh+</option>
+                            <option value="AB_NEGATIVE">AB Rh-</option>
+                            <option value="O_POSITIVE">0 Rh+</option>
+                            <option value="O_NEGATIVE">0 Rh-</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>ŞİFRE</label>
+                    <input type="password" id="password" placeholder="En az 8 karakter" required>
+                </div>
+
+                <button type="submit" class="btn-primary">Kaydı Tamamla</button>
+            </form>
+
+            <div class="auth-footer">
+                Zaten hesabınız var mı? <a href="index.html">Giriş Yap</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="javascript/register.js"></script>
+</body>
+</html>
