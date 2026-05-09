@@ -1,58 +1,117 @@
-// Sayfa yüklendiğinde bugünün tarihini minimum yap
-document.getElementById('appointmentDate').min = new Date().toISOString().split("T")[0];
+// Sayfa yüklendiğinde çalışacak ana tetikleyici
+document.addEventListener('DOMContentLoaded', () => {
+    window.initializeAppointmentPage();
+});
 
-const doctorData = {
-    kardiyoloji: ["Dr. Mehmet Öz", "Dr. Canan Karatay"],
-    goz: ["Dr. Sinan Akçıl", "Dr. Merve Aydın"],
-    dahiliye: ["Dr. Ali Veli", "Dr. Ayşe Yılmaz"],
-    ortopedi: ["Dr. Hasan Tahsin"]
-};
-
-function loadDoctors() {
-    const clinic = document.getElementById('clinicSelect').value;
-    const docSelect = document.getElementById('doctorSelect');
+// Sayfa Başlatma Fonksiyonu
+window.initializeAppointmentPage = function() {
+    const user = JSON.parse(localStorage.getItem('user'));
     
-    docSelect.innerHTML = '<option value="">Doktor Seçiniz...</option>';
-    
-    if (clinic) {
-        docSelect.disabled = false;
-        doctorData[clinic].forEach(doc => {
-            let opt = document.createElement('option');
-            opt.value = doc;
-            opt.innerHTML = doc;
-            docSelect.appendChild(opt);
-        });
-    } else {
-        docSelect.disabled = true;
-    }
-}
-
-function prepareSummary() {
-    const clinic = document.getElementById('clinicSelect').value;
-    const doctor = document.getElementById('doctorSelect').value;
-    const date = document.getElementById('appointmentDate').value;
-    const errorBox = document.getElementById('errorMessage');
-
-    if (!clinic || !doctor || !date) {
-        errorBox.style.display = 'block';
+    // Oturum kontrolü
+    if (!user) {
+        window.location.href = 'index.html';
         return;
     }
 
-    errorBox.style.display = 'none';
+    // Seçim kutularını (select) dinlemeye başla
+    const clinicSelect = document.getElementById('clinicSelect');
+    if (clinicSelect) {
+        clinicSelect.addEventListener('change', window.handleClinicChange);
+    }
+
+    // Formu dinlemeye başla
+    const appointmentForm = document.getElementById('appointmentForm');
+    if (appointmentForm) {
+        appointmentForm.addEventListener('submit', window.handleAppointmentSubmit);
+    }
+};
+
+// Poliklinik değiştiğinde doktorları yükleyen fonksiyon
+window.handleClinicChange = function(e) {
+    const selectedClinic = e.target.value;
+    const doctorSelect = document.getElementById('doctorSelect');
     
-    // Sağ taraftaki özeti güncelle ve aktif et
-    document.getElementById('sumClinic').innerText = clinic.toUpperCase();
-    document.getElementById('sumDoctor').innerText = doctor;
-    document.getElementById('sumDate').innerText = date;
+    // Örnek veri seti (Backend gelene kadar)
+    const doctorsByClinic = {
+        "Kardiyoloji": ["Prof. Dr. Ahmet Yılmaz", "Doç. Dr. Ayşe Kaya"],
+        "Dahiliye": ["Uzm. Dr. Mehmet Öz", "Dr. Fatma Şahin"],
+        "Göz Hastalıkları": ["Dr. Caner Bulut", "Prof. Dr. Elif Akın"],
+        "Nöroloji": ["Doç. Dr. Serdar Tekin"]
+    };
 
-    const summaryCard = document.getElementById('summaryCard');
-    summaryCard.style.opacity = "1";
-    summaryCard.style.pointerEvents = "auto";
-    summaryCard.style.transform = "scale(1.02)";
-}
+    const doctors = doctorsByClinic[selectedClinic] || [];
 
-function confirmAppointment() {
-    // Burada Backend API'sine (POST /api/appointments) istek atılacak
-    alert("Tebrikler! Randevunuz başarıyla oluşturuldu.");
-    window.location.reload(); // Sayfayı sıfırla
-}
+    // Listeyi temizle ve yeni doktorları ekle
+    doctorSelect.innerHTML = '<option value="" disabled selected>Doktor seçiniz...</option>';
+    
+    doctors.forEach(doc => {
+        const option = document.createElement('option');
+        option.value = doc;
+        option.textContent = doc;
+        doctorSelect.appendChild(option);
+    });
+
+    doctorSelect.disabled = false;
+};
+
+// Randevu formunu gönderen fonksiyon
+window.handleAppointmentSubmit = async function(e) {
+    e.preventDefault();
+
+    const user = JSON.parse(localStorage.getItem('user'));
+    const clinic = document.getElementById('clinicSelect').value;
+    const doctor = document.getElementById('doctorSelect').value;
+    const date = document.getElementById('appointmentDate').value;
+
+    const payload = {
+        patientId: user.id,
+        clinicName: clinic,
+        doctorName: doctor,
+        appointmentDate: date,
+        status: "ONAYLANDI" // Varsayılan durum
+    };
+
+    try {
+        const response = await fetch('http://localhost:8080/api/appointments/create', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('token')
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            alert("Randevunuz başarıyla sisteme kaydedildi!");
+            window.location.href = 'patient.html';
+        } else {
+            const errorData = await response.json();
+            window.showErrorMessage(errorData.message || "Randevu alınamadı.");
+        }
+    } catch (err) {
+        console.error("Bağlantı hatası:", err);
+        // Backend çalışmıyorsa test amaçlı local kaydı tetikle
+        window.saveToLocalMock(payload);
+    }
+};
+
+// Hata mesajı gösterme fonksiyonu
+window.showErrorMessage = function(msg) {
+    const errorBox = document.getElementById('errorBox');
+    if (errorBox) {
+        errorBox.textContent = msg;
+        errorBox.style.display = 'block';
+    } else {
+        alert(msg);
+    }
+};
+
+// Backend kapalıyken çalışacak simülasyon fonksiyonu
+window.saveToLocalMock = function(data) {
+    let appointments = JSON.parse(localStorage.getItem('appointments') || '[]');
+    appointments.push(data);
+    localStorage.setItem('appointments', JSON.stringify(appointments));
+    
+    alert("Dikkat: Sunucuya bağlanılamadı. Veri tarayıcı hafızasına (Local) kaydedildi.");
+    window.location.href = 'patient.html';
+};

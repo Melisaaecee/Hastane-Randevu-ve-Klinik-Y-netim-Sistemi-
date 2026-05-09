@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedSoft | Doktor Paneli</title>
+    <!-- Stil Dosyası -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Font Awesome (İkonlar için) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Yan Menü (Sidebar) -->
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fas fa-heartbeat"></i>
+            <span>MedSoft</span>
+        </div>
+        <nav>
+            <ul>
+                <li class="active" onclick="window.doctorApp.showTab('profile', this)">
+                    <i class="fas fa-user-md"></i> <span>Profil Bilgileri</span>
+                </li>
+                <li onclick="window.doctorApp.showTab('slots', this)">
+                    <i class="fas fa-calendar-plus"></i> <span>Randevu Slotları</span>
+                </li>
+                <!-- YENİ: Randevular Sekmesi -->
+                <li onclick="window.doctorApp.showTab('appointments', this)">
+                    <i class="fas fa-calendar-check"></i> <span>Randevularım</span>
+                </li>
+                <li class="logout-item" onclick="window.logout()">
+                    <i class="fas fa-sign-out-alt"></i> <span>Çıkış Yap</span>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Ana İçerik Alanı -->
+    <main class="main-content">
+        
+        <!-- Üst Başlık Paneli -->
+        <header class="content-header">
+            <h1 id="userNameDisplay">Yükleniyor...</h1>
+            <div class="user-status">
+                <span class="status-indicator"></span> Çevrimiçi
+            </div>
+        </header>
+
+        <!-- 1. SEKMELİ İÇERİK: PROFİL -->
+        <section id="profile" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-id-card"></i>
+                    <h2>Kişisel ve Mesleki Bilgiler</h2>
+                </div>
+                <div id="doctor-details">
+                    <p class="loading-text">Profil bilgileri çekiliyor...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. SEKMELİ İÇERİK: SLOT YÖNETİMİ -->
+        <section id="slots" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-plus-circle"></i>
+                    <h2>Yeni Çalışma Slotu Ekle</h2>
+                </div>
+                <form id="slot-form" class="slot-creation-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startTime">Başlangıç Zamanı</label>
+                            <input type="datetime-local" id="startTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="endTime">Bitiş Zamanı</label>
+                            <input type="datetime-local" id="endTime" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Slotu Sisteme Tanımla
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card" style="margin-top: 25px;">
+                <div class="card-header">
+                    <i class="fas fa-list-ul"></i>
+                    <h2>Mevcut ve Gelecek Slotlarınız</h2>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><i class="far fa-clock"></i> Başlangıç</th>
+                                <th><i class="far fa-clock"></i> Bitiş</th>
+                                <th><i class="fas fa-info-circle"></i> Durum</th>
+                                <th><i class="fas fa-tools"></i> İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="slot-table-body">
+                            <tr><td colspan="4" style="text-align: center; padding: 20px;">Slotlar yükleniyor...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. YENİ SEKMELİ İÇERİK: RANDEVU LİSTESİ -->
+        <section id="appointments" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h2>Randevularım</h2>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-user-injured"></i> Hasta Adı</th>
+                                <th><i class="fas fa-fingerprint"></i> TCKN</th>
+                                <th><i class="far fa-calendar-alt"></i> Tarih & Saat</th>
+                                <th><i class="fas fa-info-circle"></i> Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointments-table-body">
+                            <tr><td colspan="4" style="text-align: center; padding: 20px;">Randevular yükleniyor...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JavaScript Dosyası -->
+    <script src="javascript/doctor.js"></script>
+</body>
+</html>

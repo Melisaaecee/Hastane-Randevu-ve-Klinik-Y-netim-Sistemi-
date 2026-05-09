@@ -1,11 +1,13 @@
 package com.hospital.management.Service;
 
 import com.hospital.management.Config.SecurityUtil;
+import com.hospital.management.Entity.Doctor; // Eklendi
 import com.hospital.management.Entity.Slot;
 import com.hospital.management.Entity.SlotStatus;
 import com.hospital.management.Exception.AccessDeniedException;
 import com.hospital.management.Exception.BadRequestException;
 import com.hospital.management.Exception.EntityNotFoundException;
+import com.hospital.management.Repository.DoctorRepository; // Eklendi
 import com.hospital.management.Repository.SlotRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 public class SlotService {
 
     private final SlotRepository slotRepository;
+    private final DoctorRepository doctorRepository; // Veritabanından çekmek için eklendi
 
     // GELECEK MÜSAİT SLOTLAR (Halka Açık Sorgu)
     public List<Slot> getFutureAvailableSlots(Long doctorId) {
@@ -38,6 +41,16 @@ public class SlotService {
     @Transactional
     public Slot createSlot(Slot slot) {
         
+        // --- PROFESYONEL ÇÖZÜM: Nesneyi Doldurma (Hydration) ---
+        // Frontend'den sadece ID geliyor, User NULL olduğu için veritabanından tam halini çekiyoruz.
+        Doctor doctor = doctorRepository.findById(slot.getDoctor().getId())
+                .orElseThrow(() -> new EntityNotFoundException("Doktor bulunamadı."));
+        
+        // Slot nesnesine veritabanından gelen tam dolu Doktor nesnesini set ediyoruz.
+        // Böylece .getUser().getId() artık NullPointerException vermeyecek.
+        slot.setDoctor(doctor);
+        // -------------------------------------------------------
+
         if (!SecurityUtil.isOwner(slot.getDoctor().getUser().getId()) && !SecurityUtil.isAdmin()) {
             throw new AccessDeniedException("Başka bir doktor adına çalışma saati (slot) oluşturamazsınız.");
         }
