@@ -1,0 +1,89 @@
+:root {
+    --primary-blue: #3498db;
+    --soft-blue: #eef7fd;
+    --dark-blue: #2c3e50;
+    --medical-red: #e74c3c;
+    --pure-white: #ffffff;
+    --soft-gray: #f4f7f6;
+    --border-color: #d1d9e6;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+
+body {
+    background-color: var(--soft-gray);
+    /* Hafif desenli arka plan */
+    background-image: radial-gradient(#3498db1a 1px, transparent 1px);
+    background-size: 20px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.auth-card {
+    background: var(--pure-white);
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    width: 100%;
+    max-width: 450px;
+    border: 1px solid var(--border-color);
+}
+
+.auth-card h2 {
+    color: var(--dark-blue);
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.auth-card h2 span { color: var(--primary-blue); }
+
+.input-group { margin-bottom: 1.2rem; }
+
+label { display: block; margin-bottom: 0.5rem; color: var(--dark-blue); font-size: 0.9rem; font-weight: 500; }
+
+input, select {
+    width: 100%;
+    padding: 0.8rem;
+    border: 2px solid var(--soft-blue);
+    border-radius: 10px;
+    background: var(--soft-gray);
+    transition: all 0.3s;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    background: white;
+}
+
+button {
+    width: 100%;
+    padding: 0.9rem;
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover { background: var(--dark-blue); }
+
+.error-box {
+    background: #fee2e2;
+    color: var(--medical-red);
+    padding: 0.7rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    display: none;
+    border: 1px solid #fecaca;
+}
+
+.toggle-text { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; }
+.toggle-text a { color: var(--primary-blue); text-decoration: none; font-weight: 600; }

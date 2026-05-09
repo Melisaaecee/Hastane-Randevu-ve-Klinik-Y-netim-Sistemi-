@@ -14,15 +14,14 @@ public class MailService {
     public void sendPasswordResetMail(String to, String token) {
         SimpleMailMessage message = new SimpleMailMessage();
         
-        // 1. Gönderen mail adresini properties dosyasındakiyle aynı yapıyoruz
+        
         message.setFrom("akilli.kutuphane6@gmail.com"); 
         message.setTo(to);
         
-        // 2. Konu başlığını hastane sistemine göre güncelledik
+       
         message.setSubject("Hastane Yönetim Sistemi | Şifre Sıfırlama Talebi");
         
         // 3. Mesaj içeriği ve Frontend linki
-        // Not: localhost:3000 senin React/Angular frontend portun olmalı
         String resetUrl = "http://localhost:3000/reset-password?token=" + token;
         
         String emailContent = "Sayın Kullanıcımız,\n\n" +
@@ -34,8 +33,7 @@ public class MailService {
                 "Sağlıklı günler dileriz,\nHastane Yönetim Sistemi Ekibi";
 
         message.setText(emailContent);
-        
-        // Maili gönderiyoruz
+      
         mailSender.send(message);
     }
 }

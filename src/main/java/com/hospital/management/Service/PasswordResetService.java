@@ -44,7 +44,7 @@ public class PasswordResetService {
 
     @Transactional
     public void resetPassword(String token, String newPassword) {
-        // Token bulunamazsa kendi özel exception sınıfını kullanıyoruz
+       
         PasswordResetToken resetToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new EntityNotFoundException("Geçersiz veya kullanılmış şifre sıfırlama linki!"));
 
@@ -56,7 +56,7 @@ public class PasswordResetService {
 
         User user = resetToken.getUser();
 
-        // 2. Eski Şifre Kontrolü (BadRequestException kullanımı)
+        // 2. Eski Şifre Kontrolü 
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
             throw new BadRequestException("Yeni şifreniz mevcut şifrenizle aynı olamaz. Lütfen farklı bir şifre seçin.");
         }
