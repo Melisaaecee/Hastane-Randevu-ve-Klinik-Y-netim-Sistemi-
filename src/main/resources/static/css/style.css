@@ -1,3 +1,8 @@
+/* 
+    HAY (Hastane Yönetim Sistemi) - Global Style Sheet 
+    Palette: Açık Mavi, Koyu Mavi, Beyaz, Gri ve Tıbbi Kırmızı
+*/
+
 :root {
     --primary-blue: #007bff;
     --light-blue: #e3f2fd;
@@ -6,13 +11,14 @@
     --white: #ffffff;
     --text-gray: #64748b;
     --bg-pattern: #f0f4f8;
+    --success-green: #10b981;
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
 }
 
 body {
@@ -22,30 +28,48 @@ body {
         linear-gradient(var(--light-blue) 1.5px, transparent 1.5px),
         linear-gradient(90deg, var(--light-blue) 1.5px, transparent 1.5px);
     background-size: 40px 40px;
+    min-height: 100vh;
+    color: var(--dark-blue);
+    line-height: 1.6;
+}
+
+/* --- GENEL KAPSAYICILAR (LAYOUT) --- */
+
+.container-center {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    padding: 20px;
 }
 
-/* Giriş Kartı - Cam Efekti ve Yumuşak Gölge */
-.auth-card {
+.dashboard-wrapper {
+    width: 95%;
+    max-width: 1200px;
+    margin: 2rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* --- KART YAPILARI (CAM EFEKTİ) --- */
+
+.auth-card, .selection-card {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-    padding: 3rem 2.5rem;
+    padding: 2.5rem;
     border-radius: 24px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    width: 100%;
-    max-width: 420px;
     border: 1px solid rgba(255, 255, 255, 0.5);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.auth-card:hover {
+.auth-card:hover, .selection-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.12);
 }
 
-.auth-card h2 {
+h2 {
     color: var(--dark-blue);
     text-align: center;
     margin-bottom: 0.5rem;
@@ -53,16 +77,18 @@ body {
     letter-spacing: -0.5px;
 }
 
-.auth-card p.subtitle {
+h2 span {
+    color: var(--primary-blue);
+}
+
+p.subtitle {
     text-align: center;
     color: var(--text-gray);
     margin-bottom: 2rem;
     font-size: 0.9rem;
 }
 
-.auth-card h2 span {
-    color: var(--primary-blue);
-}
+/* --- FORM ELEMANLARI --- */
 
 .input-group {
     margin-bottom: 1.5rem;
@@ -79,7 +105,7 @@ label {
     letter-spacing: 0.5px;
 }
 
-input {
+input, select {
     width: 100%;
     padding: 0.9rem 1.2rem;
     border: 2px solid #e2e8f0;
@@ -88,13 +114,23 @@ input {
     font-size: 1rem;
     transition: all 0.2s ease;
     color: var(--dark-blue);
+    appearance: none;
 }
 
-input:focus {
+select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e3a8a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+}
+
+input:focus, select:focus {
     outline: none;
     border-color: var(--primary-blue);
     box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.1);
 }
+
+/* --- BUTONLAR --- */
 
 button {
     width: 100%;
@@ -108,11 +144,132 @@ button {
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
     transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
 }
 
 button:hover {
     box-shadow: 0 7px 14px rgba(0, 123, 255, 0.3);
     filter: brightness(1.1);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success-green), #059669);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--medical-red), #dc2626);
+}
+
+/* --- DASHBOARD VE NAVİGASYON --- */
+
+.glass-nav {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(15px);
+    padding: 1rem 2rem;
+    border-radius: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    margin-bottom: 1rem;
+}
+
+.appointment-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 2rem;
+}
+
+/* --- BİLGİ VE ÖZET KUTULARI --- */
+
+.summary-box {
+    background: linear-gradient(to bottom right, var(--white), var(--light-blue));
+    border-radius: 20px;
+    padding: 1.5rem;
+    border-left: 5px solid var(--primary-blue);
+    margin-bottom: 1.5rem;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--text-gray);
+    font-size: 0.95rem;
+}
+
+.info-note {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: var(--dark-blue);
+    background: rgba(0, 123, 255, 0.08);
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+/* --- TABLO VE ROZETLER --- */
+
+.table-container {
+    background: var(--white);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background-color: var(--light-blue);
+    padding: 1.2rem;
+    color: var(--dark-blue);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    text-align: left;
+}
+
+td {
+    padding: 1.2rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: var(--text-gray);
+    font-size: 0.9rem;
+}
+
+tr:hover {
+    background-color: #f8fafc;
+}
+
+.badge {
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.badge-success { background: #dcfce7; color: #166534; }
+.badge-pending { background: #fef9c3; color: #854d0e; }
+.badge-danger { background: #fee2e2; color: #991b1b; }
+
+/* --- DİĞER --- */
+
+.error-box {
+    background: #fff5f5;
+    color: var(--medical-red);
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+    border-left: 4px solid var(--medical-red);
 }
 
 .toggle-text {
@@ -126,44 +283,10 @@ button:hover {
     color: var(--primary-blue);
     text-decoration: none;
     font-weight: 600;
-    border-bottom: 1px solid transparent;
-    transition: 0.2s;
 }
 
-.toggle-text a:hover {
-    border-bottom: 1px solid var(--primary-blue);
-}
-
-.error-box {
-    background: #fff5f5;
-    color: var(--medical-red);
-    padding: 0.8rem;
-    border-radius: 10px;
-    margin-bottom: 1.5rem;
-    font-size: 0.85rem;
-    border-left: 4px solid var(--medical-red);
-    display: none;
-}
-
-.user-info-box {
-    margin: 15px 0;
-    padding: 10px;
-    background: var(--light-blue);
-    border-radius: 12px;
-    font-size: 0.9rem;
-    color: var(--dark-blue);
-}
-
-.info-item {
-    margin: 5px 0;
-    display: flex;
-    justify-content: space-between;
-}
-
-.account-type {
-    font-size: 0.7rem;
-    color: var(--text-gray);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: bold;
+@media (max-width: 850px) {
+    .appointment-grid {
+        grid-template-columns: 1fr;
+    }
 }
