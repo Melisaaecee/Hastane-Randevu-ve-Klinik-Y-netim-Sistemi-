@@ -28,10 +28,9 @@ body {
     color: var(--dark-blue);
     line-height: 1.6;
     display: flex;
-    /* Sidebar yan yana durması için */
+   
 }
 
-/* --- SIDEBAR (YAN MENÜ) --- */
 .sidebar {
     width: var(--sidebar-width);
     height: 100vh;

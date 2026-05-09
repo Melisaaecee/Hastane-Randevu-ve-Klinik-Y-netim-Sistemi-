@@ -1,23 +1,37 @@
-// 1. TEMEL NAVİGASYON VE GÖRÜNÜM FONKSİYONLARI
-window.showSection = function (sectionId) {
-    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+window.showSection = function (sectionId, element) {
+    // 1. ADIM: Tüm içerik bölümlerini (section) bul ve 'active' sınıfını sil (Hepsini Gizle)
+    const allSections = document.querySelectorAll('.tab-content');
+    allSections.forEach(s => {
+        s.classList.remove('active');
+        s.style.display = 'none'; 
+    });
+
+
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 
+   
     const target = document.getElementById(sectionId);
-    const link = document.getElementById('link-' + sectionId);
+    if (target) {
+        target.classList.add('active');
+        target.style.display = 'block'; 
+    }
 
-    if (target) target.classList.add('active');
-    if (link) link.classList.add('active');
 
-    // Randevularım sekmesine geçildiyse verileri tazele
+    if (element) {
+        element.classList.add('active');
+    } else {
+        const link = document.getElementById('link-' + sectionId);
+        if (link) link.classList.add('active');
+    }
+
+   
     if (sectionId === 'appointments') {
         window.filterAppointments('all');
     }
 };
-
 // 2. RANDEVU FİLTRELEME VE BACKEND ENTEGRASYONU
 window.filterAppointments = async function (type) {
-    // Butonların görsel durumunu güncelle
+
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
     const activeBtn = document.getElementById('btn-' + type);
     if (activeBtn) activeBtn.classList.add('active-filter');
@@ -168,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('avatarInitial').textContent = user.firstName.charAt(0).toUpperCase();
     }
 
-    // --- KİŞİSEL BİLGİLERİ DOLDURMA (GÜNCELLENDİ) ---
+    // --- KİŞİSEL BİLGİLERİ DOLDURMA  ---
     const fields = {
         'infoTckn': user.tckn,
         'infoEmail': user.email,
@@ -186,7 +200,8 @@ window.logout = function () {
     localStorage.clear();
     window.location.href = 'index.html';
 };
-// 1. ADIM: DOĞRULAMA KODU GÖNDERME
+
+// DOĞRULAMA KODU GÖNDERME
 window.sendEmailVerification = async function () {
     const emailInput = document.getElementById('newEmail');
     const sendCodeBtn = document.getElementById('send-code-btn');
@@ -257,9 +272,9 @@ window.confirmEmailUpdate = async function () {
                 'Authorization': 'Bearer ' + authData.token
             },
             body: JSON.stringify({
-                code: incomingCode,      // Backend "code" bekliyor
-                newEmail: newEmail,    // Backend "newEmail" bekliyor
-                tckn: authData.user.tckn // Backend "tckn" bekliyor
+                code: incomingCode,
+                newEmail: newEmail,
+                tckn: authData.user.tckn
             })
         });
 
@@ -267,7 +282,6 @@ window.confirmEmailUpdate = async function () {
 
         if (response.ok) {
             alert("E-posta adresiniz başarıyla güncellendi.");
-            // LocalStorage'daki kullanıcı bilgisini de güncelle ki arayüzde değişsin
             authData.user.email = newEmail;
             localStorage.setItem('user', JSON.stringify(authData));
             location.reload();
@@ -287,7 +301,7 @@ window.cancelAppointment = async function (appointmentId) {
 
     try {
         const response = await fetch(`http://localhost:8080/api/appointments/${appointmentId}/cancel`, {
-            method: 'PUT', // Controller'da @PutMapping olarak tanımlı
+            method: 'PUT',
             headers: {
                 'Authorization': 'Bearer ' + authData.token,
                 'Content-Type': 'application/json'
@@ -296,10 +310,9 @@ window.cancelAppointment = async function (appointmentId) {
 
         if (response.ok) {
             alert("Randevu başarıyla iptal edildi.");
-            window.filterAppointments('all'); // Tabloyu tazele
+            window.filterAppointments('all');
         } else {
             const errorText = await response.text();
-            // Backend'den gelen "24 saat kuralı" veya "Geçmiş iptal edilemez" mesajlarını gösterir
             alert("Hata: " + errorText);
         }
     } catch (error) {
@@ -307,6 +320,7 @@ window.cancelAppointment = async function (appointmentId) {
         alert("Bağlantı hatası oluştu.");
     }
 };
+
 // RenderTable fonksiyonunu şu şekilde güncelleyin:
 function renderTable(data) {
     const tbody = document.getElementById('appointmentTableBody');
@@ -318,7 +332,7 @@ function renderTable(data) {
     }
 
     tbody.innerHTML = data.map(app => {
-        // ZİNCİRLEME KONTROL (Optional Chaining) ekleyerek undefined hatalarını önleyin
+
         const doctorName = app.slot?.doctor?.user
             ? `Dr. ${app.slot.doctor.user.firstName} ${app.slot.doctor.user.lastName}`
             : "Bilinmeyen Doktor";

@@ -37,18 +37,18 @@ public class SecurityConfig {
                 .headers(headers -> headers
                         .xssProtection(xss -> xss.headerValue(
                                 org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
-                       
+
                         .contentSecurityPolicy(cps -> cps.policyDirectives("script-src 'self' 'unsafe-inline'")))
                 .authorizeHttpRequests(auth -> auth
-                      
+
                         .requestMatchers(
                                 "/",
                                 "/index.html",
                                 "/login.html",
                                 "/register.html",
-                                "/reset-password.html", 
+                                "/reset-password.html",
                                 "/patient.html",
-                                "/doctor.html",
+                                "/doctor-dashboard.html",
                                 "/css/**",
                                 "/javascript/**",
                                 "/js/**",
