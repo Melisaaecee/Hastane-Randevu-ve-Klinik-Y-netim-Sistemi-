@@ -42,4 +42,7 @@ public interface PenaltyRepository extends JpaRepository<Penalty, Long> {
     // 7. Tarihe göre sıralı getirme (En yeni ceza en üstte)
     // Admin için daha düzenli bir görünüm sağlar.
     List<Penalty> findByPatientUserTcknOrderByPenaltyStartDateDesc(String tckn);
+
+
+    boolean existsByPatientIdAndActiveTrueAndPenaltyEndDateAfter(Long patientId, LocalDateTime now);
 }

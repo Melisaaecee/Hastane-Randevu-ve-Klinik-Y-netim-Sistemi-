@@ -22,6 +22,7 @@ public class AppointmentService {
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
     private final PenaltyService penaltyService;
+    private final MailService mailService;
 
     // CREATE
     @Transactional
@@ -144,6 +145,13 @@ public class AppointmentService {
         appointment.setStatus(AppointmentStatus.NOT_ATTENDED);
 
         penaltyService.createPenaltyFromAppointment(appointment);
+
+        // Hastaya ceza maili gönder
+        mailService.sendPenaltyMail(
+        appointment.getPatient().getUser().getEmail(),
+        appointment.getPatient().getUser().getFirstName() + " " + appointment.getPatient().getUser().getLastName(),
+        appointment.getSlot().getStartTime().toString()
+    );
 
         appointmentRepository.save(appointment);
     }

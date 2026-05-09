@@ -63,4 +63,25 @@ public class MailService {
 
         mailSender.send(message);
     }
+
+
+    @Transactional
+    public void sendPenaltyMail(String to, String fullName, String appointmentDate) {
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        message.setFrom("akilli.kutuphane6@gmail.com");
+        message.setTo(to);
+        message.setSubject("Randevu Devamsızlığı ve Kısıtlama Bilgilendirmesi");
+
+        String emailContent = "Sayın " + fullName + ",\n\n" +
+                appointmentDate + " tarihindeki randevunuza katılım sağlamadığınız sistemimize işlenmiştir.\n\n" +
+                "Hastane politikalarımız gereği, randevusuna gelmeyen hastalarımızın yeni randevu alması " +
+                "7 gün süreyle kısıtlanmaktadır.\n\n" +
+                "Cezanızın bitiş tarihinden itibaren tekrar randevu oluşturabilirsiniz.\n\n" +
+                "Anlayışınız için teşekkür eder, sağlıklı günler dileriz.\nHastane Yönetim Sistemi Ekibi";
+
+        message.setText(emailContent);
+
+        mailSender.send(message);
+    }
 }

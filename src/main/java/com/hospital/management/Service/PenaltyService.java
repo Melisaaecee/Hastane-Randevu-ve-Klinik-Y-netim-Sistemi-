@@ -21,8 +21,12 @@ public class PenaltyService {
 
     // HASTANIN AKTİF CEZASI VAR MI?
     public boolean hasActivePenalty(Long patientId) {
-        return penaltyRepository.existsByPatientIdAndActiveTrue(patientId);
-    }
+    // Sadece 'active' olması yetmez, bitiş tarihinin de şu andan ileride olması gerekir
+    return penaltyRepository.existsByPatientIdAndActiveTrueAndPenaltyEndDateAfter(
+            patientId, 
+            LocalDateTime.now()
+    );
+}
 
     // HASTANIN TÜM CEZALARI
     public List<Penalty> getPatientPenalties(Long patientId) {
