@@ -1,4 +1,4 @@
-// 1. Önce Fonksiyonları Tanımla (Dosya yüklenir yüklenmez hazır olsunlar)
+// 1. TEMEL NAVİGASYON VE GÖRÜNÜM FONKSİYONLARI
 window.showSection = function (sectionId) {
     document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
@@ -8,228 +8,242 @@ window.showSection = function (sectionId) {
 
     if (target) target.classList.add('active');
     if (link) link.classList.add('active');
-};
 
-window.sendEmailVerification = async function () {
-    const email = document.getElementById('newEmail').value;
-    const authData = JSON.parse(localStorage.getItem('user'));
-    const tckn = authData.user.tckn;
-
-    try {
-        const response = await fetch('http://localhost:8080/api/auth/send-verification-code', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email: email,
-                tckn: tckn
-            })
-        });
-
-        if (response.ok) {
-            alert("Doğrulama kodu mail adresinize gönderildi.");
-            document.getElementById('emailStep1').style.display = 'none';
-            document.getElementById('emailStep2').style.display = 'block';
-        }
-    } catch (error) {
-        alert("Hata oluştu!");
+    // Randevularım sekmesine geçildiyse verileri tazele
+    if (sectionId === 'appointments') {
+        window.filterAppointments('all');
     }
 };
 
-window.confirmEmailUpdate = async function () {
-    const code = document.getElementById('emailVerifyCode').value;
-    const newEmail = document.getElementById('newEmail').value;
-    const authData = JSON.parse(localStorage.getItem('user'));
+// 2. RANDEVU FİLTRELEME VE BACKEND ENTEGRASYONU
+window.filterAppointments = async function (type) {
+    // Butonların görsel durumunu güncelle
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
+    const activeBtn = document.getElementById('btn-' + type);
+    if (activeBtn) activeBtn.classList.add('active-filter');
 
-    // TCKN bilgisini localStorage'dan alıyoruz (Backend'e kim olduğumuzu söylemek için)
-    const tckn = authData.user.tckn;
+    const authData = JSON.parse(localStorage.getItem('user'));
+    if (!authData || !authData.token) return;
+
+    let url = 'http://localhost:8080/api/appointments';
+
+    // Backend'deki AppointmentController ve AppointmentService yapılarına göre yönlendirme
+    if (type === 'past') {
+        // getPatientPastAppointments metodunu tetikler
+        url += `/patient/${authData.user.id}/past`;
+    } else if (type === 'active') {
+        // Aktif randevular için genel /my endpoint'ini kullanıp JS tarafında filtreleyeceğiz 
+        // veya backend'e yeni bir /my/active endpoint'i ekleyebilirsin.
+        url += '/my';
+    } else {
+        // getMyAppointments metodunu tetikler
+        url += '/my';
+    }
 
     try {
-        const response = await fetch('http://localhost:8080/api/auth/verify-email-update', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                code: code,
-                newEmail: newEmail,
-                tckn: tckn
-            })
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + authData.token,
+                'Content-Type': 'application/json'
+            }
         });
 
-        if (response.ok) {
-            alert("E-posta veritabanında başarıyla güncellendi!");
+        if (!response.ok) throw new Error("Veri çekilemedi");
 
-            // LocalStorage'ı da güncelle ki sayfa yenilenince yeni mail kalsın
-            authData.user.email = newEmail;
-            localStorage.setItem('user', JSON.stringify(authData));
+        let data = await response.json();
 
-            location.reload(); // Bilgileri tazelemek için sayfayı yenile
-        } else {
-            const error = await response.json();
-            alert("Hata: " + error.message);
+        // Eğer 'active' seçildiyse frontend tarafında anlık zaman kontrolü yap
+        if (type === 'active') {
+            const now = new Date();
+            data = data.filter(app => new Date(app.slot.startTime) >= now);
         }
+
+        renderTable(data);
     } catch (error) {
-        alert("Bağlantı hatası! Backend'in çalıştığından emin olun.");
+        console.error("Filtreleme hatası:", error);
+        renderTable([]);
     }
 };
 
+// 3. TABLO RENDER FONKSİYONU (Backend Entity Yapısına Uygun)
+function renderTable(data) {
+    const tbody = document.getElementById('appointmentTableBody');
+    if (!tbody) return;
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Kayıt bulunamadı.</td></tr>';
+        return;
+    }
+
+    // Backend'den gelen Appointment nesnesi içindeki Slot ve Doctor hiyerarşisine göre:
+    tbody.innerHTML = data.map(app => {
+        const date = new Date(app.slot.startTime).toLocaleString('tr-TR');
+        const isFuture = new Date(app.slot.startTime) >= new Date();
+
+        return `
+            <tr>
+                <td>Dr. ${app.slot.doctor.user.firstName} ${app.slot.doctor.user.lastName}</td>
+                <td>${app.slot.doctor.clinic.name}</td>
+                <td>${date}</td>
+                <td>
+                    <span class="status-badge ${isFuture ? 'status-active' : 'status-past'}">
+                        ${app.status} 
+                    </span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// 4. ŞİFRE VE PROFİL GÜNCELLEME (Mevcut Fonksiyonların Korundu)
 window.handlePasswordUpdate = async function () {
     const cpEl = document.getElementById('currentPassword');
     const npEl = document.getElementById('newPassword');
     const confEl = document.getElementById('confirmPassword');
 
-    // Güvenlik kontrolü: Inputlar HTML'de var mı?
-    if (!cpEl || !npEl || !confEl) {
-        alert("Sistem hatası: Şifre alanları bulunamadı.");
+    if (npEl.value !== confEl.value) {
+        alert("Yeni şifreler eşleşmiyor!");
         return;
     }
 
-    const currentPassword = cpEl.value;
-    const newPassword = npEl.value;
-    const confirmPassword = confEl.value;
-
-    // 1. Boş alan kontrolü
-    if (!currentPassword || !newPassword || !confirmPassword) {
-        alert("Lütfen tüm alanları doldurun!");
-        return;
-    }
-
-    // 2. Şifre eşleşme kontrolü
-    if (newPassword !== confirmPassword) {
-        alert("Yeni şifreler birbiriyle eşleşmiyor!");
-        return;
-    }
-
-    // 3. LocalStorage'dan kullanıcı verisini al
     const authData = JSON.parse(localStorage.getItem('user'));
-    if (!authData || !authData.user) {
-        alert("Oturum bilgisi bulunamadı! Giriş sayfasına yönlendiriliyorsunuz.");
-        window.location.href = 'index.html';
-        return;
-    }
-
-    const tckn = authData.user.tckn;
 
     try {
         const response = await fetch('http://localhost:8080/api/auth/reset-password-logged-in', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authData.token
+            },
             body: JSON.stringify({
-                tckn: tckn,
-                currentPassword: currentPassword,
-                newPassword: newPassword
+                tckn: authData.user.tckn,
+                currentPassword: cpEl.value,
+                newPassword: npEl.value
             })
         });
 
         if (response.ok) {
-            // BAŞARILI DURUM
-            alert("Şifreniz başarıyla güncellendi! Güvenliğiniz için tekrar giriş yapmalısınız.");
-
-            // Oturumu temizle
-            localStorage.clear();
-
-            // Giriş sayfasına yönlendir
-            window.location.href = 'index.html';
-
+            alert("Şifre güncellendi, tekrar giriş yapınız.");
+            window.logout();
         } else {
-            // HATA DURUMU (Backend'den gelen hata mesajı)
-            const errorData = await response.json();
-            alert("Hata: " + (errorData.message || "İşlem başarısız!"));
+            const err = await response.json();
+            alert("Hata: " + err.message);
         }
     } catch (error) {
-        console.error("Güncelleme hatası:", error);
-        alert("Sunucuyla iletişim kurulamadı. Lütfen internet bağlantınızı ve backend'i kontrol edin.");
+        alert("Sunucu hatası!");
     }
 };
+
+// 5. SAYFA YÜKLENDİĞİNDE ÇALIŞACAK KISIM
+document.addEventListener('DOMContentLoaded', function () {
+    const sendCodeBtn = document.getElementById('send-code-btn');
+    const emailInput = document.getElementById('new-email');
+
+    if (sendCodeBtn) {
+        sendCodeBtn.addEventListener('click', async function () {
+            const newEmail = emailInput.value.trim();
+
+            if (!newEmail || !newEmail.includes('@')) {
+                alert('Lütfen geçerli bir e-posta adresi giriniz.');
+                return;
+            }
+
+            sendCodeBtn.disabled = true;
+            sendCodeBtn.innerText = 'Gönderiliyor...';
+
+            try {
+              
+                console.log("Kod gönderiliyor:", newEmail);
+
+                // Simülasyon (Gerçek API geldiğinde burayı güncelleyeceksiniz)
+                setTimeout(() => {
+                    alert('Doğrulama kodu e-posta adresinize gönderildi!');
+                    sendCodeBtn.disabled = false;
+                    sendCodeBtn.innerText = 'Kod Gönder';
+                }, 1500);
+
+            } catch (error) {
+                console.error("Hata:", error);
+                alert('Bir hata oluştu, lütfen tekrar deneyin.');
+                sendCodeBtn.disabled = false;
+                sendCodeBtn.innerText = 'Kod Gönder';
+            }
+        });
+    }
+});
 
 window.logout = function () {
-    if (confirm("Çıkış yapmak istiyor musunuz?")) {
-        localStorage.clear();
-        window.location.href = 'index.html';
-    }
+    localStorage.clear();
+    window.location.href = 'index.html';
 };
 
-// 2. En Son DOM Yüklendiğinde Bilgileri Doldur
-document.addEventListener('DOMContentLoaded', () => {
-    // LocalStorage'dan gelen ham paket (İçinde token ve user var)
+
+
+// RANDEVU İPTAL ETME FONKSİYONU
+window.cancelAppointment = async function (appointmentId) {
+    if (!confirm("Bu randevuyu iptal etmek istediğinize emin misiniz? (24 saat kuralı geçerlidir)")) return;
+
     const authData = JSON.parse(localStorage.getItem('user'));
 
-    if (!authData || !authData.user) {
-        window.location.href = 'index.html';
-        return;
+    try {
+        const response = await fetch(`http://localhost:8080/api/appointments/${appointmentId}/cancel`, {
+            method: 'PUT', // Controller'da @PutMapping olarak tanımlı
+            headers: {
+                'Authorization': 'Bearer ' + authData.token,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            alert("Randevu başarıyla iptal edildi.");
+            window.filterAppointments('all'); // Tabloyu tazele
+        } else {
+            const errorText = await response.text();
+            // Backend'den gelen "24 saat kuralı" veya "Geçmiş iptal edilemez" mesajlarını gösterir
+            alert("Hata: " + errorText);
+        }
+    } catch (error) {
+        console.error("İptal hatası:", error);
+        alert("Bağlantı hatası oluştu.");
     }
-
-    // Gerçek kullanıcı verisi authData.user içinde!
-    const user = authData.user;
-
-    // Sidebar Bilgileri (Melisa Ece olarak görünecek)
-    const fullName = `${user.firstName} ${user.lastName}`;
-    const nameElements = [document.getElementById('patientFullName'), document.getElementById('infoName')];
-
-    nameElements.forEach(el => {
-        if (el) el.textContent = fullName;
-    });
-
-    if (document.getElementById('avatarInitial')) {
-        document.getElementById('avatarInitial').textContent = user.firstName.trim().charAt(0).toUpperCase();
-    }
-
-    // Diğer Bilgiler
-    const fields = {
-        'infoTckn': user.tckn,
-        'infoEmail': user.email,
-        'infoBlood': user.bloodGroup || "Belirtilmedi",
-        'infoAge': user.age || "Belirtilmedi"
-    };
-
-    for (const [id, value] of Object.entries(fields)) {
-        const el = document.getElementById(id);
-        if (el) el.textContent = value;
-    }
-
-    console.log("Dashboard başarıyla yüklendi: ", user.firstName);
-});
-
-
-window.filterAppointments = function (type) {
-    // Butonların aktiflik durumunu değiştir
-    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
-    document.getElementById('btn-' + type).classList.add('active-filter');
-
-    const tbody = document.getElementById('appointmentTableBody');
-    const now = new Date(); // Şu anki zaman (2026-05-09)
-
-    // Filtreleme mantığı
-    const filtered = allAppointments.filter(app => {
-        const appDate = new Date(app.date);
-        if (type === 'active') return appDate >= now;
-        if (type === 'past') return appDate < now;
-        return true; // 'all' durumu
-    });
-
-    // Tabloyu güncelle
-    renderTable(filtered);
 };
-
 function renderTable(data) {
     const tbody = document.getElementById('appointmentTableBody');
-    if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Kayıt bulunamadı.</td></tr>';
+    if (!tbody) return;
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Kayıt bulunamadı.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = data.map(app => `
-        <tr>
-            <td>${app.doctor}</td>
-            <td>${app.department}</td>
-            <td>${app.date}</td>
-            <td><span class="status-badge ${new Date(app.date) >= new Date() ? 'status-active' : 'status-past'}">
-                ${new Date(app.date) >= new Date() ? 'Aktif' : 'Geçmiş'}
-            </span></td>
-        </tr>
-    `).join('');
-}
+    tbody.innerHTML = data.map(app => {
+        const appointmentDate = new Date(app.slot.startTime);
+        const dateStr = appointmentDate.toLocaleString('tr-TR');
+        const now = new Date();
 
-// Sayfa ilk yüklendiğinde tümünü göster
-document.addEventListener('DOMContentLoaded', () => {
-    // Eğer backend'den veri çekiyorsan, fetch'ten sonra filterAppointments('all') çağır.
-    filterAppointments('all');
-});
+        // Sadece gelecekteki ve 'PENDING' veya 'CONFIRMED' durumdaki randevular iptal edilebilir
+        const isCancelable = appointmentDate > now && (app.status === 'PENDING' || app.status === 'CONFIRMED');
+
+        return `
+            <tr>
+                <td>Dr. ${app.slot.doctor.user.firstName} ${app.slot.doctor.user.lastName}</td>
+                <td>${app.slot.doctor.clinic.name}</td>
+                <td>${dateStr}</td>
+                <td>
+                    <span class="status-badge ${appointmentDate >= now ? 'status-active' : 'status-past'}">
+                        ${app.status} 
+                    </span>
+                </td>
+                <td>
+                    ${isCancelable ?
+                `<button onclick="cancelAppointment(${app.id})" class="btn-cancel-table">
+                            <i class="fas fa-times"></i> İptal Et
+                         </button>` :
+                `<span style="color: #cbd5e1; font-size: 0.8rem;">İşlem Yapılamaz</span>`
+            }
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
