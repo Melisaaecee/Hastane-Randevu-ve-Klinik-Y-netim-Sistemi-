@@ -1,6 +1,5 @@
 package com.hospital.management.Config;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -32,24 +31,40 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) 
-                // Merkezi CORS yapılandırmasını aktif ettik
-                .cors(Customizer.withDefaults()) 
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .headers(headers -> headers
                         .xssProtection(xss -> xss.headerValue(
                                 org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
-                        .contentSecurityPolicy(cps -> cps.policyDirectives("script-src 'self'")))
+                       
+                        .contentSecurityPolicy(cps -> cps.policyDirectives("script-src 'self' 'unsafe-inline'")))
                 .authorizeHttpRequests(auth -> auth
+                      
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/login.html",
+                                "/register.html",
+                                "/reset-password.html", 
+                                "/patient.html",
+                                "/doctor.html",
+                                "/css/**",
+                                "/javascript/**",
+                                "/js/**",
+                                "/images/**",
+                                "/favicon.ico")
+                        .permitAll()
+                        // 2. KİMLİK DOĞRULAMA VE GENEL ENDPOINTLER
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/cities/**", "/api/districts/**").permitAll()
+                        .requestMatchers("/api/doctors/**").permitAll()
+                        .requestMatchers("/api/slots/**").permitAll()
 
-                        // --- TEST İÇİN EKLENEN KISIM ---
-                        .requestMatchers("/api/doctors/**").permitAll() 
-                        .requestMatchers("/api/slots/**").permitAll()   
-                        // ------------------------------
-
+                        // 3. ROL BAZLI ERİŞİM
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // 4. GERİ KALAN HER ŞEY AUTHENTICATED
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
@@ -63,19 +78,13 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // --- CORS YAPILANDIRMASI (Eklenen Kısım) ---
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        // Frontend adreslerini buraya ekledik
-        configuration.setAllowedOrigins(Arrays.asList("http://127.0.0.1:5500", "http://localhost:5500"));
-        
-        // Tüm metodlara ve header'lara izin verdik
+
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080", "http://127.0.0.1:8080"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
-        
-        // Kimlik bilgilerine (Token vb.) izin ver
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -93,7 +102,8 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    @PostConstruct
+    // Async threadlerde SecurityContext'i taşımak için
+    @jakarta.annotation.PostConstruct
     public void enableAuthOnAsyncThreads() {
         SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
     }

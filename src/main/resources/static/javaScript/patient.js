@@ -27,16 +27,15 @@ window.filterAppointments = async function (type) {
 
     let url = 'http://localhost:8080/api/appointments';
 
-    // Backend'deki AppointmentController ve AppointmentService yapılarına göre yönlendirme
+
     if (type === 'past') {
-        // getPatientPastAppointments metodunu tetikler
+
         url += `/patient/${authData.user.id}/past`;
     } else if (type === 'active') {
-        // Aktif randevular için genel /my endpoint'ini kullanıp JS tarafında filtreleyeceğiz 
-        // veya backend'e yeni bir /my/active endpoint'i ekleyebilirsin.
+
         url += '/my';
     } else {
-        // getMyAppointments metodunu tetikler
+
         url += '/my';
     }
 
@@ -53,7 +52,7 @@ window.filterAppointments = async function (type) {
 
         let data = await response.json();
 
-        // Eğer 'active' seçildiyse frontend tarafında anlık zaman kontrolü yap
+
         if (type === 'active') {
             const now = new Date();
             data = data.filter(app => new Date(app.slot.startTime) >= now);
@@ -76,7 +75,7 @@ function renderTable(data) {
         return;
     }
 
-    // Backend'den gelen Appointment nesnesi içindeki Slot ve Doctor hiyerarşisine göre:
+
     tbody.innerHTML = data.map(app => {
         const date = new Date(app.slot.startTime).toLocaleString('tr-TR');
         const isFuture = new Date(app.slot.startTime) >= new Date();
@@ -193,7 +192,7 @@ window.sendEmailVerification = async function () {
     const sendCodeBtn = document.getElementById('send-code-btn');
     const newEmail = emailInput.value.trim();
 
-    // LocalStorage'dan kullanıcı verilerini al (TCKN için)
+
     const authData = JSON.parse(localStorage.getItem('user'));
 
     if (!newEmail || !newEmail.includes('@')) {
@@ -218,7 +217,7 @@ window.sendEmailVerification = async function () {
             },
             body: JSON.stringify({
                 email: newEmail,
-                tckn: authData.user.tckn // Backend tckn bekliyor
+                tckn: authData.user.tckn
             })
         });
 
@@ -308,6 +307,7 @@ window.cancelAppointment = async function (appointmentId) {
         alert("Bağlantı hatası oluştu.");
     }
 };
+// RenderTable fonksiyonunu şu şekilde güncelleyin:
 function renderTable(data) {
     const tbody = document.getElementById('appointmentTableBody');
     if (!tbody) return;
@@ -318,20 +318,25 @@ function renderTable(data) {
     }
 
     tbody.innerHTML = data.map(app => {
-        const appointmentDate = new Date(app.slot.startTime);
-        const dateStr = appointmentDate.toLocaleString('tr-TR');
+        // ZİNCİRLEME KONTROL (Optional Chaining) ekleyerek undefined hatalarını önleyin
+        const doctorName = app.slot?.doctor?.user
+            ? `Dr. ${app.slot.doctor.user.firstName} ${app.slot.doctor.user.lastName}`
+            : "Bilinmeyen Doktor";
+
+        const clinicName = app.slot?.doctor?.clinic?.name || "Bilinmeyen Klinik";
+        const startTime = app.slot?.startTime ? new Date(app.slot.startTime) : new Date();
+        const dateStr = startTime.toLocaleString('tr-TR');
         const now = new Date();
 
-        // Sadece gelecekteki ve 'PENDING' veya 'CONFIRMED' durumdaki randevular iptal edilebilir
-        const isCancelable = appointmentDate > now && (app.status === 'PENDING' || app.status === 'CONFIRMED');
+        const isCancelable = startTime > now && (app.status === 'PENDING' || app.status === 'CONFIRMED');
 
         return `
             <tr>
-                <td>Dr. ${app.slot.doctor.user.firstName} ${app.slot.doctor.user.lastName}</td>
-                <td>${app.slot.doctor.clinic.name}</td>
+                <td>${doctorName}</td>
+                <td>${clinicName}</td>
                 <td>${dateStr}</td>
                 <td>
-                    <span class="status-badge ${appointmentDate >= now ? 'status-active' : 'status-past'}">
+                    <span class="status-badge ${startTime >= now ? 'status-active' : 'status-past'}">
                         ${app.status} 
                     </span>
                 </td>

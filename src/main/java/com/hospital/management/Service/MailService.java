@@ -27,8 +27,7 @@ public class MailService {
 
         message.setSubject("Hastane Yönetim Sistemi | Şifre Sıfırlama Talebi");
 
-        // MailService.java
-        String resetUrl = "http://127.0.0.1:5500/src/main/resources/static/resetPassword.html?token=" + token;
+        String resetUrl = "http://localhost:8080/reset-password.html?token=" + token;
         String emailContent = "Sayın Kullanıcımız,\n\n" +
                 "Hesabınız için şifre sıfırlama talebinde bulundunuz. " +
                 "Aşağıdaki bağlantıya tıklayarak yeni şifrenizi belirleyebilirsiniz:\n\n" +
