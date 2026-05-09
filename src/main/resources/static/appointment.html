@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Hastane Yönetim Sistemi | Randevu Al</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Font Awesome ikonları için -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+<div class="main-wrapper">
+    <!-- Üst Bilgi Paneli -->
+    <header class="dashboard-header">
+        <div class="logo">🩺 Hastane<span>Yönetimi</span></div>
+        <div class="user-profile">
+            <span id="userNameDisplay">Hoş geldiniz, Ahmet Yılmaz</span>
+            <button class="btn-logout-small" onclick="logout()">Çıkış</button>
+        </div>
+    </header>
+
+    <div class="appointment-grid">
+        <!-- SOL TARAF: Seçim Formu -->
+        <div class="auth-card appointment-selection">
+            <h2>Randevu <span>Al</span></h2>
+            <p class="subtitle">Lütfen poliklinik ve doktor seçimi yapınız.</p>
+            
+            <div id="errorMessage" class="error-box">Lütfen tüm alanları doldurun!</div>
+
+            <div class="input-group">
+                <label><i class="fa-solid fa-hospital"></i> Poliklinik</label>
+                <select id="clinicSelect" onchange="loadDoctors()">
+                    <option value="">Seçiniz...</option>
+                    <option value="kardiyoloji">Kardiyoloji</option>
+                    <option value="goz">Göz Hastalıkları</option>
+                    <option value="dahiliye">İç Hastalıkları (Dahiliye)</option>
+                    <option value="ortopedi">Ortopedi</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label><i class="fa-solid fa-user-doctor"></i> Doktor</label>
+                <select id="doctorSelect" disabled>
+                    <option value="">Önce poliklinik seçin...</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label><i class="fa-solid fa-calendar-days"></i> Randevu Tarihi</label>
+                <input type="date" id="appointmentDate" min="">
+            </div>
+
+            <button id="checkBtn" onclick="prepareSummary()">Randevu Bilgilerini Kontrol Et</button>
+        </div>
+
+        <!-- SAĞ TARAF: Özet ve Onay (Başlangıçta Şeffaf/Pasif) -->
+        <div class="auth-card appointment-summary" id="summaryCard" style="opacity: 0.5; pointer-events: none;">
+            <h2>Randevu <span>Özeti</span></h2>
+            <p class="subtitle">Seçtiğiniz bilgiler aşağıdadır.</p>
+
+            <div class="summary-details">
+                <div class="summary-item">
+                    <span>Poliklinik:</span>
+                    <strong id="sumClinic">-</strong>
+                </div>
+                <div class="summary-item">
+                    <span>Doktor:</span>
+                    <strong id="sumDoctor">-</strong>
+                </div>
+                <div class="summary-item">
+                    <span>Tarih:</span>
+                    <strong id="sumDate">-</strong>
+                </div>
+            </div>
+
+            <div class="info-note">
+                <i class="fa-solid fa-circle-info"></i>
+                Randevunuz onaylandıktan sonra SMS ile bilgilendirme yapılacaktır.
+            </div>
+
+            <button class="btn-confirm" onclick="confirmAppointment()">
+                <i class="fa-solid fa-check-double"></i> Randevuyu Onayla
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="appointment.js"></script>
+</body>
+</html>
