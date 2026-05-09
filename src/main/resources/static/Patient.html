@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hasta Paneli</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <div class="dashboard-container">
+        <aside class="glass-card">
+            <div class="user-profile">
+                <div class="avatar" id="avatarInitial">?</div>
+                <h3 id="patientFullName">Yükleniyor...</h3>
+
+                <div class="user-info-box">
+                    <div class="info-item">
+                        <strong>Kan Grubu:</strong> <span id="patientBlood">--</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Yaş:</strong> <span id="patientAge">--</span>
+                    </div>
+                </div>
+
+                <p class="account-type">Hasta Profili</p>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#" class="nav-link active">Randevularım</a>
+                <a href="#" class="nav-link">Yeni Randevu Al</a>
+                <a href="#" onclick="logout()" class="nav-link logout">Çıkış Yap</a>
+            </nav>
+        </aside>
+
+        <main class="glass-card">
+            <h1>Hoş Geldiniz, <span id="welcomeName" style="color: var(--primary-blue);">Hasta</span></h1>
+            <div class="appointment-section">
+                <h3>Randevularınız</h3>
+                <table class="appointment-table">
+                    <thead>
+                        <tr>
+                            <th>Doktor</th>
+                            <th>Branş</th>
+                            <th>Tarih</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appointmentTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script src="javascript/patient.js"></script>
+</body>
+
+</html>

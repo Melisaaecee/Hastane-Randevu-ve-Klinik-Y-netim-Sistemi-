@@ -1,89 +1,169 @@
 :root {
-    --primary-blue: #3498db;
-    --soft-blue: #eef7fd;
-    --dark-blue: #2c3e50;
-    --medical-red: #e74c3c;
-    --pure-white: #ffffff;
-    --soft-gray: #f4f7f6;
-    --border-color: #d1d9e6;
+    --primary-blue: #007bff;
+    --light-blue: #e3f2fd;
+    --dark-blue: #1e3a8a;
+    --medical-red: #ff4757;
+    --white: #ffffff;
+    --text-gray: #64748b;
+    --bg-pattern: #f0f4f8;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
 
 body {
-    background-color: var(--soft-gray);
-    /* Hafif desenli arka plan */
-    background-image: radial-gradient(#3498db1a 1px, transparent 1px);
-    background-size: 20px 20px;
+    background-color: var(--bg-pattern);
+    /* Modern Tıbbi Izgara Deseni */
+    background-image:
+        linear-gradient(var(--light-blue) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, var(--light-blue) 1.5px, transparent 1.5px);
+    background-size: 40px 40px;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
 }
 
+/* Giriş Kartı - Cam Efekti ve Yumuşak Gölge */
 .auth-card {
-    background: var(--pure-white);
-    padding: 2.5rem;
-    border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 3rem 2.5rem;
+    border-radius: 24px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     width: 100%;
-    max-width: 450px;
-    border: 1px solid var(--border-color);
+    max-width: 420px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    transition: transform 0.3s ease;
+}
+
+.auth-card:hover {
+    transform: translateY(-5px);
 }
 
 .auth-card h2 {
     color: var(--dark-blue);
     text-align: center;
-    margin-bottom: 1.5rem;
-    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 1.8rem;
+    letter-spacing: -0.5px;
 }
 
-.auth-card h2 span { color: var(--primary-blue); }
+.auth-card p.subtitle {
+    text-align: center;
+    color: var(--text-gray);
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+}
 
-.input-group { margin-bottom: 1.2rem; }
+.auth-card h2 span {
+    color: var(--primary-blue);
+}
 
-label { display: block; margin-bottom: 0.5rem; color: var(--dark-blue); font-size: 0.9rem; font-weight: 500; }
+.input-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
 
-input, select {
+label {
+    display: block;
+    margin-bottom: 0.6rem;
+    color: var(--dark-blue);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+input {
     width: 100%;
-    padding: 0.8rem;
-    border: 2px solid var(--soft-blue);
-    border-radius: 10px;
-    background: var(--soft-gray);
-    transition: all 0.3s;
+    padding: 0.9rem 1.2rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background: var(--white);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    color: var(--dark-blue);
 }
 
 input:focus {
     outline: none;
     border-color: var(--primary-blue);
-    background: white;
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.1);
 }
 
 button {
     width: 100%;
-    padding: 0.9rem;
-    background: var(--primary-blue);
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--primary-blue), #0056b3);
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
-    transition: 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
+    transition: all 0.3s ease;
 }
 
-button:hover { background: var(--dark-blue); }
+button:hover {
+    box-shadow: 0 7px 14px rgba(0, 123, 255, 0.3);
+    filter: brightness(1.1);
+}
+
+.toggle-text {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-gray);
+}
+
+.toggle-text a {
+    color: var(--primary-blue);
+    text-decoration: none;
+    font-weight: 600;
+    border-bottom: 1px solid transparent;
+    transition: 0.2s;
+}
+
+.toggle-text a:hover {
+    border-bottom: 1px solid var(--primary-blue);
+}
 
 .error-box {
-    background: #fee2e2;
+    background: #fff5f5;
     color: var(--medical-red);
-    padding: 0.7rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
+    padding: 0.8rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
     font-size: 0.85rem;
+    border-left: 4px solid var(--medical-red);
     display: none;
-    border: 1px solid #fecaca;
 }
 
-.toggle-text { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; }
-.toggle-text a { color: var(--primary-blue); text-decoration: none; font-weight: 600; }
+.user-info-box {
+    margin: 15px 0;
+    padding: 10px;
+    background: var(--light-blue);
+    border-radius: 12px;
+    font-size: 0.9rem;
+    color: var(--dark-blue);
+}
+
+.info-item {
+    margin: 5px 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.account-type {
+    font-size: 0.7rem;
+    color: var(--text-gray);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: bold;
+}
