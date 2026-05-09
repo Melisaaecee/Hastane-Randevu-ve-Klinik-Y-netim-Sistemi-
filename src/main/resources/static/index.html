@@ -3,202 +3,236 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Giriş | Sağlık Sistemi</title>
+    <!-- Paylaştığın CSS dosyası -->
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Mevcut sekme stillerin korunuyor */
+        /* Giriş sayfasına özel ek merkezleme */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header h1 span {
+            color: var(--primary-blue);
+        }
+
         .auth-tabs {
             display: flex;
-            margin-bottom: 25px;
-            border-bottom: 1px solid #eee;
             gap: 10px;
+            margin-bottom: 25px;
+            background: var(--light-blue);
+            padding: 5px;
+            border-radius: 12px;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 12px;
+            padding: 10px;
             border: none;
-            background: none;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            color: #888;
-            transition: 0.3s;
-            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+            background: transparent;
+            color: var(--text-gray);
         }
 
         .tab-btn.active {
-            color: #2563eb;
-            border-bottom: 2px solid #2563eb;
+            background: var(--white);
+            color: var(--primary-blue);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
-        /* "Şifremi Unuttum" Linki ve Modal İçin Eklemeler (CSS Bozmaz) */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-gray);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary-blue);
+        }
+
+        .error-box {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            display: none;
+            /* JS tarafından açılacak */
+            border: 1px solid #fecaca;
+            line-height: 1.4;
+        }
+
         .auth-options {
             display: flex;
             justify-content: flex-end;
-            margin: -10px 0 15px 0;
+            margin-bottom: 20px;
         }
 
         .forgot-link {
             font-size: 0.85rem;
-            color: #64748b;
-            text-decoration: none;
+            color: var(--primary-blue);
             cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .forgot-link:hover { color: #2563eb; }
+        .auth-footer {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
 
+        .auth-footer a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        /* Modal Stilleri */
         .modal-overlay {
-            display: none; /* Başlangıçta gizli */
+            display: none;
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(0, 0, 0, 0.6);
-            z-index: 1000;
-            align-items: center;
+            backdrop-filter: blur(4px);
+            z-index: 2000;
             justify-content: center;
+            align-items: center;
         }
 
         .modal-content {
             background: white;
             padding: 30px;
-            border-radius: 15px;
-            width: 400px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
             position: relative;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.3s ease-out;
         }
 
         .close-modal {
             position: absolute;
-            right: 20px; top: 15px;
-            cursor: pointer;
+            right: 20px;
+            top: 15px;
             font-size: 24px;
-            color: #94a3b8;
+            cursor: pointer;
+            color: var(--text-gray);
         }
     </style>
 </head>
 
 <body>
-    <div class="center-wrapper">
-        <div class="auth-card">
-            <div class="auth-header">
-                <h1>Sistem<span>Girişi</span></h1>
+
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Sistem<span>Girişi</span></h1>
+            <p style="color: var(--text-gray); font-size: 0.9rem; margin-top: 5px;">Sağlık Randevu Paneli</p>
+        </div>
+
+        <!-- JS switchTab fonksiyonu ile uyumlu tablar -->
+        <div class="auth-tabs">
+            <button type="button" class="tab-btn active" id="btnPatient"
+                onclick="switchTab('PATIENT'); this.classList.add('active'); document.getElementById('btnStaff').classList.remove('active')">Hasta
+                Girişi</button>
+            <button type="button" class="tab-btn" id="btnStaff"
+                onclick="switchTab('STAFF'); this.classList.add('active'); document.getElementById('btnPatient').classList.remove('active')">Personel
+                Girişi</button>
+        </div>
+
+        <!-- Hata Mesaj Alanı -->
+        <div id="errorBox" class="error-box"></div>
+
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="tckn">TC Kimlik Numarası</label>
+                <input type="text" id="tckn" name="tckn" placeholder="11 haneli TCKN" required maxlength="11">
             </div>
 
-            <div class="auth-tabs">
-                <button type="button" class="tab-btn active" id="btnPatient" onclick="window.switchTab('PATIENT')">Hasta Girişi</button>
-                <button type="button" class="tab-btn" id="btnStaff" onclick="window.switchTab('STAFF')">Personel Girişi</button>
+            <div class="input-group">
+                <label for="password">Şifre</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required>
             </div>
 
-            <div id="errorBox" class="error-box" style="display: none;"></div>
-
-            <form id="loginForm">
-                <div class="input-group">
-                    <label id="identityLabel">TC KİMLİK NO</label>
-                    <input type="text" id="tckn" placeholder="11 haneli TC numaranız" required>
-                </div>
-
-                <div class="input-group">
-                    <label>ŞİFRE</label>
-                    <input type="password" id="password" placeholder="••••••••" required>
-                </div>
-
-                <div class="auth-options">
-                    <span class="forgot-link" onclick="window.openForgotModal()">Şifremi Unuttum?</span>
-                </div>
-
-                <button type="submit" class="btn-primary">Giriş Yap</button>
-            </form>
-
-            <div class="auth-footer">
-                Henüz kayıtlı değil misiniz? <a href="register.html">Hesap Oluştur</a>
+            <div class="auth-options">
+                <span class="forgot-link" onclick="openForgotModal()">Şifremi Unuttum?</span>
             </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">Giriş Yap</button>
+        </form>
+
+        <div class="auth-footer">
+            Henüz kayıtlı değil misiniz? <a href="register.html">Hesap Oluştur</a>
         </div>
     </div>
 
+    <!-- Şifremi Unuttum Modalı -->
     <div id="forgotModal" class="modal-overlay">
         <div class="modal-content">
-            <span class="close-modal" onclick="window.closeForgotModal()">&times;</span>
-            <h2 style="margin-bottom: 10px;">Şifre <span>Sıfırla</span></h2>
-            <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 20px;">E-posta adresinize bir sıfırlama linki göndereceğiz.</p>
-            
+            <span class="close-modal" onclick="closeForgotModal()">&times;</span>
+            <h2 style="margin-bottom: 10px; color: var(--dark-blue);">Şifre <span>Sıfırla</span></h2>
+            <p style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 20px;">
+                E-posta adresinize bir sıfırlama bağlantısı gönderilecektir.
+            </p>
+
             <div class="input-group">
-                <label>E-POSTA</label>
-                <input type="email" id="forgotEmail" placeholder="mail@ornek.com">
+                <label>E-POSTA ADRESİ</label>
+                <input type="email" id="forgotEmail" placeholder="ornek@mail.com">
             </div>
-            
-            <button class="btn-primary" onclick="window.sendResetLink()" id="btnReset">Link Gönder</button>
-            <p id="forgotMsg" style="margin-top:15px; font-size:0.85rem; display:none;"></p>
+
+            <div id="forgotMessage"
+                style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem;">
+            </div>
+
+            <button type="button" class="btn-primary" id="btnReset" onclick="sendResetLink()"
+                style="width: 100%; justify-content: center;">Link Gönder</button>
         </div>
     </div>
 
+    <!-- Harici JS dosyanı en sona ekle -->
     <script src="javascript/index.js"></script>
-    <script>
-        // Tüm fonksiyonları window'a bağladık
-        window.switchTab = function(role) {
-            const label = document.getElementById('identityLabel');
-            const input = document.getElementById('tckn');
-            const btnPatient = document.getElementById('btnPatient');
-            const btnStaff = document.getElementById('btnStaff');
-
-            if (role === 'STAFF') {
-                label.innerText = "KULLANICI ADI";
-                input.placeholder = "Doktor veya Admin kullanıcı adı";
-                input.removeAttribute('maxlength');
-                btnStaff.classList.add('active');
-                btnPatient.classList.remove('active');
-            } else {
-                label.innerText = "TC KİMLİK NO";
-                input.placeholder = "11 haneli TC numaranız";
-                input.setAttribute('maxlength', '11');
-                btnPatient.classList.add('active');
-                btnStaff.classList.remove('active');
-            }
-        };
-
-        window.openForgotModal = function() {
-            document.getElementById('forgotModal').style.display = 'flex';
-        };
-
-        window.closeForgotModal = function() {
-            document.getElementById('forgotModal').style.display = 'none';
-            document.getElementById('forgotMsg').style.display = 'none';
-        };
-
-        window.sendResetLink = async function() {
-            const email = document.getElementById('forgotEmail').value;
-            const msg = document.getElementById('forgotMsg');
-            const btn = document.getElementById('btnReset');
-
-            if (!email || !email.includes('@')) {
-                alert("Geçerli bir email girin.");
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerText = "Gönderiliyor...";
-
-            try {
-                // Senin yazdığın ForgotPasswordRequest'e gidiyor
-                const response = await fetch('http://localhost:8080/api/auth/forgot-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email })
-                });
-
-                if (response.ok) {
-                    msg.style.color = "green";
-                    msg.innerText = "Sıfırlama linki gönderildi!";
-                } else {
-                    msg.style.color = "red";
-                    msg.innerText = "Hata oluştu, tekrar deneyin.";
-                }
-                msg.style.display = 'block';
-            } catch (err) {
-                alert("Sunucu hatası!");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Link Gönder";
-            }
-        };
-    </script>
 </body>
+
 </html>

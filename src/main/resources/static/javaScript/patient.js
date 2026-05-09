@@ -187,3 +187,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("Dashboard başarıyla yüklendi: ", user.firstName);
 });
+
+
+window.filterAppointments = function (type) {
+    // Butonların aktiflik durumunu değiştir
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
+    document.getElementById('btn-' + type).classList.add('active-filter');
+
+    const tbody = document.getElementById('appointmentTableBody');
+    const now = new Date(); // Şu anki zaman (2026-05-09)
+
+    // Filtreleme mantığı
+    const filtered = allAppointments.filter(app => {
+        const appDate = new Date(app.date);
+        if (type === 'active') return appDate >= now;
+        if (type === 'past') return appDate < now;
+        return true; // 'all' durumu
+    });
+
+    // Tabloyu güncelle
+    renderTable(filtered);
+};
+
+function renderTable(data) {
+    const tbody = document.getElementById('appointmentTableBody');
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Kayıt bulunamadı.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = data.map(app => `
+        <tr>
+            <td>${app.doctor}</td>
+            <td>${app.department}</td>
+            <td>${app.date}</td>
+            <td><span class="status-badge ${new Date(app.date) >= new Date() ? 'status-active' : 'status-past'}">
+                ${new Date(app.date) >= new Date() ? 'Aktif' : 'Geçmiş'}
+            </span></td>
+        </tr>
+    `).join('');
+}
+
+// Sayfa ilk yüklendiğinde tümünü göster
+document.addEventListener('DOMContentLoaded', () => {
+    // Eğer backend'den veri çekiyorsan, fetch'ten sonra filterAppointments('all') çağır.
+    filterAppointments('all');
+});
