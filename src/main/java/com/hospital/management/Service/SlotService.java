@@ -37,7 +37,7 @@ public class SlotService {
                 .collect(Collectors.toList());
     }
 
-    // Doktorun slotlarını getir 
+    // Doktorun slotlarını getir
     public List<Slot> getSlotsByDoctorId(Long doctorId) {
         return slotRepository.findByDoctorIdWithDetails(doctorId); // ✅ Fetch join
     }
@@ -56,6 +56,7 @@ public class SlotService {
                slot.setClinic(doctor.getClinic());
                }
 
+        
         // Slot nesnesine veritabanından gelen tam dolu Doktor nesnesini set ediyoruz.
         // Böylece .getUser().getId() artık NullPointerException vermeyecek.
         slot.setDoctor(doctor);
