@@ -17,23 +17,23 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Sistemde "admin" kullanıcı adıyla biri var mı bak
-        if (!userRepository.existsByUsername("admin")) {
+
+        // SADECE admin yoksa oluştur
+        if (!userRepository.existsByUsername("admin") && !userRepository.existsByEmail("admin@hastane.com")) {
+
             User admin = new User();
             admin.setUsername("admin");
-            admin.setPassword(passwordEncoder.encode("admin123")); 
+            admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setEmail("admin@hastane.com");
-            admin.setTckn("00000000000");
+            admin.setTckn("11111111111");
             admin.setFirstName("Sistem");
             admin.setLastName("Admini");
             admin.setRole(Role.ADMIN); 
-
-            
             admin.setAccountNonLocked(true);
             admin.setFailedAttempt(0);
-            userRepository.save(admin);
 
-            System.out.println(">> [SİSTEM] Saf Admin kullanıcısı oluşturuldu. (Patient kaydı yoktur)");
+            userRepository.save(admin);
+            System.out.println(" Admin kullanıcısı oluşturuldu.");
         }
     }
 }

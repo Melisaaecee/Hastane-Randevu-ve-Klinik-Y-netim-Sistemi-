@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedSoft | Admin Paneli</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fas fa-heartbeat"></i>
+            <span>Med<span style="font-weight: 800; color: #fff;">Soft</span></span>
+        </div>
+
+        <div class="sidebar-user-info">
+            <div id="avatarInitial" class="avatar-circle"></div>
+            <p id="adminFullNameDisplay" style="color: white; font-weight: 600; margin: 10px 0 5px 0;"></p>
+
+        </div>
+
+        <nav>
+            <ul>
+                <li class="active" onclick="switchTab('dashboard', event)">
+                    <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                </li>
+                <li onclick="switchTab('profile', event)">
+                    <i class="fas fa-user-cog"></i> <span>Hesap Yönetimi</span>
+                </li>
+                <li onclick="switchTab('cities', event)">
+                    <i class="fas fa-map-marker-alt"></i> <span>Şehirler</span>
+                </li>
+                <li onclick="switchTab('districts', event)">
+                    <i class="fas fa-map"></i> <span>İlçeler</span>
+                </li>
+                <li onclick="switchTab('hospitals', event)">
+                    <i class="fas fa-hospital"></i> <span>Hastaneler</span>
+                </li>
+                <li onclick="switchTab('clinics', event)">
+                    <i class="fas fa-stethoscope"></i> <span>Klinikler</span>
+                </li>
+                <li onclick="switchTab('doctors', event)">
+                    <i class="fas fa-user-md"></i> <span>Doktorlar</span>
+                </li>
+                <li onclick="switchTab('users', event)">
+                    <i class="fas fa-users"></i> <span>Kullanıcılar</span>
+                </li>
+                <li onclick="switchTab('appointments', event)">
+                    <i class="fas fa-calendar"></i> <span>Randevular</span>
+                </li>
+                <li onclick="switchTab('slots', event)">
+                    <i class="fas fa-clock"></i> <span>Slotlar</span>
+                </li>
+                <li class="logout-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> <span>Çıkış Yap</span>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <h1 id="page-title">Dashboard</h1>
+            <div class="user-status">
+                <div class="status-indicator"></div>
+                <span>Sistem Çevrimiçi</span>
+            </div>
+        </header>
+
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="tab-content active">
+            <div class="profile-grid">
+                <div class="info-item"><strong>Kullanıcı</strong><span id="count-users">0</span></div>
+                <div class="info-item"><strong>Hastane</strong><span id="count-hospitals">0</span></div>
+                <div class="info-item"><strong>Doktor</strong><span id="count-doctors">0</span></div>
+                <div class="info-item"><strong>Randevu</strong><span id="count-appointments">0</span></div>
+                <div class="info-item"><strong>Klinik</strong><span id="count-clinics">0</span></div>
+            </div>
+        </section>
+
+        <!-- PROFILE -->
+        <section id="profile" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-id-card"></i> Profil Bilgilerim</h2>
+                <div class="profile-info-box">
+                    <p><strong>Ad Soyad:</strong> <span id="me-fullname">-</span></p>
+                    <p><strong>TC Kimlik No:</strong> <span id="me-tckn">-</span></p>
+                    <p><strong>Kullanıcı Adı:</strong> <span id="me-username">-</span></p>
+                    <p><strong>Yetki:</strong> <span id="me-role">-</span></p>
+                </div>
+
+                <div id="username-change-section"
+                    style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px;">
+                    <h4><i class="fas fa-user-edit"></i> Kullanıcı Adını Değiştir</h4>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <input type="text" id="new-username-input" class="form-input" placeholder="Yeni kullanıcı adı"
+                            style="flex:1">
+                        <button onclick="handleUsernameUpdate()" class="btn-primary"
+                            style="width: auto;">Güncelle</button>
+                    </div>
+                </div>
+
+                <hr style="margin: 30px 0;">
+                <h2><i class="fas fa-key"></i> Şifre Değiştir</h2>
+                <div class="password-form" style="max-width: 420px; margin-top: 20px;">
+                    <div class="form-group">
+                        <label>Mevcut Şifre</label>
+                        <input type="password" id="currentPassword" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Yeni Şifre</label>
+                        <input type="password" id="newPassword" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Yeni Şifre (Tekrar)</label>
+                        <input type="password" id="confirmPassword" class="form-input">
+                    </div>
+                    <button onclick="handlePasswordUpdate()" class="btn-primary">Şifreyi Güncelle ve Çıkış Yap</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CITIES - ŞEHİR YÖNETİMİ -->
+        <section id="cities" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-map-marker-alt"></i> Şehir Yönetimi</h2>
+                <div class="filter-group" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" id="cityNameInput" class="form-input" placeholder="Yeni şehir adı"
+                        style="flex:1">
+                    <button onclick="addCity()" class="btn-primary" style="width: auto;">Ekle</button>
+                    <input type="text" id="citySearchInput" class="form-input" placeholder="🔍 Şehir ara..."
+                        style="flex:1" onkeyup="filterCities()">
+                    <button onclick="sortCities()" class="btn-primary" style="width: auto; background: #64748b;">Sırala
+                        (A-Z)</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Şehir Adı</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cityTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- DISTRICTS - İLÇE YÖNETİMİ -->
+        <section id="districts" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-map"></i> İlçe Yönetimi</h2>
+                <div class="filter-group" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" id="districtNameInput" class="form-input" placeholder="Yeni ilçe adı"
+                        style="flex:1">
+                    <select id="districtCitySelect" class="form-input" style="flex:1"></select>
+                    <button onclick="addDistrict()" class="btn-primary" style="width: auto;">Ekle</button>
+                    <input type="text" id="districtSearchInput" class="form-input" placeholder="🔍 İlçe ara..."
+                        style="flex:1" onkeyup="filterDistricts()">
+                    <button onclick="sortDistricts()" class="btn-primary"
+                        style="width: auto; background: #64748b;">Sırala</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>İlçe Adı</th>
+                                <th>Şehir</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="districtTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- HOSPITALS - HASTANE YÖNETİMİ -->
+        <section id="hospitals" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-hospital"></i> Hastane Yönetimi</h2>
+                <div class="filter-group" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" id="hospitalNameInput" class="form-input" placeholder="Yeni hastane adı"
+                        style="flex:1">
+                    <select id="hospitalCitySelect" class="form-input" style="flex:1"></select>
+                    <select id="hospitalDistrictSelect" class="form-input" style="flex:1"></select>
+                    <button onclick="addHospital()" class="btn-primary" style="width: auto;">Ekle</button>
+                    <input type="text" id="hospitalSearchInput" class="form-input" placeholder="🔍 Hastane ara..."
+                        style="flex:1" onkeyup="filterHospitals()">
+                    <button onclick="sortHospitals()" class="btn-primary"
+                        style="width: auto; background: #64748b;">Sırala</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Hastane Adı</th>
+                                <th>Şehir</th>
+                                <th>İlçe</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hospitalTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- CLINICS - KLİNİK YÖNETİMİ -->
+        <section id="clinics" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-stethoscope"></i> Klinik Yönetimi</h2>
+                <div class="filter-group" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" id="clinicNameInput" class="form-input" placeholder="Yeni klinik adı"
+                        style="flex:1">
+                    <select id="clinicHospitalSelect" class="form-input" style="flex:1"></select>
+                    <button onclick="addClinic()" class="btn-primary" style="width: auto;">Ekle</button>
+                    <input type="text" id="clinicSearchInput" class="form-input" placeholder="🔍 Klinik ara..."
+                        style="flex:1" onkeyup="filterClinics()">
+                    <button onclick="sortClinics()" class="btn-primary"
+                        style="width: auto; background: #64748b;">Sırala</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Klinik Adı</th>
+                                <th>Hastane</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clinicTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- DOCTORS - DOKTOR YÖNETİMİ -->
+        <section id="doctors" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-user-md"></i> Doktor Yönetimi</h2>
+                <div class="filter-group" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" id="doctorFirstName" class="form-input" placeholder="Ad" style="flex:1">
+                    <input type="text" id="doctorLastName" class="form-input" placeholder="Soyad" style="flex:1">
+                    <input type="text" id="doctorSpecialty" class="form-input" placeholder="Uzmanlık" style="flex:1">
+                    <select id="doctorClinicSelect" class="form-input" style="flex:1"></select>
+                    <button onclick="addDoctor()" class="btn-primary" style="width: auto;">Ekle</button>
+                    <input type="text" id="doctorSearchInput" class="form-input" placeholder="🔍 Doktor ara..."
+                        style="flex:1" onkeyup="filterDoctors()">
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Ad Soyad</th>
+                                <th>Uzmanlık</th>
+                                <th>Klinik</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="doctorTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- USERS -->
+        <section id="users" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-users"></i> Kullanıcılar</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>TCKN</th>
+                                <th>Rol</th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- APPOINTMENTS -->
+        <section id="appointments" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-calendar"></i> Randevular</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Hasta</th>
+                                <th>Doktor</th>
+                                <th>Durum</th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointmentTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLOTS -->
+        <section id="slots" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-clock"></i> Slotlar</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Doktor</th>
+                                <th>Zaman</th>
+                                <th>Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody id="slotTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="./javascript/admin.js"></script>
+</body>
+
+</html>

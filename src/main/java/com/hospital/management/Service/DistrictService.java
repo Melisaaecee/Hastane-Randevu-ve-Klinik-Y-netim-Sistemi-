@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +22,14 @@ public class DistrictService {
         return districtRepository.findByCityId(cityId).stream()
                 .sorted(Comparator.comparing(District::getName))
                 .toList();
+    }
+
+   
+
+    public List<District> getAllDistricts() {
+        return districtRepository.findAll().stream()
+                .sorted(Comparator.comparing(District::getName))
+                .collect(Collectors.toList());
     }
 
     public District getById(Long id) {

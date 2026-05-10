@@ -16,7 +16,6 @@ public class CustomUserDetails implements UserDetails {
         this.user = user;
     }
 
-    // ROLE BİLGİSİ
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(
@@ -30,8 +29,10 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getUsername();
+           return user.getTckn();
     }
+
+
 
     // HESAP DURUMU
     @Override

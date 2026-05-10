@@ -2,16 +2,20 @@ package com.hospital.management.Entity;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "users")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -47,14 +51,16 @@ public class User {
     private Boolean accountNonLocked = true;
 
     @Column(name = "verification_code")
-    private String verificationCode; //e-posta güncellemesi için  rastgele üretilen kodu saklar 
+    private String verificationCode; // e-posta güncellemesi için rastgele üretilen kodu saklar
 
     @Column(name = "lock_time")
     private LocalDateTime lockTime;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private Patient patient;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private Doctor doctor;
 }

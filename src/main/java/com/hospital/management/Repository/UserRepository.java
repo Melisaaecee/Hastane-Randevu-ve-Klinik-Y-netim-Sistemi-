@@ -12,7 +12,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 1. Giriş işlemi (Login) için kullanıcı adı ile bulma
     Optional<User> findByUsername(String username);
 
-    // 2. TCKN ile kullanıcı bulma (Şifre sıfırlama veya kayıt kontrolü için)
+    // 2. TCKN ile kullanıcı bulma 
     Optional<User> findByTckn(String tckn);
 
     // 3. E-posta ile kullanıcı bulma

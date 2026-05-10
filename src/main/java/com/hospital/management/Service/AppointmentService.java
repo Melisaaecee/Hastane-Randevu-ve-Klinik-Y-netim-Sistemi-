@@ -24,6 +24,10 @@ public class AppointmentService {
     private final PenaltyService penaltyService;
     private final MailService mailService;
 
+    public List<Appointment> getAllAppointments() {
+        return appointmentRepository.findAll();
+    }
+
     // CREATE
     @Transactional
     public Appointment createAppointment(Long patientId, Long slotId) {
@@ -148,10 +152,10 @@ public class AppointmentService {
 
         // Hastaya ceza maili gönder
         mailService.sendPenaltyMail(
-        appointment.getPatient().getUser().getEmail(),
-        appointment.getPatient().getUser().getFirstName() + " " + appointment.getPatient().getUser().getLastName(),
-        appointment.getSlot().getStartTime().toString()
-    );
+                appointment.getPatient().getUser().getEmail(),
+                appointment.getPatient().getUser().getFirstName() + " "
+                        + appointment.getPatient().getUser().getLastName(),
+                appointment.getSlot().getStartTime().toString());
 
         appointmentRepository.save(appointment);
     }

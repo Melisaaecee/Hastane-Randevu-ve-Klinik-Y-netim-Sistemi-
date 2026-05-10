@@ -1,12 +1,16 @@
 package com.hospital.management.Entity;
+
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "clinics")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Clinic {
@@ -23,5 +27,6 @@ public class Clinic {
     private Hospital hospital;
 
     @OneToMany(mappedBy = "clinic")
+    @JsonIgnore
     private List<Doctor> doctors;
 }

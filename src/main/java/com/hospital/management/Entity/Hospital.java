@@ -2,12 +2,13 @@ package com.hospital.management.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "hospitals")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Hospital {
@@ -27,5 +28,6 @@ public class Hospital {
     private District district;
 
     @OneToMany(mappedBy = "hospital", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Clinic> clinics;
 }

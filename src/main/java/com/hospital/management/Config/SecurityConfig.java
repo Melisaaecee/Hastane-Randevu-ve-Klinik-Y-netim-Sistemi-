@@ -37,10 +37,11 @@ public class SecurityConfig {
                 .headers(headers -> headers
                         .xssProtection(xss -> xss.headerValue(
                                 org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
-
-                        .contentSecurityPolicy(cps -> cps.policyDirectives("script-src 'self' 'unsafe-inline'")))
+                        // MIME tipi hatalarını önlemek için CSP ayarını genişlettik
+                        .contentSecurityPolicy(cps -> cps.policyDirectives(
+                                "script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com")))
                 .authorizeHttpRequests(auth -> auth
-
+                        // 1. STATİK DOSYALAR (MIME hatalarını önlemek için burası kritik)
                         .requestMatchers(
                                 "/",
                                 "/index.html",
@@ -49,29 +50,34 @@ public class SecurityConfig {
                                 "/reset-password.html",
                                 "/patient.html",
                                 "/doctor-dashboard.html",
+                                "/admin.html",
+                                "/style.css",
+                                "/admin.js",
                                 "/css/**",
-                                "/javascript/**",
                                 "/js/**",
+                                "/javascript/**",
                                 "/images/**",
                                 "/favicon.ico")
                         .permitAll()
-                        // 2. KİMLİK DOĞRULAMA VE GENEL ENDPOINTLER
+
+                        // 2. GENEL API ENDPOINTLERİ
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/cities/**", "/api/districts/**").permitAll()
                         .requestMatchers("/api/doctors/**").permitAll()
                         .requestMatchers("/api/slots/**").permitAll()
 
-                        // 3. ROL BAZLI ERİŞİM
+                        // 3. ROL BAZLI ERİŞİM (Backend'deki ROLE_ ön eki ile eşleşir)
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
 
-                        // 4. GERİ KALAN HER ŞEY AUTHENTICATED
+                        // 4. DİĞER HER ŞEY
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json");
                             response.getWriter()
-                                    .write("{\"message\": \"Kimlik dogrulama basarisiz veya oturum suresi doldu.\"}");
+                                    .write("{\"message\": \"Kimlik dogrulama basarisiz veya yetkiniz yok.\"}");
                         }))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -82,7 +88,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080", "http://127.0.0.1:8080"));
+        // ÖNEMLİ: Eğer Live Server kullanıyorsan "http://127.0.0.1:5500" eklemelisin
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:8080"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
         configuration.setAllowCredentials(true);
@@ -102,7 +110,6 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // Async threadlerde SecurityContext'i taşımak için
     @jakarta.annotation.PostConstruct
     public void enableAuthOnAsyncThreads() {
         SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);

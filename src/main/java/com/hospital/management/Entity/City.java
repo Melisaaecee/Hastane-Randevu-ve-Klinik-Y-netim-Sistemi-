@@ -5,9 +5,12 @@ import lombok.*;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "cities")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class City {
@@ -20,5 +23,6 @@ public class City {
     private String name;
 
     @OneToMany(mappedBy = "city")
+    @JsonIgnore
     private List<District> districts;
 }

@@ -4,9 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "penalties")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Penalty {
@@ -17,18 +20,20 @@ public class Penalty {
 
     @ManyToOne
     @JoinColumn(name = "patient_id", nullable = false)
+    @JsonIgnore
     private Patient patient;
 
     @ManyToOne
     @JoinColumn(name = "appointment_id", nullable = false)
-    private Appointment appointment; // 🔥 cezanın kaynağı
+    @JsonIgnore
+    private Appointment appointment;
 
     @Column(nullable = false)
-    private LocalDateTime penaltyStartDate; // Ceza başlangıcı (Randevuya gidilmeyen an)
+    private LocalDateTime penaltyStartDate;
 
     @Column(nullable = false)
-    private LocalDateTime penaltyEndDate; // Ceza bitişi (Başlangıç + 7 Gün)
+    private LocalDateTime penaltyEndDate;
 
     @Column(nullable = false)
-    private boolean active = true; // Ceza hala geçerli mi?
+    private boolean active = true;
 }

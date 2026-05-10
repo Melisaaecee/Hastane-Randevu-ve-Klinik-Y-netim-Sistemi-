@@ -5,11 +5,15 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "slots", uniqueConstraints = {
         @UniqueConstraint(columnNames = { "doctor_id", "start_time" })
 })
-@Data
+
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Slot {
@@ -26,13 +30,26 @@ public class Slot {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private SlotStatus status = SlotStatus.AVAILABLE;
+    private SlotStatus status;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor doctor;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "clinic_id", nullable = false)
     private Clinic clinic;
+
+    @OneToOne(mappedBy = "slot")
+    @JsonIgnore
+    private Appointment appointment;
+
+    @PrePersist
+    public void prePersist() {
+
+        if (status == null) {
+            status = SlotStatus.AVAILABLE;
+        }
+
+    }
 }

@@ -1,175 +1,126 @@
-// Sayfa yüklendiğinde çalışacak başlangıç ayarları
-document.addEventListener('DOMContentLoaded', () => {
-    // Eğer giriş yapmış bir kullanıcı varsa profil bilgilerini hemen ekrana bas
-    window.updateProfileUI();
-
-    // Formu dinlemeye başla
-    const loginForm = document.getElementById('loginForm');
+// Sayfa yüklendiğinde formu dinlemeye başla
+document.addEventListener("DOMContentLoaded", () => {
+    const loginForm = document.getElementById("loginForm");
     if (loginForm) {
-        loginForm.addEventListener('submit', window.handleLogin);
+        loginForm.addEventListener("submit", handleLogin);
     }
 });
 
-// Giriş İşlemi
-let loginAttempts = 0; // Deneme sayacı
 
-window.handleLogin = async function(event) {
-    event.preventDefault();
-    
-    const tckn = document.getElementById('tckn').value;
-    const password = document.getElementById('password').value;
-    const errorBox = document.getElementById('errorBox');
-
-    try {
-        const response = await fetch('http://localhost:8080/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tckn, password })
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem('user', JSON.stringify(data));
-            loginAttempts = 0; // Başarılı girişte sıfırla
-            window.location.href = 'patient.html';
-        } else {
-            loginAttempts++; // Hatalı girişte artır
-            errorBox.style.display = 'block';
-
-            if (loginAttempts === 2) {
-                // 2. Denemeden sonra özel mesaj
-                errorBox.innerHTML = "Hatalı şifre! <strong>Şifrenizi mi unuttunuz?</strong> Bir sonraki hatalı denemede hesabınız kilitlenecektir.";
-                // Şifremi unuttum linkini görsel olarak vurgulayalım
-                const forgotLink = document.querySelector('.forgot-link');
-                if (forgotLink) {
-                    forgotLink.style.color = "#2563eb";
-                    forgotLink.style.fontWeight = "bold";
-                    forgotLink.style.textDecoration = "underline";
-                }
-            } else if (loginAttempts >= 3) {
-                // 3. deneme ve sonrası (Backend zaten kilitliyor, biz sadece mesajı gösteriyoruz)
-                errorBox.innerText = "Hesabınız çok fazla hatalı deneme nedeniyle kilitlenmiştir.";
-            } else {
-                // 1. Deneme
-                errorBox.innerText = "TCKN veya Şifre hatalı!";
-            }
-        }
-    } catch (error) {
-        errorBox.style.display = 'block';
-        errorBox.innerText = "Sunucu bağlantı hatası!";
-    }
-};
-
-// Profil bilgilerini ekrana basan fonksiyon
-window.updateProfileUI = function () {
-    const rawData = localStorage.getItem('user');
-    if (!rawData) return;
-
-    try {
-        const userData = JSON.parse(rawData);
-
-        const nameDisplay = document.getElementById('userNameDisplay');
-        const bloodGroupElem = document.getElementById('bloodGroup');
-        const ageElem = document.getElementById('age');
-
-        if (nameDisplay) nameDisplay.innerText = userData.firstName + " " + userData.lastName;
-
-        // Backend'den bloodGroup ve age gelmiyorsa "Belirtilmedi" yazar
-        if (bloodGroupElem) bloodGroupElem.innerText = userData.bloodGroup || "Belirtilmedi";
-        if (ageElem) ageElem.innerText = userData.age || "??";
-    } catch (e) {
-        console.error("User verisi ayrıştırılamadı:", e);
-    }
-};
-
-// Rol bazlı yönlendirme
-window.redirectByUserRole = function (role) {
-    if (role === 'ADMIN') {
-        window.location.href = 'admin.html';
-    } else if (role === 'DOCTOR') {
-        window.location.href = 'doctor.html';
-    } else {
-        window.location.href = 'patient.html';
-    }
-};
-
-window.switchTab = function (type) {
+// index.js dosyanın ilgili kısmı tam olarak böyle olsun:
+window.switchTab = function (role) {
     const label = document.querySelector('label[for="tckn"]');
     const input = document.getElementById('tckn');
-    if (type === 'STAFF') {
-        label.innerText = "Kullanıcı Adı";
+    const patientBtn = document.getElementById("btnPatient");
+    const staffBtn = document.getElementById("btnStaff");
+
+    if (role === "STAFF") {
+        label.innerText = "Kullanıcı Adı / TCKN";
         input.placeholder = "Doktor/Admin kullanıcı adı";
+        staffBtn.classList.add("active");
+        patientBtn.classList.remove("active");
     } else {
         label.innerText = "TC Kimlik Numarası";
         input.placeholder = "11 haneli TCKN";
+        patientBtn.classList.add("active");
+        staffBtn.classList.remove("active");
     }
-}
+};
 
-// Hata gösterimi
-window.showError = function (message) {
-    const errorBox = document.getElementById('errorBox');
-    if (errorBox) {
-        errorBox.textContent = message;
-        errorBox.style.display = 'block';
+// LOGIN İŞLEMİ
+window.handleLogin = async function (e) {
+    e.preventDefault();
+
+    const tckn = document.getElementById("tckn").value;
+    const password = document.getElementById("password").value;
+    const errorBox = document.getElementById("errorBox");
+
+    // Hata kutusunu temizle
+    if (errorBox) errorBox.style.display = "none";
+
+    try {
+        const res = await fetch("http://localhost:8080/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tckn, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            showError(data.message || "Giriş bilgileri hatalı!");
+            return;
+        }
+
+        // Başarılı Giriş: Veriyi kaydet
+        localStorage.setItem("user", JSON.stringify(data));
+
+        // Rolü temizle ve yönlendir (Spring Security'den gelen ROLE_ ön ekini temizler)
+        const rawRole = data.user?.role || data.role || "";
+        const role = rawRole.replace("ROLE_", "");
+
+        if (role === "ADMIN") location.href = "admin.html";
+        else if (role === "DOCTOR") location.href = "doctor.html";
+        else if (role === "PATIENT") location.href = "patient.html";
+        else showError("Bilinmeyen Yetki!");
+
+    } catch (err) {
+        showError("Sunucu bağlantı hatası!");
+    }
+};
+
+// MODAL KONTROLLERİ
+window.openForgotModal = function () {
+    document.getElementById("forgotModal").style.display = "flex";
+};
+
+window.closeForgotModal = function () {
+    document.getElementById("forgotModal").style.display = "none";
+};
+
+// HATA MESAJI GÖSTERİMİ
+window.showError = function (msg) {
+    const box = document.getElementById("errorBox");
+    if (box) {
+        box.style.display = "block";
+        box.textContent = msg;
     } else {
-        alert(message);
+        alert(msg);
     }
 };
 
-// Çıkış işlemi
-window.logout = function () {
-    localStorage.clear();
-    window.location.href = 'index.html';
-};
+// ŞİFRE SIFIRLAMA
+window.sendResetLink = async function () {
+    const email = document.getElementById("forgotEmail").value;
+    const msg = document.getElementById("forgotMessage");
 
-// Modalı Aç
-window.openForgotModal = function() {
-    document.getElementById('forgotModal').style.display = 'flex';
-    document.getElementById('forgotMessage').style.display = 'none';
-};
-
-// Modalı Kapat
-window.closeForgotModal = function() {
-    document.getElementById('forgotModal').style.display = 'none';
-};
-
-// Sıfırlama Linki Gönder
-window.sendResetLink = async function() {
-    const email = document.getElementById('forgotEmail').value;
-    const btn = document.getElementById('btnReset');
-    const msg = document.getElementById('forgotMessage');
-
-    if (!email || !email.includes('@')) {
-        alert("Lütfen geçerli bir e-posta adresi giriniz.");
+    if (!email.includes("@")) {
+        msg.style.color = "#991b1b"; // Koyu kırmızı
+        msg.textContent = "Geçerli bir email giriniz.";
+        msg.style.display = "block";
         return;
     }
 
-    try {
-        btn.disabled = true;
-        btn.innerText = "Gönderiliyor...";
+    msg.style.display = "block";
+    msg.style.color = "#1e40af"; // Mavi
+    msg.textContent = "Gönderiliyor...";
 
-        const response = await fetch('http://localhost:8080/api/auth/forgot-password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email })
+    try {
+        const res = await fetch("http://localhost:8080/api/auth/forgot-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
         });
 
-        if (response.ok) {
-            msg.style.color = "#059669";
-            msg.innerText = "Sıfırlama linki e-posta adresinize gönderildi. Lütfen gelen kutunuzu (ve spam klasörünü) kontrol edin.";
-            msg.style.display = 'block';
+        if (res.ok) {
+            msg.style.color = "#15803d"; // Yeşil
+            msg.textContent = "Sıfırlama bağlantısı gönderildi.";
         } else {
-            const data = await response.json();
-            msg.style.color = "#dc2626";
-            msg.innerText = data.message || "E-posta gönderilirken bir hata oluştu.";
-            msg.style.display = 'block';
+            msg.style.color = "#991b1b";
+            msg.textContent = "E-posta bulunamadı.";
         }
-    } catch (error) {
-        msg.style.color = "#dc2626";
-        msg.innerText = "Sunucuya ulaşılamadı.";
-        msg.style.display = 'block';
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "Link Gönder";
+    } catch (e) {
+        msg.style.color = "#991b1b";
+        msg.textContent = "Sistem hatası.";
     }
 };

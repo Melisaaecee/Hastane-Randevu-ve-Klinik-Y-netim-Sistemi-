@@ -7,133 +7,44 @@
     <title>MedSoft | Hasta Paneli</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" href="https://api.iconify.design/fa6-solid:heart-pulse.svg?color=%23e11d48" type="image/svg+xml">
-
-    <style>
-        /* JS ile uyumlu animasyon ve geçiş efektleri */
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        .tab-content.active {
-            display: block !important;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* KUTULARI YUMUŞATAN YENİ CSS */
-        .card {
-            background: #ffffff;
-            border-radius: 20px;
-            /* Dış çerçeve yuvarlatma */
-            padding: 25px;
-            border: 1px solid #f1f5f9;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
-            /* Çok hafif gölge */
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #64748b;
-            margin-bottom: 8px;
-            margin-left: 5px;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1.5px solid #e2e8f0;
-            /* Sert siyah yerine soft gri */
-            border-radius: 12px;
-            /* Keskin köşeler yerine yuvarlak köşeler */
-            background-color: #f8fafc;
-            transition: all 0.2s ease;
-            font-size: 14px;
-            outline: none;
-            box-sizing: border-box;
-            /* Taşmaları önler */
-        }
-
-        .form-control:focus {
-            border-color: #2563eb;
-            background-color: #ffffff;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-            /* Odaklanınca mavi parıltı */
-        }
-
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            /* Buton köşeleri de yumuşatıldı */
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .btn-primary:hover {
-            background: #1d4ed8;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-        }
-
-        .nav-link.active {
-            background: rgba(255, 255, 255, 0.1);
-            border-left: 4px solid #fff;
-        }
-    </style>
 </head>
 
 <body>
 
     <aside class="sidebar">
-        <div class="logo"><i class="fas fa-heartbeat"></i> <span>Med<span>Soft</span></span></div>
+        <div class="logo">
+            <i class="fas fa-heartbeat"></i>
+            <span>Med<span style="font-weight: 800; color: #fff;">Soft</span></span>
+        </div>
 
-        <div class="sidebar-user-info"
-            style="text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-            <div id="avatarInitial"
-                style="width: 60px; height: 60px; background: #2563eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 1.5rem; font-weight: bold; color: white;">
-                -</div>
-            <p id="patientFullName" style="color: white; font-weight: 600; margin: 0;">Yükleniyor...</p>
+        <div class="sidebar-user-info">
+            <div id="avatarInitial" class="avatar-circle">H</div>
+            <p id="patientFullName" style="color: white; font-weight: 600; margin: 10px 0 5px 0;">Yükleniyor...</p>
+            <small
+                style="color: rgba(255,255,255,0.6); font-size: 11px; letter-spacing: 1px; text-transform: uppercase;">
+                Hasta
+            </small>
         </div>
 
         <nav>
             <ul>
-                <li id="link-appointments" class="nav-link active" onclick="showSection('appointments', this)">
-                    <i class="fas fa-calendar-alt"></i> <span>Randevularım</span>
+                <li class="active" onclick="showSection('appointments', event)">
+                    <i class="fas fa-calendar-check"></i> <span>Randevularım</span>
                 </li>
-                <li id="link-get-appointment" class="nav-link" onclick="showSection('get-appointment', this)">
-                    <i class="fas fa-plus-circle"></i> <span>Randevu Al</span>
+                <li onclick="showSection('my-info', event)">
+                    <i class="fas fa-user-circle"></i> <span>Profilim</span>
                 </li>
-                <li id="link-my-info" class="nav-link" onclick="showSection('my-info', this)">
-                    <i class="fas fa-user-circle"></i> <span>Kişisel Bilgiler</span>
+                <li onclick="showSection('profile-settings', event)">
+                    <i class="fas fa-cog"></i> <span>Ayarlar</span>
                 </li>
-                <li id="link-profile-settings" class="nav-link" onclick="showSection('profile-settings', this)">
-                    <i class="fas fa-shield-alt"></i> <span>Güvenlik Ayarları</span>
+                <li onclick="showSection('my-penalties', event)">
+                    <i class="fas fa-ban"></i> <span>Ceza Durumu</span>
                 </li>
-                <li id="link-my-penalties" class="nav-link" onclick="showSection('my-penalties', this)">
-                    <i class="fas fa-ban"></i> <span>Cezalarım</span>
+                <li onclick="showSection('get-appointment', event)">
+                    <i class="fas fa-plus-circle"></i> <span>Yeni Randevu</span>
                 </li>
-                <li class="logout-item" onclick="logout()" style="margin-top: auto; cursor: pointer;">
-                    <i class="fas fa-sign-out-alt"></i> <span>Güvenli Çıkış</span>
+                <li class="logout-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> <span>Çıkış Yap</span>
                 </li>
             </ul>
         </nav>
@@ -142,13 +53,17 @@
     <main class="main-content">
         <header class="content-header">
             <h2 id="section-title">Randevularım</h2>
+            <div class="user-status">
+                <div class="status-indicator"></div>
+                Sistem Çevrimiçi
+            </div>
         </header>
 
-        <!-- 1. RANDEVULARIM SEKMESİ -->
+        <!-- RANDEVULAR BÖLÜMÜ -->
         <section id="appointments" class="tab-content active">
             <div class="card">
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3><i class="fas fa-calendar-check"></i> Randevu Geçmişi</h3>
+                    <h2><i class="fas fa-calendar-check"></i> Randevularım</h2>
                     <div class="filter-group">
                         <button onclick="filterAppointments('all')" id="btn-all"
                             class="filter-btn active-filter">Tümü</button>
@@ -168,107 +83,114 @@
                             </tr>
                         </thead>
                         <tbody id="appointmentTableBody">
-                            <!-- JS: renderTable(data) burayı dolduracak -->
+                            <tr>
+                                <td colspan="5" style="text-align: center;">Yükleniyor...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- 2. KİŞİSEL BİLGİLER SEKMESİ -->
+        <!-- PROFİL BİLGİLERİ BÖLÜMÜ -->
         <section id="my-info" class="tab-content">
             <div class="card">
                 <div class="card-header">
-                    <h3><i class="fas fa-info-circle"></i> Profil Bilgileri</h3>
+                    <h2><i class="fas fa-info-circle"></i> Profil Bilgilerim</h2>
                 </div>
-                <div class="info-grid"
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding: 20px;">
-                    <div class="info-card"
-                        style="background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0;">
-                        <strong style="display: block; color: #64748b; font-size: 0.8rem;">T.C. KİMLİK NO</strong>
-                        <span id="infoTckn" style="font-weight: 600;">--</span>
+                <div class="info-grid">
+                    <div class="info-card-box">
+                        <strong>T.C. KİMLİK NO</strong>
+                        <span id="infoTckn">--</span>
                     </div>
-                    <div class="info-card"
-                        style="background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0;">
-                        <strong style="display: block; color: #64748b; font-size: 0.8rem;">AD SOYAD</strong>
-                        <span id="infoName" style="font-weight: 600;">--</span>
+                    <div class="info-card-box">
+                        <strong>AD SOYAD</strong>
+                        <span id="infoName">--</span>
                     </div>
-                    <div class="info-card"
-                        style="background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0;">
-                        <strong style="display: block; color: #64748b; font-size: 0.8rem;">E-POSTA</strong>
-                        <span id="infoEmail" style="font-weight: 600;">--</span>
+                    <div class="info-card-box">
+                        <strong>E-POSTA</strong>
+                        <span id="infoEmail">--</span>
                     </div>
-                    <div class="info-card"
-                        style="background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0;">
-                        <strong style="display: block; color: #64748b; font-size: 0.8rem;">KAN GRUBU</strong>
-                        <span id="infoBlood" style="font-weight: 600;">--</span>
+                    <div class="info-card-box">
+                        <strong>KAN GRUBU</strong>
+                        <span id="infoBlood">--</span>
+                    </div>
+                    <div class="info-card-box">
+                        <strong>YAŞ</strong>
+                        <span id="infoAge">--</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 3. GÜVENLİK AYARLARI SEKMESİ -->
+        <!-- AYARLAR BÖLÜMÜ -->
         <section id="profile-settings" class="tab-content">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <!-- Şifre Değiştir -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Şifre Güncelle</h3>
+            <div class="settings-wrapper">
+                <div class="settings-card">
+                    <h3><i class="fas fa-key"></i> Şifre Güncelle</h3>
+                    <div class="input-field-group">
+                        <label>Mevcut Şifre</label>
+                        <input type="password" id="currentPassword" class="form-input">
                     </div>
-                    <div style="padding: 20px;">
-                        <div class="form-group"><label>Mevcut Şifre</label><input type="password" id="currentPassword"
-                                class="form-control"></div>
-                        <div class="form-group"><label>Yeni Şifre</label><input type="password" id="newPassword"
-                                class="form-control"></div>
-                        <div class="form-group"><label>Tekrar Yeni Şifre</label><input type="password"
-                                id="confirmPassword" class="form-control"></div>
-                        <button class="btn-primary" onclick="handlePasswordUpdate()"
-                            style="width: 100%; margin-top: 10px;">Şifreyi Değiştir</button>
+                    <div class="input-field-group">
+                        <label>Yeni Şifre</label>
+                        <input type="password" id="newPassword" class="form-input">
                     </div>
+                    <div class="input-field-group">
+                        <label>Tekrar Yeni Şifre</label>
+                        <input type="password" id="confirmPassword" class="form-input">
+                    </div>
+                    <button class="btn-update" onclick="handlePasswordUpdate()">Şifreyi Değiştir</button>
                 </div>
-                <!-- E-posta Değiştir -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>E-posta Güncelle</h3>
+
+                <div class="settings-card">
+                    <h3><i class="fas fa-envelope"></i> E-posta Güncelle</h3>
+                    <div id="emailStep1">
+                        <div class="input-field-group">
+                            <label>Yeni E-posta</label>
+                            <input type="email" id="newEmail" class="form-input" placeholder="ornek@mail.com">
+                        </div>
+                        <button class="btn-update" onclick="sendEmailVerification()">Doğrulama Kodu Gönder</button>
                     </div>
-                    <div style="padding: 20px;">
-                        <div id="emailStep1">
-                            <div class="form-group"><label>Yeni E-posta</label><input type="email" id="newEmail"
-                                    class="form-control"></div>
-                            <button id="send-code-btn" class="btn-primary" onclick="sendEmailVerification()"
-                                style="width: 100%; margin-top: 10px;">Kod Gönder</button>
+                    <div id="emailStep2" style="display: none;">
+                        <div class="input-field-group">
+                            <label>Doğrulama Kodu</label>
+                            <input type="text" id="emailVerifyCode" class="form-input" maxlength="6"
+                                placeholder="000000">
                         </div>
-                        <div id="emailStep2" style="display: none;">
-                            <div class="form-group"><label>Doğrulama Kodu</label><input type="text" id="emailVerifyCode"
-                                    class="form-control" maxlength="6"></div>
-                            <button class="btn-primary" onclick="confirmEmailUpdate()"
-                                style="width: 100%; margin-top: 10px;">Onayla</button>
-                        </div>
+                        <button class="btn-update" onclick="confirmEmailUpdate()">Güncellemeyi Onayla</button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 4. CEZALARIM SEKMESİ -->
+        <!-- CEZA DURUMU BÖLÜMÜ -->
         <section id="my-penalties" class="tab-content">
             <div class="card">
                 <div class="card-header">
-                    <h3>Cezalarım</h3>
+                    <h2><i class="fas fa-ban"></i> Ceza Durumu</h2>
                 </div>
-                <div style="padding: 30px; text-align: center; color: #64748b;">
-                    <i class="fas fa-check-circle" style="font-size: 3rem; color: #10b981; margin-bottom: 15px;"></i>
-                    <p>Aktif bir cezanız bulunmamaktadır. Randevularınıza zamanında katıldığınız için teşekkürler!</p>
+                <div style="padding: 40px; text-align: center;">
+                    <i class="fas fa-check-circle"
+                        style="font-size: 3.5rem; color: var(--success-green); margin-bottom: 20px; display: block;"></i>
+                    <p style="color: var(--text-gray); font-size: 1.1rem; font-weight: 500;">Aktif bir cezanız
+                        bulunmamaktadır.</p>
+                    <p style="color: var(--text-gray); font-size: 0.9rem; margin-top: 5px;">Randevularınıza düzenli
+                        katılım sağladığınız için teşekkür ederiz.</p>
                 </div>
             </div>
         </section>
 
-        <!-- 5. RANDEVU AL SEKMESİ -->
+        <!-- YENİ RANDEVU BÖLÜMÜ -->
         <section id="get-appointment" class="tab-content">
             <div class="card">
                 <div class="card-header">
-                    <h3>Randevu Al</h3>
+                    <h2><i class="fas fa-plus-circle"></i> Yeni Randevu</h2>
                 </div>
-                <div style="padding: 20px;">Bu özellik yakında aktif edilecektir.</div>
+                <div style="padding: 30px; text-align: center; color: var(--text-gray);">
+                    <i class="fas fa-tools" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                    <p>Randevu alma modülü geliştirme aşamasındadır.</p>
+                </div>
             </div>
         </section>
     </main>

@@ -40,12 +40,13 @@ public class SlotService {
     // SLOT OLUŞTUR (IDOR Korumalı)
     @Transactional
     public Slot createSlot(Slot slot) {
-        
+
         // --- PROFESYONEL ÇÖZÜM: Nesneyi Doldurma (Hydration) ---
-        // Frontend'den sadece ID geliyor, User NULL olduğu için veritabanından tam halini çekiyoruz.
+        // Frontend'den sadece ID geliyor, User NULL olduğu için veritabanından tam
+        // halini çekiyoruz.
         Doctor doctor = doctorRepository.findById(slot.getDoctor().getId())
                 .orElseThrow(() -> new EntityNotFoundException("Doktor bulunamadı."));
-        
+
         // Slot nesnesine veritabanından gelen tam dolu Doktor nesnesini set ediyoruz.
         // Böylece .getUser().getId() artık NullPointerException vermeyecek.
         slot.setDoctor(doctor);
@@ -99,5 +100,9 @@ public class SlotService {
 
         slot.setStatus(SlotStatus.CANCELLED);
         slotRepository.save(slot);
+    }
+
+    public List<Slot> getAllSlots() {
+        return slotRepository.findAll();
     }
 }

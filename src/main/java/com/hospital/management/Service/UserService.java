@@ -36,16 +36,16 @@ public class UserService {
 
     @Transactional
     public void updatePassword(String tckn, String currentPassword, String newPassword) {
-       
+
         User user = userRepository.findByTckn(tckn)
                 .orElseThrow(() -> new EntityNotFoundException("Kullanıcı bulunamadı"));
 
-        // 2. Mevcut şifre doğruluğunu kontrol et (BCrypt matches kullanımı)
+        // 2. Mevcut şifre doğruluğunu kontrol et
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             throw new RuntimeException("Mevcut şifreniz hatalı!");
         }
 
-        // 3. Yeni şifre eski şifreyle aynı mı kontrolü (Opsiyonel ama iyi bir pratik)
+        // 3. Yeni şifre eski şifreyle aynı mı kontrolü
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
             throw new RuntimeException("Yeni şifre eskisinden farklı olmalıdır!");
         }
@@ -86,7 +86,7 @@ public class UserService {
 
         User user = getUserByTckn(tckn);
 
-        // 2. Yeni email başka bir kullanıcıda var mı kontrol et (Güvenlik için)
+        // 2. Yeni email başka bir kullanıcıda var mı kontrol et
         if (userRepository.existsByEmail(newEmail)) {
             throw new BadRequestException("Bu e-posta adresi zaten başka bir kullanıcı tarafından kullanılıyor.");
         }
@@ -142,6 +142,7 @@ public class UserService {
                 user.getId(),
                 user.getTckn(),
                 user.getEmail(),
+                user.getUsername(),
                 user.getFirstName(),
                 user.getLastName(),
                 user.getRole().name(),

@@ -19,14 +19,20 @@ public class AppointmentController {
 
     // --- RANDEVU OLUŞTURMA VE KİŞİSEL GÖRÜNÜM (ME) ---
 
-    // Randevu oluşturur. Hasta ID ve Slot ID parametreleri ile çalışır. 24 saat kuralı ve uygunluk kontrolü serviste yapılır.
+    // Randevu oluşturur. Hasta ID ve Slot ID parametreleri ile çalışır. 24 saat
+    // kuralı ve uygunluk kontrolü serviste yapılır.
     @PostMapping
     @PreAuthorize("hasAnyRole('PATIENT', 'ADMIN')")
     public ResponseEntity<Appointment> create(@RequestParam Long patientId, @RequestParam Long slotId) {
         return ResponseEntity.ok(appointmentService.createAppointment(patientId, slotId));
     }
 
-    
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Appointment>> getAll() {
+        return ResponseEntity.ok(appointmentService.getAllAppointments());
+    }
+
     // Login olan hastanın kendi randevularını listeler.
     @GetMapping("/my")
     @PreAuthorize("hasRole('PATIENT')")
@@ -34,7 +40,6 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getMyAppointments());
     }
 
-    
     // Login olan doktorun kendi randevularını listeler.
     @GetMapping("/doctor/my")
     @PreAuthorize("hasRole('DOCTOR')")
@@ -58,7 +63,6 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getPatientPastAppointments(patientId));
     }
 
-    
     // Belirli bir hastanın aktif (gelecek) randevularını getirir.
     @GetMapping("/doctor/{doctorId}/active")
     @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
@@ -76,8 +80,8 @@ public class AppointmentController {
         return ResponseEntity.ok("Randevu başarıyla iptal edildi.");
     }
 
-    
-    // Randevuyu "Gelmedi" olarak işaretler. Sadece doktor veya admin bu işlemi yapabilir. Gelmedi olarak işaretlenen randevular için ceza işlemi uygulanır.
+    // Randevuyu "Gelmedi" olarak işaretler. Sadece doktor veya admin bu işlemi
+    // yapabilir. Gelmedi olarak işaretlenen randevular için ceza işlemi uygulanır.
     @PutMapping("/{id}/not-attended")
     @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
     public ResponseEntity<String> markAsNotAttended(@PathVariable Long id) {
@@ -87,7 +91,6 @@ public class AppointmentController {
 
     // --- ADMİN PANELİ GÖRÜNÜMLERİ ---
 
-   
     // Belirli bir kliniğe ait tüm randevuları listeler (Admin görebilir).
     @GetMapping("/clinic/{clinicId}")
     @PreAuthorize("hasRole('ADMIN')")

@@ -29,7 +29,7 @@ public class AuthService {
 
                 User user = new User();
                 user.setTckn(request.getTckn());
-                user.setUsername(null); // Hastalar kullanıcı adı almaz
+                user.setUsername(null);
                 user.setPassword(passwordEncoder.encode(request.getPassword()));
                 user.setEmail(request.getEmail());
                 user.setFirstName(request.getFirstName());
@@ -106,7 +106,6 @@ public class AuthService {
                 String bloodGroup = "Belirtilmedi";
                 Integer age = 0;
 
-               
                 if (user.getPatient() != null) {
                         bloodGroup = user.getPatient().getBloodType() != null ? user.getPatient().getBloodType().name()
                                         : "Belirtilmedi";
@@ -117,6 +116,7 @@ public class AuthService {
                                 user.getId(),
                                 user.getTckn(),
                                 user.getEmail(),
+                                user.getUsername(),
                                 user.getFirstName(),
                                 user.getLastName(),
                                 user.getRole().name(),

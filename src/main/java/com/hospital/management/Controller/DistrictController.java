@@ -19,22 +19,25 @@ public class DistrictController {
 
     // --- LİSTELEME VE DOĞRULAMA (HERKESE AÇIK) ---
 
-    
     // Belirli bir şehre (City) ait tüm ilçeleri listeler.
     @GetMapping("/city/{cityId}")
     public ResponseEntity<List<District>> getDistrictsByCity(@PathVariable Long cityId) {
         return ResponseEntity.ok(districtService.getDistrictsByCity(cityId));
     }
 
-    
+    @GetMapping
+    public ResponseEntity<List<District>> getAllDistricts() {
+        return ResponseEntity.ok(districtService.getAllDistricts());
+    }
+
     // ID ile ilçe sorgular.
     @GetMapping("/{id}")
     public ResponseEntity<District> getById(@PathVariable Long id) {
         return ResponseEntity.ok(districtService.getById(id));
     }
 
-    
-    // İlçe ve şehir eşleşmesini doğrular. (Randevu akışında hastaların kullanımı için uygundur).
+    // İlçe ve şehir eşleşmesini doğrular. (Randevu akışında hastaların kullanımı
+    // için uygundur).
     @GetMapping("/validate")
     public ResponseEntity<String> validateDistrictInCity(
             @RequestParam Long districtId,
@@ -52,7 +55,6 @@ public class DistrictController {
         return ResponseEntity.ok(districtService.saveOrUpdate(district));
     }
 
-    
     // Belirli bir ilçeyi günceller.
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

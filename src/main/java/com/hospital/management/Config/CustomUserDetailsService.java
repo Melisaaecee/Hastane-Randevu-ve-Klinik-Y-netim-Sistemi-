@@ -1,6 +1,5 @@
 package com.hospital.management.Config;
 
-
 import com.hospital.management.Entity.User;
 import com.hospital.management.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,12 +15,10 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String username)
-            throws UsernameNotFoundException {
-
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() ->
-                        new UsernameNotFoundException("Kullanıcı bulunamadı: " + username));
+    public UserDetails loadUserByUsername(String tckn) throws UsernameNotFoundException {
+      
+        User user = userRepository.findByTckn(tckn)
+                .orElseThrow(() -> new UsernameNotFoundException("TCKN bulunamadı: " + tckn));
 
         return new CustomUserDetails(user);
     }

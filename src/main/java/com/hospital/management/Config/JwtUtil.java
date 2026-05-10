@@ -21,17 +21,16 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long EXPIRATION_TIME;
 
-
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
     // TOKEN ÜRET
-    public String generateToken(Long userId, String username, String role) {
+    public String generateToken(Long userId, String tckn, String role) {
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(tckn) 
                 .claim("userId", userId)
-                .claim("role", "ROLE_" + role)
+                .claim("role", role.startsWith("ROLE_") ? role : "ROLE_" + role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
@@ -39,7 +38,7 @@ public class JwtUtil {
     }
 
     public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+        return extractClaim(token, Claims::getSubject); // Bu aslında TCKN dönecektir
     }
 
     public Long extractUserId(String token) {
@@ -54,18 +53,26 @@ public class JwtUtil {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
 
+    // TOKEN DOĞRULA
     public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
-            final String username = extractUsername(token);
-            return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-        } catch (Exception e) {
+            final String tcknFromToken = extractUsername(token);
+            boolean isUsernameValid = tcknFromToken.equals(userDetails.getUsername());
+            boolean isExpired = isTokenExpired(token);
 
+            if (!isUsernameValid) {
+                System.out.println("DOĞRULAMA HATASI: Token TCKN (" + tcknFromToken + ") ile UserDetails TCKN ("
+                        + userDetails.getUsername() + ") eşleşmiyor!");
+            }
+            return (isUsernameValid && !isExpired);
+        } catch (Exception e) {
             return false;
         }
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> resolver) {
-        return resolver.apply(getClaims(token));
+        final Claims claims = getClaims(token);
+        return resolver.apply(claims);
     }
 
     private Claims getClaims(String token) {

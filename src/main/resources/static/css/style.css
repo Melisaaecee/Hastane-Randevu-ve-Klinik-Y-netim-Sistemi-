@@ -28,7 +28,7 @@ body {
     color: var(--dark-blue);
     line-height: 1.6;
     display: flex;
-   
+
 }
 
 .sidebar {
@@ -43,6 +43,17 @@ body {
     flex-direction: column;
     z-index: 1000;
     box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
 }
 
 .logo {
@@ -381,7 +392,6 @@ td {
 
 .input-field-group input {
     width: 100%;
-    /* Kutunun tamamını kaplar */
     padding: 12px 16px;
     border: 2px solid #e2e8f0;
     border-radius: 12px;
@@ -408,7 +418,7 @@ td {
     cursor: pointer;
     transition: all 0.3s ease;
     margin-top: auto;
-    /* Butonu her zaman en alta iter */
+
 }
 
 .btn-update:hover {
@@ -416,7 +426,7 @@ td {
     transform: translateY(-2px);
 }
 
-/* Filtre Buton Grubu ve Görseldeki Stil */
+
 .filter-group {
     display: flex;
     background: #f1f5f9;
@@ -428,7 +438,6 @@ td {
 
 .filter-btn {
     border: 1px solid #cbd5e1;
-    /* Görseldeki çerçeve stili */
     background: #ffffff;
     padding: 6px 15px;
     border-radius: 8px;
@@ -451,7 +460,6 @@ td {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Sidebar Kullanıcı Bilgisi Alanı Düzeltme */
 .sidebar-user-info {
     padding: 20px;
     text-align: center;
@@ -470,4 +478,103 @@ td {
     font-size: 1.5rem;
     font-weight: bold;
     border: 3px solid rgba(255, 255, 255, 0.1);
+}
+
+
+
+/* Profil Bilgi Kutusu (TC ve Yetki alanı) */
+.profile-info-box {
+    background: #f8fafc !important;
+    border-radius: 16px !important;
+    border: 1px solid #e2e8f0;
+    padding: 22px;
+    margin-bottom: 25px;
+    transition: all 0.3s ease;
+}
+
+
+.form-input,
+.input-field-group input {
+    width: 100%;
+    padding: 12px 18px !important;
+    border-radius: 12px !important;
+    border: 1.5px solid #e2e8f0 !important;
+    background-color: #ffffff !important;
+    font-size: 0.95rem !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    color: var(--dark-blue);
+}
+
+
+.form-input:focus,
+.input-field-group input:focus {
+    border-color: var(--primary-blue) !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.1) !important;
+    outline: none;
+}
+
+
+.btn-primary,
+.btn-update {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    border-radius: 12px !important;
+    padding: 14px 24px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2) !important;
+    border: none !important;
+    width: 100%;
+
+}
+
+.btn-primary:hover,
+.btn-update:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 15px rgba(0, 123, 255, 0.3) !important;
+}
+
+
+.form-group label,
+.input-field-group label {
+    margin-bottom: 8px;
+    display: block;
+    color: var(--text-gray);
+    font-weight: 500 !important;
+
+}
+
+/* Güncelle Butonu - Sarı */
+.btn-update {
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%) !important;
+    color: #1e3a8a !important;
+    padding: 6px 14px !important;
+    font-size: 13px !important;
+    border-radius: 8px !important;
+    width: auto !important;
+    min-width: 70px;
+}
+
+/* Sil Butonu - Kırmızı */
+.btn-delete {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+    color: white !important;
+    padding: 6px 14px !important;
+    font-size: 13px !important;
+    border-radius: 8px !important;
+    width: auto !important;
+    min-width: 70px;
+}
+
+.btn-update:hover,
+.btn-delete:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Buton container */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }

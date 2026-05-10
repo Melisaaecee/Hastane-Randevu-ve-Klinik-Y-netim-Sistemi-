@@ -14,7 +14,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/slots")
 @RequiredArgsConstructor
-// @CrossOrigin(origins = "http://127.0.0.1:5500") // Eğer SecurityConfig'deki çalışmazsa burayı açarsın
+// @CrossOrigin(origins = "http://127.0.0.1:5500") // Eğer SecurityConfig'deki
+// çalışmazsa burayı açarsın
 public class SlotController {
 
     private final SlotService slotService;
@@ -24,10 +25,14 @@ public class SlotController {
         return ResponseEntity.ok(slotService.getFutureAvailableSlots(doctorId));
     }
 
+    @GetMapping
+    public ResponseEntity<List<Slot>> getAllSlots() {
+        return ResponseEntity.ok(slotService.getAllSlots());
+    }
+
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<Slot> create(@RequestBody Slot slot) {
-        // Service katmanında artık nesneyi doldurduğumuz için güvenle çağırıyoruz
         Slot createdSlot = slotService.createSlot(slot);
         return new ResponseEntity<>(createdSlot, HttpStatus.CREATED);
     }

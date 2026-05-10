@@ -38,29 +38,30 @@
 
         .auth-tabs {
             display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-            background: var(--light-blue);
-            padding: 5px;
+            background: #e6effd;
+            padding: 4px;
             border-radius: 12px;
+            margin-bottom: 25px;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 10px;
+            padding: 12px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
             background: transparent;
-            color: var(--text-gray);
+            color: #64748b;
+            /* Pasif yazı rengi */
         }
 
+
         .tab-btn.active {
-            background: var(--white);
-            color: var(--primary-blue);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            background: #ffffff;
+            color: #0066cc;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .input-group {
@@ -172,14 +173,10 @@
             <p style="color: var(--text-gray); font-size: 0.9rem; margin-top: 5px;">Sağlık Randevu Paneli</p>
         </div>
 
-        <!-- JS switchTab fonksiyonu ile uyumlu tablar -->
         <div class="auth-tabs">
-            <button type="button" class="tab-btn active" id="btnPatient"
-                onclick="switchTab('PATIENT'); this.classList.add('active'); document.getElementById('btnStaff').classList.remove('active')">Hasta
+            <button type="button" class="tab-btn active" id="btnPatient" onclick="switchTab('PATIENT')">Hasta
                 Girişi</button>
-            <button type="button" class="tab-btn" id="btnStaff"
-                onclick="switchTab('STAFF'); this.classList.add('active'); document.getElementById('btnPatient').classList.remove('active')">Personel
-                Girişi</button>
+            <button type="button" class="tab-btn" id="btnStaff" onclick="switchTab('STAFF')">Personel Girişi</button>
         </div>
 
         <!-- Hata Mesaj Alanı -->
@@ -187,10 +184,9 @@
 
         <form id="loginForm">
             <div class="input-group">
-                <label for="tckn">TC Kimlik Numarası</label>
-                <input type="text" id="tckn" name="tckn" placeholder="11 haneli TCKN" required maxlength="11">
+                <label id="usernameLabel" for="tckn">TC KİMLİK NUMARASI</label>
+                <input type="text" id="tckn" name="tckn" placeholder="11 haneli TCKN" required>
             </div>
-
             <div class="input-group">
                 <label for="password">Şifre</label>
                 <input type="password" id="password" name="password" placeholder="••••••••" required>
@@ -231,7 +227,6 @@
         </div>
     </div>
 
-    <!-- Harici JS dosyanı en sona ekle -->
     <script src="javascript/index.js"></script>
 </body>
 

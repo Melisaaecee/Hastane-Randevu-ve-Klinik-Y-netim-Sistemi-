@@ -28,10 +28,12 @@ document.getElementById('resetPasswordForm').addEventListener('submit', async (e
             alert("Şifreniz başarıyla güncellendi! Giriş sayfasına yönlendiriliyorsunuz.");
             window.location.href = 'index.html';
         } else {
-            const errorMsg = await response.text();
-            alert("Hata: " + errorMsg);
+            // Karmaşık JSON yerine sadece anlamlı mesajı ayıklıyoruz
+            const errorData = await response.json();
+            const cleanMessage = errorData.message || "İşlem sırasında bir hata oluştu.";
+            alert(cleanMessage);
         }
     } catch (error) {
-        alert("Bağlantı hatası!");
+        alert("Bağlantı hatası! Lütfen internetinizi veya sunucuyu kontrol edin.");
     }
 });
