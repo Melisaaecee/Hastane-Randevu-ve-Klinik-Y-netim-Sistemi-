@@ -1,50 +1,19 @@
-const API_URL = "http://localhost:8080/api";
-
-async function fetchWithAuth(url, options = {}) {
-    const rawData = localStorage.getItem("user");
-    const userData = rawData ? JSON.parse(rawData) : null;
-    const token = userData?.token || userData?.jwt || userData?.accessToken;
-
-    if (!token) {
-        window.location.href = "index.html";
-        return null;
-    }
-
-    const response = await fetch(url, {
-        ...options,
-        headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-            ...options.headers
-        }
-    });
-
-    if (response.status === 401 || response.status === 403) {
-        alert("Oturum süreniz doldu. Lütfen tekrar giriş yapın.");
-        localStorage.clear();
-        window.location.href = "index.html";
-        return null;
-    }
-
-    return response;
-} 
-
 window.showSection = function (sectionId, element) {
     // 1. ADIM: Tüm içerik bölümlerini (section) bul ve 'active' sınıfını sil (Hepsini Gizle)
     const allSections = document.querySelectorAll('.tab-content');
     allSections.forEach(s => {
         s.classList.remove('active');
-        s.style.display = 'none';
+        s.style.display = 'none'; 
     });
 
 
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 
-
+   
     const target = document.getElementById(sectionId);
     if (target) {
         target.classList.add('active');
-        target.style.display = 'block';
+        target.style.display = 'block'; 
     }
 
 
@@ -55,7 +24,7 @@ window.showSection = function (sectionId, element) {
         if (link) link.classList.add('active');
     }
 
-
+   
     if (sectionId === 'appointments') {
         window.filterAppointments('all');
     }
@@ -110,7 +79,7 @@ window.filterAppointments = async function (type) {
     }
 };
 
-// 3. TABLO RENDER FONKSİYONU 
+// 3. TABLO RENDER FONKSİYONU (Backend Entity Yapısına Uygun)
 function renderTable(data) {
     const tbody = document.getElementById('appointmentTableBody');
     if (!tbody) return;
@@ -140,7 +109,7 @@ function renderTable(data) {
     }).join('');
 }
 
-// 4. ŞİFRE VE PROFİL GÜNCELLEME 
+// 4. ŞİFRE VE PROFİL GÜNCELLEME (Mevcut Fonksiyonların Korundu)
 window.handlePasswordUpdate = async function () {
     const cpEl = document.getElementById('currentPassword');
     const npEl = document.getElementById('newPassword');
@@ -397,78 +366,3 @@ function renderTable(data) {
         `;
     }).join('');
 }
-
-// ================= SIDEBAR KULLANICI BİLGİLERİNİ GÖSTER =================
-window.loadPatientProfile = async function () {
-    try {
-        const authData = JSON.parse(localStorage.getItem('user'));
-        if (!authData || !authData.token) {
-            window.location.href = 'index.html';
-            return;
-        }
-
-        const res = await fetchWithAuth(`${API_URL}/users/me`);
-        if (!res) return;
-
-        const userData = await res.json();
-
-        // İsim bilgilerini al
-        const firstName = userData.firstName || "";
-        const lastName = userData.lastName || "";
-        const fullName = `${firstName} ${lastName}`.trim();
-
-        // Avatar yuvarlağına ilk harfi koy
-        const avatarEl = document.getElementById("avatarInitial");
-        if (avatarEl) {
-            if (firstName && firstName.length > 0) {
-                avatarEl.textContent = firstName.charAt(0).toUpperCase();
-            } else if (userData.username && userData.username.length > 0) {
-                avatarEl.textContent = userData.username.charAt(0).toUpperCase();
-            } else {
-                avatarEl.textContent = "H";
-            }
-        }
-
-        // Sidebar'a isim soyisim yaz
-        const patientNameEl = document.getElementById("patientFullName");
-        if (patientNameEl) {
-            patientNameEl.textContent = fullName || userData.username || "Hasta";
-        }
-
-        // Profil sayfasındaki bilgileri doldur
-        const infoName = document.getElementById("infoName");
-        if (infoName) infoName.textContent = fullName || "-";
-
-        const infoTckn = document.getElementById("infoTckn");
-        if (infoTckn) infoTckn.textContent = userData.tckn || "-";
-
-        const infoEmail = document.getElementById("infoEmail");
-        if (infoEmail) infoEmail.textContent = userData.email || "-";
-
-        const infoBlood = document.getElementById("infoBlood");
-        if (infoBlood && userData.bloodGroup) {
-            // Kan grubunu formatla
-            const bloodMap = {
-                'A_POSITIVE': 'A+', 'A_NEGATIVE': 'A-',
-                'B_POSITIVE': 'B+', 'B_NEGATIVE': 'B-',
-                'AB_POSITIVE': 'AB+', 'AB_NEGATIVE': 'AB-',
-                'O_POSITIVE': '0+', 'O_NEGATIVE': '0-'
-            };
-            infoBlood.textContent = bloodMap[userData.bloodGroup] || userData.bloodGroup;
-        } else if (infoBlood) {
-            infoBlood.textContent = "Belirtilmedi";
-        }
-
-        const infoAge = document.getElementById("infoAge");
-        if (infoAge) infoAge.textContent = userData.age || "--";
-
-    } catch (error) {
-        console.error("Profil yükleme hatası:", error);
-        // Hata durumunda varsayılan değerler
-        const avatarEl = document.getElementById("avatarInitial");
-        if (avatarEl) avatarEl.textContent = "H";
-
-        const patientNameEl = document.getElementById("patientFullName");
-        if (patientNameEl) patientNameEl.textContent = "Hasta";
-    }
-};
