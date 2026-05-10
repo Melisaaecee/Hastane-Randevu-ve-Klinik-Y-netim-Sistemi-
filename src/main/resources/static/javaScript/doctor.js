@@ -620,7 +620,6 @@ window.doctorApp = {
             alert("Sunucu hatası!");
         }
     },
-
     fetchSlots: async function () {
         const tbody = document.getElementById('slot-table-body');
         if (!tbody || !this.activeDoctor?.id) return;
@@ -632,30 +631,47 @@ window.doctorApp = {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
 
-            if (!response.ok) throw new Error();
+            console.log("Slot API yanıt durumu:", response.status);
 
-            const slots = await response.json();
-
-            if (slots.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4">📅 Henüz slot oluşturulmamış.<\/td><\/tr>';
+            if (response.status === 401) {
+                tbody.innerHTML = '<tr><td colspan="4">Oturum süresi doldu! <button onclick="window.doctorApp.logout()">Tekrar Giriş Yap<\/button><\/td><\/tr>';
                 return;
             }
 
-            tbody.innerHTML = slots.map(slot => `
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const slots = await response.json();
+            console.log("Gelen slotlar:", slots);
+
+            if (!slots || slots.length === 0) {
+                tbody.innerHTML = '<td><td colspan="4">📅 Henüz slot oluşturulmamış.<\/td><\/tr>';
+                return;
+            }
+
+            tbody.innerHTML = slots.map(slot => {
+                const isAvailable = slot.status === 'AVAILABLE';
+                const statusText = isAvailable ? '✅ Boş' : '🔴 Dolu';
+                const statusClass = isAvailable ? 'status-available' : 'status-reserved';
+
+                return `
                 <tr>
-                    <td>${this.formatDate(slot.startTime)}</td>
-                    <td>${this.formatDate(slot.endTime)}</td>
-                    <td>${slot.available ? '✅ Boş' : '🔴 Dolu'}</td>
+                    <td>${this.formatDate(slot.startTime)}<\/td>
+                    <td>${this.formatDate(slot.endTime)}<\/td>
+                    <td><span class="status-badge ${statusClass}">${statusText}<\/span><\/td>
                     <td>
-                        ${slot.available ?
-                    `<button class="btn-cancel" onclick="window.doctorApp.deleteSlot(${slot.id})">🗑️ İptal</button>` :
-                    '<span>-</span>'}
-                    </td>
+                        ${isAvailable ?
+                        `<button class="btn-cancel" onclick="window.doctorApp.deleteSlot(${slot.id})">🗑️ İptal</button>` :
+                        '<span style="color:gray;">İşlem Kapalı</span>'}
+                    <\/td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
+
         } catch (e) {
             console.error("Slot hatası:", e);
-            tbody.innerHTML = '<tr><td colspan="4">❌ Slotlar yüklenemedi.<\/td><\/tr>';
+            tbody.innerHTML = '<tr><td colspan="4">❌ Slotlar yüklenemedi. Lütfen sayfayı yenileyin.<\/td><\/tr>';
         }
     },
 
@@ -678,7 +694,6 @@ window.doctorApp = {
             alert("Sunucu hatası!");
         }
     },
-
     setupEventListeners: function () {
         const slotForm = document.getElementById('slot-form');
         if (slotForm) {
@@ -693,12 +708,22 @@ window.doctorApp = {
                     return;
                 }
 
+                // DOKTOR ID'SİNİ KONTROL ET
+                const doctorId = this.activeDoctor?.id;
+                if (!doctorId) {
+                    alert("❌ Doktor bilgisi bulunamadı! Lütfen sayfayı yenileyin.");
+                    return;
+                }
+
+                // SADECE DOKTOR ID'Sİ GÖNDER (tüm doctor nesnesi değil)
                 const payload = {
                     startTime: startTime,
                     endTime: endTime,
-                    doctor: { id: this.activeDoctor?.id },
-                    available: true
+                    doctor: { id: doctorId },  // Sadece ID gönder
+                    status: "AVAILABLE"
                 };
+
+                console.log("🔵 Slot payload:", JSON.stringify(payload, null, 2));
 
                 try {
                     const response = await fetch('http://localhost:8080/api/slots', {
@@ -710,15 +735,22 @@ window.doctorApp = {
                         body: JSON.stringify(payload)
                     });
 
+                    console.log("🔵 Slot oluşturma yanıtı:", response.status);
+
                     if (response.ok) {
-                        alert("✅ Slot oluşturuldu!");
+                        const result = await response.json();
+                        console.log("✅ Slot oluşturuldu:", result);
+                        alert("✅ Slot başarıyla oluşturuldu!");
                         slotForm.reset();
-                        this.fetchSlots();
+                        this.fetchSlots(); // Listeyi yenile
                     } else {
-                        alert("❌ Slot oluşturulamadı!");
+                        const error = await response.text();
+                        console.error("❌ Slot hatası:", error);
+                        alert("❌ Slot oluşturulamadı! " + error);
                     }
                 } catch (error) {
-                    alert("Sunucu hatası!");
+                    console.error("❌ Slot hatası:", error);
+                    alert("Sunucu hatası! Lütfen tekrar deneyin.");
                 }
             });
         }
