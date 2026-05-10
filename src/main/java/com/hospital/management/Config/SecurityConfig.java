@@ -35,6 +35,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .headers(headers -> headers
+                        .frameOptions(frame -> frame.sameOrigin()) // Bu satırı ekle
                         .xssProtection(xss -> xss.headerValue(
                                 org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
                         // MIME tipi hatalarını önlemek için CSP ayarını genişlettik
@@ -53,6 +54,7 @@ public class SecurityConfig {
                                 "/admin.html",
                                 "/style.css",
                                 "/admin.js",
+                                "/appointment.html",
                                 "/css/**",
                                 "/js/**",
                                 "/javascript/**",

@@ -3,57 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Randevu Al | Sağlık Sistemi</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Randevu Al</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
+        h2 { text-align: center; color: var(--primary); margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .step-box { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; transition: 0.3s; background: white; }
+        select:focus { border-color: var(--secondary); outline: none; box-shadow: 0 0 5px rgba(52,152,219,0.3); }
+        select:disabled { background-color: #f9f9f9; cursor: not-allowed; }
+        
+        .slot-section { margin-top: 30px; display: none; }
+        .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; margin-top: 15px; }
+        .slot-btn { padding: 12px; border: 2px solid var(--secondary); background: white; color: var(--secondary); border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; text-align: center; }
+        .slot-btn:hover { background: var(--secondary); color: white; }
+        .slot-btn.selected { background: var(--success); color: white; border-color: var(--success); transform: scale(1.05); }
+        
+        #confirmBtn { width: 100%; padding: 15px; margin-top: 30px; background: var(--success); color: white; border: none; border-radius: 8px; font-size: 17px; font-weight: bold; cursor: pointer; display: none; transition: 0.3s; }
+        #confirmBtn:hover { background: #219150; }
+        .loading { font-style: italic; color: var(--secondary); font-size: 0.9rem; }
+    </style>
 </head>
 <body>
 
-    <div class="container-center">
-        <div class="selection-card">
-            <div class="auth-header">
-                <h2>Randevu <span>Al</span></h2>
-                <p class="subtitle">Lütfen poliklinik ve doktor seçimi yapınız.</p>
-            </div>
+<div class="container">
+    <h2><i class="fas fa-calendar-check"></i> Randevu Al</h2>
 
-            <div id="errorBox" class="error-box" style="display: none;"></div>
-
-            <form id="appointmentForm">
-                <div class="input-group">
-                    <label>Poliklinik Seçin</label>
-                    <select id="clinicSelect" required>
-                        <option value="" disabled selected>Poliklinik seçiniz...</option>
-                        <option value="Kardiyoloji">Kardiyoloji</option>
-                        <option value="Dahiliye">Dahiliye</option>
-                        <option value="Göz Hastalıkları">Göz Hastalıkları</option>
-                        <option value="Nöroloji">Nöroloji</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label>Doktor Seçin</label>
-                    <select id="doctorSelect" required disabled>
-                        <option value="" disabled selected>Önce poliklinik seçiniz...</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label>Randevu Tarihi</label>
-                    <input type="date" id="appointmentDate" required>
-                </div>
-
-                <div class="info-note">
-                    <span>ℹ️</span>
-                    <span>Hafta sonları randevu verilmemektedir.</span>
-                </div>
-
-                <div style="display: flex; gap: 10px;">
-                    <button type="button" onclick="location.href='patient.html'" class="btn-danger" style="flex: 1;">İptal</button>
-                    <button type="submit" class="btn-primary" style="flex: 2;">Randevuyu Onayla</button>
-                </div>
-            </form>
-        </div>
+    <div class="step-box">
+        <label><i class="fas fa-map-marker-alt"></i> Şehir Seçin</label>
+        <select id="citySelect"><option value="">Yükleniyor...</option></select>
     </div>
 
-    <script src="javascript/appointment.js"></script>
+    <div class="step-box">
+        <label><i class="fas fa-map-signs"></i> İlçe Seçin</label>
+        <select id="districtSelect" disabled><option value="">Önce Şehir Seçin</option></select>
+    </div>
+
+    <div class="step-box">
+        <label><i class="fas fa-hospital"></i> Hastane Seçin</label>
+        <select id="hospitalSelect" disabled><option value="">Önce İlçe Seçin</option></select>
+    </div>
+
+    <div class="step-box">
+        <label><i class="fas fa-notes-medical"></i> Klinik Seçin</label>
+        <select id="clinicSelect" disabled><option value="">Önce Hastane Seçin</option></select>
+    </div>
+
+    <div class="step-box">
+        <label><i class="fas fa-user-md"></i> Doktor Seçin</label>
+        <select id="doctorSelect" disabled><option value="">Önce Klinik Seçin</option></select>
+    </div>
+
+    <div id="slotSection" class="slot-section">
+        <label><i class="fas fa-clock"></i> Uygun Randevu Saatleri</label>
+        <div id="slotGrid" class="slot-grid"></div>
+    </div>
+
+    <button id="confirmBtn"><i class="fas fa-check-circle"></i> Randevuyu Onayla</button>
+</div>
+
+<script src="javascript/appointment.js"></script>
 </body>
 </html>

@@ -1,15 +1,29 @@
 window.doctorApp = {
     activeDoctor: null,
-    currentUser: JSON.parse(localStorage.getItem('user'))?.user || {
-        id: 6, 
-        firstName: "Ahmet",
-        lastName: "Yılmaz",
-        tckn: "12345678901",
-        email: "ahmet@hastane.com",
-        role: "DOCTOR"
-    },
+    currentUser: JSON.parse(localStorage.getItem('user'))?.user || null,
     
     init: async function() {
+
+
+        // Giriş yapmamış veya doktor olmayan kullanıcıları engelle
+        /*if (!this.currentUser || this.currentUser.role !== 'DOCTOR') {
+            alert("Lütfen doktor hesabınızla giriş yapın.");
+            window.location.href = 'index.html'; // Giriş yapmamışsa yönlendir
+            return;
+        }*/
+
+            // Eğer localStorage'da veri yoksa sayfayı boş görmemek için burayı elle doldur:
+    if (!this.currentUser) {
+        this.currentUser = {
+            id: 1, // Kendi veritabanındaki bir ID
+            firstName: "İrem",
+            lastName: "Geliştirici",
+            tckn: "12345678901",
+            email: "irem@medsoft.com",
+            role: "DOCTOR"
+        };
+    }
+        
         console.log("Doktor Paneli Başlatıldı...");
         const nameHeader = document.getElementById('userNameDisplay');
         if (nameHeader) nameHeader.innerText = `Dr. ${this.currentUser.firstName} ${this.currentUser.lastName}`;
@@ -41,10 +55,10 @@ window.doctorApp = {
         if (container && this.activeDoctor) {
             container.innerHTML = `
                 <div class="profile-grid">
-                    <div class="info-box"><i class="fas fa-id-card"></i><strong>TC Kimlik No</strong><span>${user.tckn}</span></div>
-                    <div class="info-box"><i class="fas fa-envelope"></i><strong>E-posta Adresi</strong><span>${user.email}</span></div>
-                    <div class="info-box"><i class="fas fa-stethoscope"></i><strong>Uzmanlık Alanı</strong><span>${this.activeDoctor.specialization}</span></div>
-                    <div class="info-box"><i class="fas fa-hospital"></i><strong>Görevli Klinik</strong><span>${this.activeDoctor.clinic?.name || 'Belirtilmemiş'}</span></div>
+                    <div class="info-item"><i class="fas fa-id-card"></i><strong>TC Kimlik No</strong><span>${user.tckn}</span></div>
+                    <div class="info-item"><i class="fas fa-envelope"></i><strong>E-posta Adresi</strong><span>${user.email}</span></div>
+                    <div class="info-item"><i class="fas fa-stethoscope"></i><strong>Uzmanlık Alanı</strong><span>${this.activeDoctor.specialization}</span></div>
+                    <div class="info-item"><i class="fas fa-hospital"></i><strong>Görevli Klinik</strong><span>${this.activeDoctor.clinic?.name || 'Belirtilmemiş'}</span></div>
                 </div>`;
         }
     },
@@ -53,7 +67,9 @@ window.doctorApp = {
         const tbody = document.getElementById('appointments-table-body');
         if (!tbody) return;
         try {
-            const response = await fetch('http://localhost:8080/api/appointments/doctor/my');
+        const response = await fetch('http://localhost:8080/api/appointments/doctor/my', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem("token")}` }
+        });
             if (!response.ok) throw new Error();
             const appointments = await response.json();
             
@@ -82,12 +98,18 @@ window.doctorApp = {
         if (!confirm("Hasta gelmedi olarak işaretlensin mi? (Ceza uygulanır)")) return;
         try {
             const response = await fetch(`http://localhost:8080/api/appointments/${appointmentId}/not-attended`, {
-                method: 'PUT'
+                method: 'PUT',
+                headers: { 
+                'Authorization': `Bearer ${localStorage.getItem("token")}` // BU SATIRI EKLE
+            }
             });
             if (response.ok) {
                 alert("İşaretlendi!");
-                this.fetchAppointments();
-            } else {
+                this.fetchAppointments(); 
+            } else if (response.status === 403) {
+            alert("Bu işlemi yapmaya yetkiniz yok.");
+        }
+            else {
                 alert("Hata oluştu.");
             }
         } catch (e) { alert("Sunucu hatası."); }
@@ -96,8 +118,10 @@ window.doctorApp = {
     fetchSlots: async function() {
         const tbody = document.getElementById('slot-table-body');
         if (!tbody || !this.activeDoctor) return;
-        try {
-            const response = await fetch(`http://localhost:8080/api/slots/doctor/${this.activeDoctor.id}`);
+       try {
+        const response = await fetch(`http://localhost:8080/api/slots/doctor/${this.activeDoctor.id}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem("token")}` }
+        });
             if (!response.ok) throw new Error();
             const slots = await response.json();
             tbody.innerHTML = slots.map(slot => `
@@ -159,7 +183,49 @@ window.doctorApp = {
 
     logout: function() { localStorage.clear(); window.location.href = 'index.html'; },
     formatDate: function(d) { return d ? new Date(d).toLocaleString('tr-TR') : "-"; },
-    setupEventListeners: function() { }
+    setupEventListeners: function() {
+    const slotForm = document.getElementById('slot-form');
+    if (slotForm) {
+        slotForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            const token = localStorage.getItem("token"); // Token'ı alıyoruz
+
+            // Backend'deki Slot entity yapısına uygun payload
+            const payload = {
+                startTime: startTime.includes(":") && startTime.split(":").length === 2 ? startTime + ":00" : startTime,
+                endTime: endTime.includes(":") && endTime.split(":").length === 2 ? endTime + ":00" : endTime,
+                doctor: { id: this.activeDoctor.id }, // Doktor nesnesini bağlıyoruz
+                status: "AVAILABLE"
+            };
+
+            try {
+                const response = await fetch('http://localhost:8080/api/slots', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Güvenlik için şart
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert("Slot başarıyla oluşturuldu!");
+                    slotForm.reset(); // Formu temizle
+                    this.fetchSlots(); // Listeyi anlık güncelle
+                } else {
+                    const errorData = await response.json();
+                    alert("Hata: " + (errorData.message || "Slot oluşturulamadı. Zaman çakışması olabilir."));
+                }
+            } catch (error) {
+                console.error("Slot hatası:", error);
+                alert("Sunucuya bağlanılamadı!");
+            }
+        });
+    }
+}
 };
 
 document.addEventListener('DOMContentLoaded', () => window.doctorApp.init());

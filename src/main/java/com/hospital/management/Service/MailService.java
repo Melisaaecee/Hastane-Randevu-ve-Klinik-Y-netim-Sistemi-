@@ -83,4 +83,24 @@ public class MailService {
 
         mailSender.send(message);
     }
+
+
+    @Transactional
+public void sendAppointmentConfirmationMail(String to, String fullName, String doctorName, String clinicName, String appointmentDate) {
+    SimpleMailMessage message = new SimpleMailMessage();
+    message.setFrom("akilli.kutuphane6@gmail.com");
+    message.setTo(to);
+    message.setSubject("Randevunuz Onaylandı | " + clinicName);
+
+    String emailContent = "Sayın " + fullName + ",\n\n" +
+            "Randevunuz başarıyla oluşturulmuştur. Bilgileriniz aşağıdadır:\n\n" +
+            "Klinik: " + clinicName + "\n" +
+            "Doktor: " + doctorName + "\n" +
+            "Tarih ve Saat: " + appointmentDate + "\n\n" +
+            "Randevunuza gidemeyecek durumdaysanız, lütfen sistem üzerinden en geç 24 saat öncesine kadar iptal ediniz.\n\n" +
+            "Sağlıklı günler dileriz,\nHastane Yönetim Sistemi Ekibi";
+
+    message.setText(emailContent);
+    mailSender.send(message);
+}
 }

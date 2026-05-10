@@ -7,6 +7,8 @@ import com.hospital.management.Exception.AccessDeniedException;
 import com.hospital.management.Exception.BadRequestException;
 import com.hospital.management.Repository.PenaltyRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,6 +81,7 @@ public class PenaltyService {
 
     // SÜRESİ DOLMUŞ CEZALARI PASİFLEŞTİR
     @Transactional
+    @Scheduled(cron = "0 0 0 * * *") //  Her gece tam 00:00'da otomatik çalışır
     public void deactivateExpiredPenalties() {
         List<Penalty> expiredPenalties = penaltyRepository.findByPenaltyEndDateBefore(LocalDateTime.now());
 

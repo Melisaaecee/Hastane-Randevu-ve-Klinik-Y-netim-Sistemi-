@@ -59,6 +59,22 @@ public class AppointmentService {
 
         slot.setStatus(SlotStatus.BOOKED);
         slotRepository.save(slot);
+
+
+        // --- Randevu alındığı zaman onay Maili Gönder ---
+    try {
+        mailService.sendAppointmentConfirmationMail(
+            patient.getUser().getEmail(),
+            patient.getUser().getFirstName() + " " + patient.getUser().getLastName(),
+            slot.getDoctor().getUser().getFirstName() + " " + slot.getDoctor().getUser().getLastName(),
+            slot.getDoctor().getClinic().getName(),
+            slot.getStartTime().toString()
+        );
+    } catch (Exception e) {
+        // Mail gitmese bile randevu kaydedilmiş olsun diye hatayı sadece logluyoruz
+        System.err.println("Randevu onay maili gönderilirken hata oluştu: " + e.getMessage());
+    }
+
         return appointmentRepository.save(appointment);
     }
 
