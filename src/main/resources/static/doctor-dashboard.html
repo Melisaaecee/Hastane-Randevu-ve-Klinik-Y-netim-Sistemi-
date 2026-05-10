@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,28 +8,35 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="icon" href="https://api.iconify.design/fa6-solid:heart-pulse.svg?color=%23e11d48" type="image/svg+xml">
-    <style>
-        .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; padding: 10px; }
-        .info-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform 0.2s; }
-        .info-box:hover { transform: translateY(-3px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .info-box i { font-size: 1.5rem; color: #3b82f6; margin-bottom: 8px; }
-        .info-box strong { font-size: 0.85rem; color: #64748b; text-transform: uppercase; }
-        .info-box span { font-size: 1rem; color: #1e293b; font-weight: 600; margin-top: 5px; }
-        .btn-not-attended { background-color: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85rem; }
-        .btn-not-attended:hover { background-color: #dc2626; }
-    </style>
 </head>
+
 <body>
 
     <aside class="sidebar">
         <div class="logo"><i class="fas fa-heartbeat"></i><span>MedSoft</span></div>
+        <div class="sidebar-user-info">
+            <div id="avatarInitial" class="avatar-circle"></div>
+            <p id="doctorNameSidebar" style="color: white; font-weight: 600; margin: 10px 0 5px 0;"></p>
+        </div>
         <nav>
             <ul>
-                <li class="active" onclick="window.doctorApp.showTab('profile', this)"><i class="fas fa-user-md"></i> <span>Profil Bilgileri</span></li>
-                <li onclick="window.doctorApp.showTab('slots', this)"><i class="fas fa-calendar-plus"></i> <span>Randevu Slotları</span></li>
-                <li onclick="window.doctorApp.showTab('appointments', this)"><i class="fas fa-calendar-check"></i> <span>Randevularım</span></li>
-                <li onclick="window.doctorApp.showTab('profile-settings', this)"><i class="fas fa-cog"></i> <span>Profil Ayarları</span></li>
-                <li class="logout-item" onclick="window.doctorApp.logout()"><i class="fas fa-sign-out-alt"></i> <span>Çıkış Yap</span></li>
+                <li class="active" onclick="window.doctorApp.showTab('profile', this)"><i class="fas fa-user-md"></i>
+                    <span>Profil Bilgilerim</span>
+                </li>
+                <li onclick="window.doctorApp.showTab('profile-edit', this)"><i class="fas fa-user-edit"></i>
+                    <span>Profili Düzenle</span>
+                </li>
+                <li onclick="window.doctorApp.showTab('slots', this)"><i class="fas fa-calendar-plus"></i> <span>Randevu
+                        Slotları</span></li>
+                <li onclick="window.doctorApp.showTab('appointments', this)"><i class="fas fa-calendar-check"></i>
+                    <span>Randevularım</span>
+                </li>
+                <li onclick="window.doctorApp.showTab('profile-settings', this)"><i class="fas fa-cog"></i>
+                    <span>Güvenlik Ayarları</span>
+                </li>
+                <li class="logout-item" onclick="window.doctorApp.logout()"><i class="fas fa-sign-out-alt"></i>
+                    <span>Çıkış Yap</span>
+                </li>
             </ul>
         </nav>
     </aside>
@@ -39,37 +47,92 @@
             <div class="user-status"><span class="status-indicator"></span> Çevrimiçi</div>
         </header>
 
+        <!-- PROFİL BİLGİLERİ TABI -->
         <section id="profile" class="tab-content active">
             <div class="card">
-                <div class="card-header"><i class="fas fa-id-card"></i> <h2>Mesleki Bilgiler</h2></div>
-                <div id="doctor-details"><p class="loading-text">Yükleniyor...</p></div>
+                <div class="card-header"><i class="fas fa-id-card"></i>
+                    <h2>Mesleki Bilgiler</h2>
+                </div>
+                <div id="doctor-details">
+                    <p class="loading-text">Yükleniyor...</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><i class="fas fa-user-circle"></i>
+                    <h2>Hesap Bilgilerim</h2>
+                </div>
+                <div id="user-details">
+                    <p class="loading-text">Yükleniyor...</p>
+                </div>
             </div>
         </section>
 
+        <!-- PROFİL DÜZENLEME TABI -->
+        <section id="profile-edit" class="tab-content">
+            <div class="card">
+                <div class="card-header"><i class="fas fa-user-edit"></i>
+                    <h2>Profil Bilgilerimi Düzenle</h2>
+                </div>
+
+                <!-- Uyarılar -->
+                <div id="tcknWarning" class="warning-box"
+                    style="display: none; background: #fff3cd; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                </div>
+                <div id="emailWarning" class="warning-box"
+                    style="display: none; background: #fff3cd; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                </div>
+
+                <!-- Düzenleme Formu -->
+                <div id="profile-edit-form"></div>
+            </div>
+        </section>
+
+        <!-- SLOT TABI -->
         <section id="slots" class="tab-content">
             <div class="card">
-                <div class="card-header"><i class="fas fa-plus-circle"></i> <h2>Slot Ekle</h2></div>
+                <div class="card-header"><i class="fas fa-plus-circle"></i>
+                    <h2>Slot Ekle</h2>
+                </div>
                 <form id="slot-form" class="slot-creation-form">
                     <div class="form-row">
-                        <div class="form-group"><label>Başlangıç</label><input type="datetime-local" id="startTime" required></div>
-                        <div class="form-group"><label>Bitiş</label><input type="datetime-local" id="endTime" required></div>
+                        <div class="form-group">
+                            <label>Başlangıç</label>
+                            <input type="datetime-local" id="startTime" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Bitiş</label>
+                            <input type="datetime-local" id="endTime" class="form-input" required>
+                        </div>
                     </div>
-                    <button type="submit" class="btn-primary">Slotu Kaydet</button>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Slotu Kaydet</button>
                 </form>
             </div>
-            <div class="card" style="margin-top: 20px;">
+            <div class="card">
+                <div class="card-header"><i class="fas fa-list"></i>
+                    <h2>Slot Listem</h2>
+                </div>
                 <div class="table-container">
                     <table>
-                        <thead><tr><th>Başlangıç</th><th>Bitiş</th><th>Durum</th><th>İşlem</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Başlangıç</th>
+                                <th>Bitiş</th>
+                                <th>Durum</th>
+                                <th>İşlem</th>
+                            </tr>
+                        </thead>
                         <tbody id="slot-table-body"></tbody>
                     </table>
                 </div>
             </div>
         </section>
 
+        <!-- RANDEVULAR TABI -->
         <section id="appointments" class="tab-content">
             <div class="card">
-                <div class="card-header"><i class="fas fa-clipboard-list"></i> <h2>Randevularım</h2></div>
+                <div class="card-header"><i class="fas fa-clipboard-list"></i>
+                    <h2>Randevularım</h2>
+                </div>
                 <div class="table-container">
                     <table>
                         <thead>
@@ -78,7 +141,7 @@
                                 <th>TCKN</th>
                                 <th>Tarih</th>
                                 <th>Durum</th>
-                                <th>İşlem</th> <!-- Yeni Sütun -->
+                                <th>İşlem</th>
                             </tr>
                         </thead>
                         <tbody id="appointments-table-body"></tbody>
@@ -87,32 +150,50 @@
             </div>
         </section>
 
+        <!-- GÜVENLİK AYARLARI TABI -->
         <section id="profile-settings" class="tab-content">
-            <div class="card">
-                <div class="card-header"><i class="fas fa-user-cog"></i> <h2>Güvenlik Ayarları</h2></div>
-                <div class="settings-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px;">
-                    <div class="settings-card" style="border: 1px solid #ddd; padding: 15px; border-radius: 8px;">
-                        <h3>Şifre Değiştir</h3>
-                        <div class="form-group"><label>Mevcut Şifre</label><input type="password" id="currentPassword" class="form-control"></div>
-                        <div class="form-group"><label>Yeni Şifre</label><input type="password" id="newPassword" class="form-control"></div>
-                        <div class="form-group"><label>Tekrar Yeni Şifre</label><input type="password" id="confirmPassword" class="form-control"></div>
-                        <button class="btn-primary" onclick="window.doctorApp.handlePasswordUpdate()" style="width: 100%; margin-top: 10px;">Güncelle</button>
+            <div class="settings-wrapper">
+                <div class="settings-card">
+                    <h3><i class="fas fa-key"></i> Şifre Değiştir</h3>
+                    <div class="input-field-group">
+                        <label>Mevcut Şifre</label>
+                        <input type="password" id="currentPassword" class="form-control">
                     </div>
-                    <div class="settings-card" style="border: 1px solid #ddd; padding: 15px; border-radius: 8px;">
-                        <h3>E-posta Güncelle</h3>
-                        <div id="emailStep1">
-                            <div class="form-group"><label>Yeni E-posta</label><input type="email" id="newEmail" class="form-control"></div>
-                            <button class="btn-primary" onclick="window.doctorApp.sendEmailVerification()" style="background:#10b981; width:100%; margin-top:10px;">Kod Gönder</button>
+                    <div class="input-field-group">
+                        <label>Yeni Şifre</label>
+                        <input type="password" id="newPassword" class="form-control">
+                    </div>
+                    <div class="input-field-group">
+                        <label>Tekrar Yeni Şifre</label>
+                        <input type="password" id="confirmPassword" class="form-control">
+                    </div>
+                    <button class="btn-update" onclick="window.doctorApp.handlePasswordUpdate()">Şifreyi
+                        Güncelle</button>
+                </div>
+
+                <div class="settings-card">
+                    <h3><i class="fas fa-envelope"></i> E-posta Güncelle</h3>
+                    <div id="emailStep1">
+                        <div class="input-field-group">
+                            <label>Yeni E-posta</label>
+                            <input type="email" id="newEmail" class="form-control">
                         </div>
-                        <div id="emailStep2" style="display: none;">
-                            <div class="form-group"><label>Onay Kodu</label><input type="text" id="emailVerifyCode" class="form-control" maxlength="6"></div>
-                            <button class="btn-primary" onclick="window.doctorApp.confirmEmailUpdate()" style="width:100%; margin-top:10px;">Onayla</button>
+                        <button class="btn-update" onclick="window.doctorApp.sendEmailVerification()"
+                            style="background: #10b981;">Kod Gönder</button>
+                    </div>
+                    <div id="emailStep2" style="display: none;">
+                        <div class="input-field-group">
+                            <label>Onay Kodu</label>
+                            <input type="text" id="emailVerifyCode" class="form-control" maxlength="6">
                         </div>
+                        <button class="btn-update" onclick="window.doctorApp.confirmEmailUpdate()">Onayla</button>
                     </div>
                 </div>
             </div>
         </section>
     </main>
+
     <script src="javascript/doctor.js"></script>
 </body>
+
 </html>

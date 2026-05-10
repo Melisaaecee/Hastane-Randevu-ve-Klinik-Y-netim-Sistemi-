@@ -2,12 +2,15 @@ package com.hospital.management.Controller;
 
 import com.hospital.management.Entity.Doctor;
 import com.hospital.management.Service.DoctorService;
+import com.hospital.management.Service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/doctors")
@@ -16,31 +19,24 @@ import java.util.List;
 public class DoctorController {
 
     private final DoctorService doctorService;
+    private final UserService userService;
 
-    // --- LİSTELEME VE FİLTRELEME (HERKESE AÇIK) ---
-
-
-    // Tüm doktorları listeler.
+    // --- LİSTELEME ---
     @GetMapping
     public ResponseEntity<List<Doctor>> getAllDoctors() {
         return ResponseEntity.ok(doctorService.getAllDoctors());
     }
 
-   // Klinik içindeki tüm doktorları listeler.
     @GetMapping("/clinic/{clinicId}")
     public ResponseEntity<List<Doctor>> getDoctorsInClinic(@PathVariable Long clinicId) {
         return ResponseEntity.ok(doctorService.getAllDoctorsInClinic(clinicId));
     }
 
-   
-    // Uzmanlık adına göre doktorları listeler.
     @GetMapping("/specialization")
     public ResponseEntity<List<Doctor>> getBySpecialization(@RequestParam String name) {
         return ResponseEntity.ok(doctorService.getDoctorsBySpecialization(name));
     }
 
-   
-    // Klinik ve doktora adına göre arama yapar.
     @GetMapping("/search")
     public ResponseEntity<List<Doctor>> searchDoctor(
             @RequestParam Long clinicId,
@@ -48,28 +44,58 @@ public class DoctorController {
         return ResponseEntity.ok(doctorService.searchDoctorInClinic(clinicId, name));
     }
 
-    // --- ÖZEL ERİŞİM VE YÖNETİM ---
-
-
-    //userId ile doktor sorgular.
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<Doctor> getDoctorByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(doctorService.getDoctorByUserId(userId));
     }
 
-    // Yeni bir doktor ekler veya mevcut bir doktoru günceller.
+    // --- DOKTOR OLUŞTURMA (SADECE ADMIN) ---
+    @PostMapping("/create-with-user")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createDoctorWithUser(
+            @RequestParam String firstName,
+            @RequestParam String lastName,
+            @RequestParam(required = false) String specialization,
+            @RequestParam Long clinicId) {
+        try {
+            return ResponseEntity.ok(doctorService.createDoctorWithUser(firstName, lastName, specialization, clinicId));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // --- GÜNCELLEME ---
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<Doctor> saveOrUpdate(@RequestBody Doctor doctor) {
         return ResponseEntity.ok(doctorService.saveOrUpdateDoctor(doctor));
     }
 
-    // Doktor kaydını sistemden tamamen siler.
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> updates) {
+        try {
+            String tckn = SecurityContextHolder.getContext().getAuthentication().getName();
+            String email = updates.get("email");
+            String newTckn = updates.get("tckn");
+            String username = updates.get("username");
+
+            userService.updateDoctorProfile(tckn, email, newTckn, username);
+            return ResponseEntity.ok(Map.of("message", "Profil başarıyla güncellendi"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> deleteDoctor(@PathVariable Long id) {
-        doctorService.deleteDoctor(id);
-        return ResponseEntity.ok("Doktor kaydı başarıyla silindi.");
+    public ResponseEntity<?> deleteDoctor(@PathVariable Long id) {
+        try {
+            doctorService.deleteDoctor(id);
+            return ResponseEntity.ok(Map.of("message", "Doktor başarıyla silindi"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }

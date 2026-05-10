@@ -37,6 +37,11 @@ public class SlotService {
                 .collect(Collectors.toList());
     }
 
+    // Doktorun slotlarını getir 
+    public List<Slot> getSlotsByDoctorId(Long doctorId) {
+        return slotRepository.findByDoctorIdWithDetails(doctorId); // ✅ Fetch join
+    }
+
     // SLOT OLUŞTUR (IDOR Korumalı)
     @Transactional
     public Slot createSlot(Slot slot) {

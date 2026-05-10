@@ -60,33 +60,30 @@ public class AppointmentService {
         slot.setStatus(SlotStatus.BOOKED);
         slotRepository.save(slot);
 
-
         // --- Randevu alındığı zaman onay Maili Gönder ---
-    try {
-        mailService.sendAppointmentConfirmationMail(
-            patient.getUser().getEmail(),
-            patient.getUser().getFirstName() + " " + patient.getUser().getLastName(),
-            slot.getDoctor().getUser().getFirstName() + " " + slot.getDoctor().getUser().getLastName(),
-            slot.getDoctor().getClinic().getName(),
-            slot.getStartTime().toString()
-        );
-    } catch (Exception e) {
-        // Mail gitmese bile randevu kaydedilmiş olsun diye hatayı sadece logluyoruz
-        System.err.println("Randevu onay maili gönderilirken hata oluştu: " + e.getMessage());
-    }
+        try {
+            mailService.sendAppointmentConfirmationMail(
+                    patient.getUser().getEmail(),
+                    patient.getUser().getFirstName() + " " + patient.getUser().getLastName(),
+                    slot.getDoctor().getUser().getFirstName() + " " + slot.getDoctor().getUser().getLastName(),
+                    slot.getDoctor().getClinic().getName(),
+                    slot.getStartTime().toString());
+        } catch (Exception e) {
+            // Mail gitmese bile randevu kaydedilmiş olsun diye hatayı sadece logluyoruz
+            System.err.println("Randevu onay maili gönderilirken hata oluştu: " + e.getMessage());
+        }
 
         return appointmentRepository.save(appointment);
     }
 
-    // PATIENT
+    // HASTA RANDEVULARI
     public List<Appointment> getPatientAppointments(Long patientId) {
-
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new EntityNotFoundException("Hasta yok"));
 
         assertOwnerOrAdmin(patient.getUser().getId());
 
-        return appointmentRepository.findByPatientId(patientId);
+        return appointmentRepository.findByPatientIdWithDetails(patientId);
     }
 
     public List<Appointment> getPatientPastAppointments(Long patientId) {
@@ -102,13 +99,12 @@ public class AppointmentService {
 
     // DOCTOR
     public List<Appointment> getDoctorAppointments(Long doctorId) {
-
         Doctor doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new EntityNotFoundException("Doktor yok"));
 
         assertOwnerOrAdmin(doctor.getUser().getId());
 
-        return appointmentRepository.findBySlotDoctorId(doctorId);
+        return appointmentRepository.findByDoctorIdWithDetails(doctorId); 
     }
 
     public List<Appointment> getDoctorActiveAppointments(Long doctorId) {

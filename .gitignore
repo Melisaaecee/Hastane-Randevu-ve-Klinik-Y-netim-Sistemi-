@@ -31,5 +31,20 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
+### VS Code (ÖNEMLİ!) ###
 .vscode/
+.history/
+*.code-workspace
+
+# ============ GÜVENLİK ============
+.env
+.env.*
+application-local.properties
+application-dev.properties
+*.p12
+*.jks
+*.key
+*.log
+logs/
+.DS_Store
+Thumbs.db

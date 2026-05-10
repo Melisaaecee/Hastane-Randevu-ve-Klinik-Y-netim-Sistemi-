@@ -576,7 +576,9 @@ td {
 .action-buttons {
     display: flex;
     gap: 8px;
-    align-items: center;}
+    align-items: center;
+}
+
 /* --- RANDEVU ALMA (WIZARD) SİSTEMİ --- */
 .appointment-container {
     padding: 20px;
@@ -659,6 +661,7 @@ select.form-control:disabled {
     cursor: not-allowed;
     opacity: 0.7;
 }
+
 .alert-error {
     background: #fff5f5;
     color: var(--medical-red);
@@ -669,6 +672,7 @@ select.form-control:disabled {
     font-size: 0.9rem;
     font-weight: 600;
 }
+
 /* Iframe'in içindeki sayfanın arka planını şeffaf tutar */
 #appointmentFrame {
     background-color: transparent;
@@ -691,7 +695,11 @@ select.form-control:disabled {
     background: #ef4444;
     color: white;
 }
-.status-scheduled { background: #ebf8ff; color: #3182ce; }
+
+.status-scheduled {
+    background: #ebf8ff;
+    color: #3182ce;
+}
 
 .btn-not-attended {
     padding: 6px 12px;
@@ -699,4 +707,43 @@ select.form-control:disabled {
     font-weight: 600;
     transition: all 0.2s;
     cursor: pointer;
+}
+
+/* Profil düzenleme formu için ek stiller */
+#profile-edit-form .form-group {
+    margin-bottom: 20px;
+}
+
+#profile-edit-form .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #334155;
+}
+
+#profile-edit-form .form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 16px;
+    background: white;
+}
+
+#profile-edit-form .form-group input:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+#profile-edit-form .form-group small {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+#profile-edit-form button {
+    margin-top: 10px;
+    width: 100%;
 }

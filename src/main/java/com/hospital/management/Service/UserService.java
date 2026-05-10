@@ -3,7 +3,7 @@ package com.hospital.management.Service;
 import com.hospital.management.Config.SecurityUtil;
 import com.hospital.management.DTO.RegisterRequest;
 import com.hospital.management.DTO.UserResponse;
-import com.hospital.management.Entity.Role; // Role importu eklendi
+import com.hospital.management.Entity.Role;
 import com.hospital.management.Entity.User;
 import com.hospital.management.Exception.AccessDeniedException;
 import com.hospital.management.Exception.BadRequestException;
@@ -79,6 +79,49 @@ public class UserService {
         }
 
         return mapToResponse(userRepository.save(user));
+    }
+
+   
+    @Transactional
+    public void updateDoctorProfile(String tckn, String email, String newTckn, String username) {
+        User user = userRepository.findByTckn(tckn)
+                .orElseThrow(() -> new EntityNotFoundException("Kullanıcı bulunamadı"));
+
+        if (!SecurityUtil.isOwner(user.getId()) && !SecurityUtil.isAdmin()) {
+            throw new AccessDeniedException("Profilinizi güncelleme yetkiniz yok.");
+        }
+
+        // Username güncelleme
+        if (username != null && !username.equals(user.getUsername())) {
+            if (username.length() < 3) {
+                throw new BadRequestException("Kullanıcı adı en az 3 karakter olmalıdır.");
+            }
+            if (userRepository.existsByUsername(username)) {
+                throw new BadRequestException("Bu kullanıcı adı zaten kullanılıyor.");
+            }
+            user.setUsername(username);
+        }
+
+        // Email güncelleme
+        if (email != null && !email.equals(user.getEmail())) {
+            if (userRepository.existsByEmail(email)) {
+                throw new BadRequestException("Bu e-posta adresi zaten kullanılıyor.");
+            }
+            user.setEmail(email);
+        }
+
+        // TCKN güncelleme
+        if (newTckn != null && !newTckn.equals(user.getTckn())) {
+            if (newTckn.length() != 11 || !newTckn.matches("\\d+")) {
+                throw new BadRequestException("TC Kimlik No 11 haneli ve sadece rakamlardan oluşmalıdır.");
+            }
+            if (userRepository.existsByTckn(newTckn)) {
+                throw new BadRequestException("Bu TC Kimlik Numarası zaten kayıtlı.");
+            }
+            user.setTckn(newTckn);
+        }
+
+        userRepository.save(user);
     }
 
     @Transactional

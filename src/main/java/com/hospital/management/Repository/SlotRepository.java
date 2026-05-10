@@ -4,6 +4,7 @@ import com.hospital.management.Entity.Slot;
 import com.hospital.management.Entity.SlotStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -45,4 +46,11 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
                         LocalDateTime end);
 
         List<Slot> findByDoctorId(Long doctorId);
+
+        @Query("SELECT DISTINCT s FROM Slot s " +
+                        "LEFT JOIN FETCH s.doctor d " +
+                        "LEFT JOIN FETCH d.user " +
+                        "WHERE s.doctor.id = :doctorId")
+        List<Slot> findByDoctorIdWithDetails(@Param("doctorId") Long doctorId);
+
 }

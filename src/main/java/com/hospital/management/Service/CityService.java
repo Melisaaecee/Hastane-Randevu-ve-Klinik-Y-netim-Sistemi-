@@ -15,10 +15,10 @@ public class CityService {
 
     private final CityRepository cityRepository;
 
-    // Tüm şehirleri alfabetik (A-Z) sıralı olarak getirir.
-
+ 
+    // Tüm şehirleri getir
     public List<City> getAllCities() {
-        return cityRepository.findAllByOrderByNameAsc();
+        return cityRepository.findAllByOrderByNameAsc(); 
     }
 
     // Şehir ID'sine göre şehir bilgisi getirir.

@@ -60,7 +60,7 @@ window.handleLogin = async function (e) {
         const role = rawRole.replace("ROLE_", "");
 
         if (role === "ADMIN") location.href = "admin.html";
-        else if (role === "DOCTOR") location.href = "doctor.html";
+        else if (role === "DOCTOR") location.href = "doctor-dashboard.html";
         else if (role === "PATIENT") location.href = "patient.html";
         else showError("Bilinmeyen Yetki!");
 

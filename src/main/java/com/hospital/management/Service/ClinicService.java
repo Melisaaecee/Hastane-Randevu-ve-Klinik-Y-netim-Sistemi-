@@ -17,14 +17,9 @@ public class ClinicService {
 
     private final ClinicRepository clinicRepository;
 
-    // 1. Tüm klinikleri listeler.
-    public List<Clinic> getAllClinics() {
-        return clinicRepository.findAll();
-    }
-
-    // 2. Belirli bir hastaneye ait tüm klinikleri ALFABETİK sıralı getirir.
+    // Belirli bir hastaneye ait klinikleri GETİR 
     public List<Clinic> getClinicsByHospitalId(Long hospitalId) {
-        List<Clinic> clinics = clinicRepository.findByHospitalId(hospitalId);
+        List<Clinic> clinics = clinicRepository.findByHospitalIdWithDetails(hospitalId); // ✅ Fetch join
 
         if (clinics.isEmpty()) {
             throw new EntityNotFoundException("Bu hastaneye ait kayıtlı klinik bulunamadı.");
@@ -33,6 +28,11 @@ public class ClinicService {
         return clinics.stream()
                 .sorted(Comparator.comparing(Clinic::getName))
                 .collect(Collectors.toList());
+    }
+
+    // Tüm klinikleri getir (Fetch join ile)
+    public List<Clinic> getAllClinics() {
+        return clinicRepository.findAllWithDetails(); 
     }
 
     // 3. Hastane içinde isme göre klinik araması yapar.

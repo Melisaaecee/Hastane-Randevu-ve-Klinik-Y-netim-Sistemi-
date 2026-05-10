@@ -17,18 +17,14 @@ public class HospitalService {
 
     private final HospitalRepository hospitalRepository;
 
-    // Tüm hastaneleri alfabetik getirir
+    // Tüm hastaneleri getir 
     public List<Hospital> getAllHospitals() {
-        return hospitalRepository.findAll().stream()
-                .sorted(Comparator.comparing(Hospital::getName))
-                .collect(Collectors.toList());
+        return hospitalRepository.findAllWithDetails(); // ✅ Fetch join
     }
 
-    // Seçilen ilçedeki hastaneler
+    // İlçedeki hastaneleri getir 
     public List<Hospital> getHospitalsByDistrict(Long districtId) {
-        return hospitalRepository.findByDistrictId(districtId).stream()
-                .sorted(Comparator.comparing(Hospital::getName))
-                .collect(Collectors.toList());
+        return hospitalRepository.findByDistrictIdWithDetails(districtId); // ✅ Fetch join
     }
 
     // Şehirdeki tüm hastaneler
@@ -50,7 +46,7 @@ public class HospitalService {
         return hospitalRepository.save(hospital);
     }
 
-    // Sil 
+    // Sil
     @Transactional
     public void deleteHospital(Long id) {
         if (!hospitalRepository.existsById(id)) {
