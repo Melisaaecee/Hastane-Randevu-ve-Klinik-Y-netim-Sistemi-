@@ -50,6 +50,11 @@ public class SlotService {
         // halini çekiyoruz.
         Doctor doctor = doctorRepository.findById(slot.getDoctor().getId())
                 .orElseThrow(() -> new EntityNotFoundException("Doktor bulunamadı."));
+                
+                
+                if (slot.getClinic() == null) {
+               slot.setClinic(doctor.getClinic());
+               }
 
         // Slot nesnesine veritabanından gelen tam dolu Doktor nesnesini set ediyoruz.
         // Böylece .getUser().getId() artık NullPointerException vermeyecek.
