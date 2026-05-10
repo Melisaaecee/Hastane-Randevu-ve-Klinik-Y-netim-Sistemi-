@@ -29,9 +29,9 @@ async function fetchWithAuth(url, options = {}) {
     return response;
 }
 
+
 // ================= TAB SYSTEM =================
-// ================= TAB SYSTEM =================
-window.switchTab = async function (tabId, event) {  // ← async EKLE
+window.switchTab = async function (tabId, event) {  
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     const targetTab = document.getElementById(tabId);
     if (targetTab) targetTab.classList.add('active');
@@ -63,6 +63,8 @@ window.switchTab = async function (tabId, event) {  // ← async EKLE
     if (tabId === 'slots') loadSlots();
     if (tabId === 'profile') loadMyProfile();
 };
+
+
 // ================= DASHBOARD =================
 window.loadStats = async function () {
     try {
@@ -314,12 +316,11 @@ window.deleteClinic = async function (id) {
 // ================= DOCTORS =================
 let doctorsData = [];
 window.loadDoctors = async function () {
-    console.log("🔵 Doktorlar yükleniyor...");
+    
     try {
         const res = await fetchWithAuth(`${API_URL}/doctors`);
         if (res && res.ok) {
             doctorsData = await res.json();
-            console.log("✅ Doktorlar yüklendi:", doctorsData.length);
             renderDoctors();
         } else {
             console.error("❌ Doktorlar yüklenemedi");
@@ -350,10 +351,10 @@ function renderDoctors() {
     }
 
     tbody.innerHTML = filtered.map(d => {
-        // Uzmanlık alanını düzenle
+       
         let specialty = d.specialization || d.specialty || '-';
         if (specialty !== '-' && specialty !== 'Uzmanlık Belirtilmemiş') {
-            // Uzmanlık varsa ilk 3 harfini al
+           
             let shortSpec = specialty.length >= 3 ? specialty.substring(0, 3).toUpperCase() : specialty.toUpperCase();
             specialty = `${shortSpec}. Uzm.`;
         } else if (specialty === 'Uzmanlık Belirtilmemiş') {
@@ -398,7 +399,7 @@ window.deleteDoctor = async function (id) {
             const result = await response.json();
             console.log("🔵 Response:", result);
             alert("✅ Doktor başarıyla silindi!");
-            await loadDoctors(); // Listeyi yenile
+            await loadDoctors();
         } else {
             const error = await response.text();
             console.error("🔴 Hata:", error);
@@ -530,7 +531,7 @@ async function loadDistrictsByCity(cityId, selectElement) {
     }
 
     try {
-        // DOĞRU ENDPOINT: /api/districts/city/{cityId}
+        
         const res = await fetchWithAuth(`${API_URL}/districts/city/${cityId}`);
 
         if (res && res.ok) {

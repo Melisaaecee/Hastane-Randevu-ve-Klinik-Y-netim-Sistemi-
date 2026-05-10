@@ -49,13 +49,13 @@ public class DoctorService {
                     if (firstName != null && !firstName.startsWith("Dr.")) {
                         if (specialization != null && !specialization.isEmpty()
                                 && !specialization.equals("Uzmanlık Belirtilmemiş")) {
-                            // Uzmanlık varsa: ilk 3 harfini al + Dr.
+                            
                             String shortSpec = specialization.length() >= 3
                                     ? specialization.substring(0, 3).toUpperCase()
                                     : specialization.toUpperCase();
                             doc.getUser().setFirstName(shortSpec + ". Dr. " + firstName);
                         } else {
-                            // Uzmanlık yoksa: sadece Dr.
+                            
                             doc.getUser().setFirstName("Dr. " + firstName);
                         }
                     }

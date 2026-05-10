@@ -5,15 +5,14 @@ window.doctorApp = {
     isFirstLogin: true,
 
     init: async function () {
-        console.log("🔵 Doktor paneli başlatılıyor...");
 
         const userData = JSON.parse(localStorage.getItem("user") || '{}');
         this.token = userData.token || localStorage.getItem("token");
         this.currentUser = userData.user || userData;
 
-        console.log("🔵 Token:", this.token ? this.token.substring(0, 50) + "..." : "YOK");
-        console.log("🔵 Kullanıcı ID:", this.currentUser?.id);
-        console.log("🔵 Kullanıcı Rol:", this.currentUser?.role);
+        //   console.log("🔵 Token:", this.token ? this.token.substring(0, 50) + "..." : "YOK");
+        // console.log("🔵 Kullanıcı ID:", this.currentUser?.id);
+        //console.log("🔵 Kullanıcı Rol:", this.currentUser?.role);
 
         if (!this.token) {
             alert("❌ Oturum bulunamadı! Lütfen tekrar giriş yapın.");
@@ -35,11 +34,8 @@ window.doctorApp = {
         this.fetchSlots();
         this.fetchAppointments();
         this.setupEventListeners();
-
-        this.checkFirstLogin();
         this.loadSettingsValues();
-
-        console.log("✅ Doktor paneli hazır!");
+        
     },
 
     // ============ UI GÜNCELLEME FONKSİYONU ============
@@ -60,61 +56,60 @@ window.doctorApp = {
         }
     },
 
-    // ============ İLK GİRİŞ KONTROLÜ ============
-    checkFirstLogin: function () {
-        const email = this.currentUser.email;
-        const tckn = this.currentUser.tckn;
-        const username = this.currentUser.username;
+    
 
-        const isTemporaryEmail = email && email.endsWith('@hastane.com');
-        const isTemporaryTckn = tckn && (tckn.startsWith('1') || tckn.length === 11 && tckn.match(/^\d+$/));
-        const isTemporaryUsername = username && (username.includes('.') || username.length < 5);
+    handlePasswordUpdate: async function () {
+        const curPass = document.getElementById('currentPassword')?.value;
+        const newPass = document.getElementById('newPassword')?.value;
+        const confPass = document.getElementById('confirmPassword')?.value;
 
-        this.isFirstLogin = isTemporaryEmail || isTemporaryTckn || isTemporaryUsername;
+        if (!curPass || !newPass) {
+            alert("Mevcut şifre ve yeni şifre gereklidir!");
+            return;
+        }
+        if (newPass !== confPass) {
+            alert("Yeni şifreler eşleşmiyor!");
+            return;
+        }
+        if (newPass.length < 6) {
+            alert("Yeni şifre en az 6 karakter olmalıdır!");
+            return;
+        }
+        if (curPass === newPass) {
+            alert("⚠️ Yeni şifre mevcut şifre ile aynı olamaz!");
+            return;
+        }
 
-        if (this.isFirstLogin) {
-            const warning = document.getElementById('firstLoginWarning');
-            if (warning) {
-                warning.style.display = 'flex';
+        try {
+            const response = await fetch('http://localhost:8080/api/auth/reset-password-logged-in', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: JSON.stringify({
+                    tckn: this.currentUser?.tckn,
+                    currentPassword: curPass,
+                    newPassword: newPass
+                })
+            });
+
+            if (response.ok) {
+                alert("✅ Şifre başarıyla değiştirildi!\nÇıkış yapılıyor...");
+
+                setTimeout(() => {
+                    localStorage.clear();
+                    window.location.href = 'index.html';
+                }, 500);
+            } else {
+                const data = await response.json();
+                alert("❌ " + (data.message || data.error || "Mevcut şifreniz hatalı!"));
             }
-
-            const logoutBtn = document.querySelector('.logout-item');
-            if (logoutBtn) {
-                logoutBtn.style.opacity = '0.5';
-                logoutBtn.style.pointerEvents = 'none';
-                logoutBtn.title = 'Önce tüm bilgilerinizi güncellemelisiniz!';
-            }
-
-            alert("⚠️ HOŞ GELDİNİZ!\n\nSistem tarafından size geçici bir kullanıcı adı, şifre ve TCKN oluşturulmuştur.\n\nGüvenlik Ayarları sekmesinden tüm bilgilerinizi güncellemeniz gerekmektedir.\n\nBilgileriniz güncellenmeden sistemden çıkış yapamazsınız!");
+        } catch (e) {
+            console.error("Şifre değiştirme hatası:", e);
+            alert("Bağlantı hatası! Lütfen tekrar deneyin.");
         }
     },
-
-    // ============ BİLGİLER TAMAMLANDI MI KONTROLÜ ============
-    checkAllInfoUpdated: function () {
-        const email = this.currentUser.email;
-        const tckn = this.currentUser.tckn;
-        const username = this.currentUser.username;
-
-        const isTemporaryEmail = email && email.endsWith('@hastane.com');
-        const isTemporaryTckn = tckn && (tckn.startsWith('1') || tckn.length === 11);
-        const isTemporaryUsername = username && (username.includes('.') || username.length < 5);
-
-        if (!isTemporaryEmail && !isTemporaryTckn && !isTemporaryUsername) {
-            this.isFirstLogin = false;
-
-            const warning = document.getElementById('firstLoginWarning');
-            if (warning) warning.style.display = 'none';
-
-            const logoutBtn = document.querySelector('.logout-item');
-            if (logoutBtn) {
-                logoutBtn.style.opacity = '1';
-                logoutBtn.style.pointerEvents = 'auto';
-            }
-            return true;
-        }
-        return false;
-    },
-
     // ============ SETTINGS INPUTLARINA DEĞER YÜKLE ============
     loadSettingsValues: function () {
         const usernameInput = document.getElementById('editUsernameSetting');
@@ -445,7 +440,7 @@ window.doctorApp = {
 
             if (response.ok) {
                 this.activeDoctor = await response.json();
-                console.log("✅ Doktor verileri yüklendi:", this.activeDoctor);
+              
             } else {
                 this.activeDoctor = { specialization: "Belirtilmemiş", clinic: { name: "-" } };
             }
@@ -507,7 +502,7 @@ window.doctorApp = {
         tbody.innerHTML = '<td><td colspan="5">Yükleniyor...<\/td><\/tr>';
 
         try {
-            // DOĞRU ENDPOINT: /api/appointments/doctor/my
+           
             const response = await fetch("http://localhost:8080/api/appointments/doctor/my", {
                 method: 'GET',
                 headers: {
@@ -515,8 +510,6 @@ window.doctorApp = {
                     "Content-Type": "application/json"
                 }
             });
-
-            console.log("Randevu API yanıt durumu:", response.status);
 
             if (response.status === 401) {
                 tbody.innerHTML = '<tr><td colspan="5">Oturum süresi doldu! <button onclick="window.doctorApp.logout()">Tekrar Giriş Yap<\/button><\/td><\/tr>';
@@ -538,15 +531,14 @@ window.doctorApp = {
             }
 
             const appointments = await response.json();
-            console.log("Gelen randevular:", appointments);
-
+          
             if (!appointments || appointments.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5">📋 Henüz randevunuz bulunmamaktadır.<\/td><\/tr>';
                 return;
             }
 
             tbody.innerHTML = appointments.map(app => {
-                // Hasta bilgilerini güvenli al
+               
                 const patientName = app.patient?.user?.firstName && app.patient?.user?.lastName
                     ? `${app.patient.user.firstName} ${app.patient.user.lastName}`
                     : app.patient?.user?.firstName || app.patient?.user?.lastName || 'Belirtilmemiş';
@@ -723,8 +715,7 @@ window.doctorApp = {
                     status: "AVAILABLE"
                 };
 
-                console.log("🔵 Slot payload:", JSON.stringify(payload, null, 2));
-
+                
                 try {
                     const response = await fetch('http://localhost:8080/api/slots', {
                         method: 'POST',
@@ -770,10 +761,11 @@ window.doctorApp = {
         return d ? new Date(d).toLocaleString('tr-TR') : '-';
     },
 
+
     logout: function () {
         localStorage.clear();
         window.location.href = 'index.html';
-    }
+    },
 };
 
 document.addEventListener('DOMContentLoaded', () => window.doctorApp.init());
