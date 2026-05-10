@@ -747,7 +747,10 @@ select.form-control:disabled {
     margin-top: 10px;
     width: 100%;
 }
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 /* Uygun slot bulunamadığında gösterilecek mesaj */
 .no-slot-msg {
     background-color: #fff5f5;

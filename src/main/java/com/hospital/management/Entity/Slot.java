@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "slots", uniqueConstraints = {
@@ -34,10 +35,12 @@ public class Slot {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id", nullable = false)
+    @JsonIgnoreProperties({"slots", "appointments", "user", "hibernateLazyInitializer", "handler"})
     private Doctor doctor;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "clinic_id", nullable = false)
+    @JsonIgnoreProperties({"doctors", "slots", "hibernateLazyInitializer", "handler"})
     private Clinic clinic;
 
     @OneToOne(mappedBy = "slot")

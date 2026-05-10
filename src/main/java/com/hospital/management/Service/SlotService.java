@@ -42,8 +42,7 @@ public class SlotService {
         return slotRepository.findByDoctorIdWithDetails(doctorId); // ✅ Fetch join
     }
 
-    // SLOT OLUŞTUR (IDOR Korumalı)
-    @Transactional
+@Transactional
     public Slot createSlot(Slot slot) {
 
         // --- PROFESYONEL ÇÖZÜM: Nesneyi Doldurma (Hydration) ---
@@ -55,6 +54,9 @@ public class SlotService {
         // Slot nesnesine veritabanından gelen tam dolu Doktor nesnesini set ediyoruz.
         // Böylece .getUser().getId() artık NullPointerException vermeyecek.
         slot.setDoctor(doctor);
+        
+        // --- EKLEMEN GEREKEN SATIR: Kliniği doktordan alıp slota set ediyoruz ---
+        slot.setClinic(doctor.getClinic()); 
         // -------------------------------------------------------
 
         if (!SecurityUtil.isOwner(slot.getDoctor().getUser().getId()) && !SecurityUtil.isAdmin()) {
