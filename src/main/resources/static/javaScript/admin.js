@@ -30,7 +30,8 @@ async function fetchWithAuth(url, options = {}) {
 }
 
 // ================= TAB SYSTEM =================
-window.switchTab = function (tabId, event) {
+// ================= TAB SYSTEM =================
+window.switchTab = async function (tabId, event) {  // ← async EKLE
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     const targetTab = document.getElementById(tabId);
     if (targetTab) targetTab.classList.add('active');
@@ -47,8 +48,11 @@ window.switchTab = function (tabId, event) {
 
     if (tabId === 'dashboard') loadStats();
     if (tabId === 'cities') loadCities();
-    if (tabId === 'districts') { loadCitiesForSelect('districtCitySelect'); loadDistricts(); }
-    if (tabId === 'hospitals') { loadCitiesForSelect('hospitalCitySelect'); loadHospitals(); }
+    if (tabId === 'districts') { await loadCitiesForSelect('districtCitySelect'); loadDistricts(); }
+    if (tabId === 'hospitals') {
+        await loadCitiesForSelect('hospitalCitySelect');
+        await loadHospitals();
+    }
     if (tabId === 'clinics') { loadHospitalsForSelect('clinicHospitalSelect'); loadClinics(); }
     if (tabId === 'doctors') {
         loadHospitalsForSelect('doctorHospitalSelect');
@@ -59,7 +63,6 @@ window.switchTab = function (tabId, event) {
     if (tabId === 'slots') loadSlots();
     if (tabId === 'profile') loadMyProfile();
 };
-
 // ================= DASHBOARD =================
 window.loadStats = async function () {
     try {
@@ -126,6 +129,7 @@ window.loadDistricts = async function () {
     const res = await fetchWithAuth(`${API_URL}/districts`);
     if (res) { districtsData = await res.json(); renderDistricts(); }
 };
+
 function renderDistricts() {
     let filtered = districtsData.filter(d => d.name.toLowerCase().includes((document.getElementById('districtSearchInput')?.value || '').toLowerCase()));
     filtered.sort((a, b) => districtSortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
@@ -141,8 +145,10 @@ function renderDistricts() {
         </tr>
     `).join("");
 }
+
 window.filterDistricts = () => renderDistricts();
 window.sortDistricts = () => { districtSortAsc = !districtSortAsc; renderDistricts(); };
+
 window.addDistrict = async function () {
     const name = document.getElementById("districtNameInput").value.trim();
     const cityId = document.getElementById("districtCitySelect").value;
@@ -150,11 +156,13 @@ window.addDistrict = async function () {
     const res = await fetchWithAuth(`${API_URL}/districts`, { method: "POST", body: JSON.stringify({ name, city: { id: parseInt(cityId) } }) });
     if (res?.ok) { alert("Eklendi"); document.getElementById("districtNameInput").value = ""; loadDistricts(); }
 };
+
 window.updateDistrict = async function (id) {
     const name = document.getElementById(`districtName_${id}`).value.trim();
     const res = await fetchWithAuth(`${API_URL}/districts/${id}`, { method: "PUT", body: JSON.stringify({ name }) });
     if (res?.ok) { alert("Güncellendi"); loadDistricts(); }
 };
+
 window.deleteDistrict = async function (id) {
     if (!confirm("Sil?")) return;
     const res = await fetchWithAuth(`${API_URL}/districts/${id}`, { method: "DELETE" });
@@ -163,6 +171,7 @@ window.deleteDistrict = async function (id) {
 
 // ================= HOSPITALS =================
 let hospitalsData = [], hospitalSortAsc = true;
+
 window.loadHospitals = async function () {
     try {
         const res = await fetchWithAuth(`${API_URL}/hospitals`);
@@ -180,6 +189,8 @@ window.loadHospitals = async function () {
         renderHospitals();
     }
 };
+
+
 function renderHospitals() {
     const searchTerm = (document.getElementById('hospitalSearchInput')?.value || '').toLowerCase();
     let filtered = hospitalsData.filter(h => h.name && h.name.toLowerCase().includes(searchTerm));
@@ -199,25 +210,44 @@ function renderHospitals() {
         </tr>
     `).join("");
 }
+
 window.filterHospitals = () => renderHospitals();
+
 window.sortHospitals = () => { hospitalSortAsc = !hospitalSortAsc; renderHospitals(); };
 window.addHospital = async function () {
     const name = document.getElementById("hospitalNameInput").value.trim();
     const cityId = document.getElementById("hospitalCitySelect").value;
     const districtId = document.getElementById("hospitalDistrictSelect").value;
+
     if (!name) return alert("Hastane adı girin!");
     if (!cityId) return alert("Şehir seçin!");
-    const hospitalData = { name: name, city: { id: parseInt(cityId) } };
-    if (districtId && districtId !== "") { hospitalData.district = { id: parseInt(districtId) }; }
+    if (!districtId) return alert("İlçe seçin!");  // ← İLÇE ZORUNLU
+
+    const hospitalData = {
+        name: name,
+        district: { id: parseInt(districtId) }  // ← district objesi gönder
+    };
+
     try {
-        const res = await fetchWithAuth(`${API_URL}/hospitals`, { method: "POST", body: JSON.stringify(hospitalData) });
+        const res = await fetchWithAuth(`${API_URL}/hospitals`, {
+            method: "POST",
+            body: JSON.stringify(hospitalData)
+        });
+
         if (res && res.ok) {
             alert("Hastane eklendi");
             document.getElementById("hospitalNameInput").value = "";
+            document.getElementById("hospitalCitySelect").value = "";
             document.getElementById("hospitalDistrictSelect").innerHTML = '<option value="">İlçe Seç</option>';
             await loadHospitals();
-        } else { alert("Hata: Hastane eklenemedi"); }
-    } catch (error) { alert("Hastane eklenirken hata oluştu"); }
+        } else {
+            const errorText = await res?.text();
+            alert("Hata: " + (errorText || "Hastane eklenemedi"));
+        }
+    } catch (error) {
+        console.error("Ekleme hatası:", error);
+        alert("Hastane eklenirken bir hata oluştu");
+    }
 };
 window.updateHospital = async function (id) {
     const nameInput = document.getElementById(`hospitalName_${id}`);
@@ -230,6 +260,7 @@ window.updateHospital = async function (id) {
         else { alert("Güncelleme başarısız"); }
     } catch (error) { alert("Güncelleme sırasında hata oluştu"); }
 };
+
 window.deleteHospital = async function (id) {
     if (!confirm("Bu hastaneyi silmek istediğinizden emin misiniz?")) return;
     try {
@@ -491,15 +522,32 @@ async function loadHospitalsForSelect(selectId) {
         }
     } catch (error) { console.error("Hastane yükleme hatası:", error); }
 }
+// ================= İLÇE YÜKLEME FONKSİYONU =================
 async function loadDistrictsByCity(cityId, selectElement) {
-    if (!cityId || cityId === "") { selectElement.innerHTML = '<option value="">İlçe Seç</option>'; return; }
+    if (!cityId || cityId === "") {
+        selectElement.innerHTML = '<option value="">İlçe Seç</option>';
+        return;
+    }
+
     try {
-        const res = await fetchWithAuth(`${API_URL}/cities/${cityId}/districts`);
+        // DOĞRU ENDPOINT: /api/districts/city/{cityId}
+        const res = await fetchWithAuth(`${API_URL}/districts/city/${cityId}`);
+
         if (res && res.ok) {
             const districts = await res.json();
-            selectElement.innerHTML = '<option value="">İlçe Seç</option>' + districts.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+            if (districts && districts.length > 0) {
+                selectElement.innerHTML = '<option value="">İlçe Seç</option>' +
+                    districts.map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('');
+            } else {
+                selectElement.innerHTML = '<option value="">Bu şehirde ilçe bulunamadı</option>';
+            }
+        } else {
+            selectElement.innerHTML = '<option value="">İlçe yüklenemedi</option>';
         }
-    } catch (error) { console.error("İlçe yükleme hatası:", error); }
+    } catch (error) {
+        console.error("İlçe yükleme hatası:", error);
+        selectElement.innerHTML = '<option value="">İlçe yüklenemedi</option>';
+    }
 }
 function escapeHtml(str) {
     if (!str) return '';
@@ -555,8 +603,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const hospitalCitySelect = document.getElementById("hospitalCitySelect");
     if (hospitalCitySelect) {
         hospitalCitySelect.addEventListener("change", async function () {
+            const cityId = this.value;
             const districtSelect = document.getElementById("hospitalDistrictSelect");
-            if (districtSelect) await loadDistrictsByCity(this.value, districtSelect);
+
+            if (!districtSelect) return;
+
+            if (!cityId || cityId === "") {
+                districtSelect.innerHTML = '<option value="">Önce şehir seçin</option>';
+                return;
+            }
+
+            await loadDistrictsByCity(cityId, districtSelect);
         });
     }
 
@@ -565,21 +622,28 @@ document.addEventListener("DOMContentLoaded", () => {
         doctorHospitalSelect.addEventListener("change", async function () {
             const hospitalId = this.value;
             const clinicSelect = document.getElementById("doctorClinicSelect");
-            if (!hospitalId) { clinicSelect.innerHTML = '<option value="">Önce hastane seçin</option>'; return; }
+            if (!hospitalId) {
+                clinicSelect.innerHTML = '<option value="">Önce hastane seçin</option>';
+                return;
+            }
             try {
                 const res = await fetchWithAuth(`${API_URL}/clinics/hospital/${hospitalId}`);
                 if (res && res.ok) {
                     const clinics = await res.json();
-                    clinicSelect.innerHTML = '<option value="">Klinik Seç</option>' + clinics.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                    clinicSelect.innerHTML = '<option value="">Klinik Seç</option>' +
+                        clinics.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
                 } else {
                     const allClinicsRes = await fetchWithAuth(`${API_URL}/clinics`);
                     if (allClinicsRes && allClinicsRes.ok) {
                         const allClinics = await allClinicsRes.json();
                         const filtered = allClinics.filter(c => c.hospital?.id === parseInt(hospitalId));
-                        clinicSelect.innerHTML = '<option value="">Klinik Seç</option>' + filtered.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                        clinicSelect.innerHTML = '<option value="">Klinik Seç</option>' +
+                            filtered.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
                     }
                 }
-            } catch (error) { console.error("Klinik yükleme hatası:", error); }
+            } catch (error) {
+                console.error("Klinik yükleme hatası:", error);
+            }
         });
     }
 });

@@ -23,9 +23,6 @@
                 <li class="active" onclick="window.doctorApp.showTab('profile', this)"><i class="fas fa-user-md"></i>
                     <span>Profil Bilgilerim</span>
                 </li>
-                <li onclick="window.doctorApp.showTab('profile-edit', this)"><i class="fas fa-user-edit"></i>
-                    <span>Profili Düzenle</span>
-                </li>
                 <li onclick="window.doctorApp.showTab('slots', this)"><i class="fas fa-calendar-plus"></i> <span>Randevu
                         Slotları</span></li>
                 <li onclick="window.doctorApp.showTab('appointments', this)"><i class="fas fa-calendar-check"></i>
@@ -67,23 +64,98 @@
             </div>
         </section>
 
-        <!-- PROFİL DÜZENLEME TABI -->
-        <section id="profile-edit" class="tab-content">
-            <div class="card">
-                <div class="card-header"><i class="fas fa-user-edit"></i>
-                    <h2>Profil Bilgilerimi Düzenle</h2>
+        <!-- GÜVENLİK AYARLARI TABI -->
+        <section id="profile-settings" class="tab-content">
+            <!-- İlk Giriş Uyarısı -->
+            <div id="firstLoginWarning" class="warning-box" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                    <strong>⚠️ HOŞ GELDİNİZ!</strong><br>
+                    Sistem tarafından size geçici bir kullanıcı adı, şifre ve TCKN oluşturulmuştur.<br>
+                    <strong>Lütfen aşağıdaki tüm bilgilerinizi güncelleyiniz.</strong> Bilgileriniz güncellenmeden
+                    sistemden çıkış yapamazsınız!
+                </div>
+            </div>
+
+            <div class="settings-wrapper">
+                <!-- Kullanıcı Adı -->
+                <div class="settings-card">
+                    <h3><i class="fas fa-user-circle"></i> Kullanıcı Adı</h3>
+                    <div class="input-field-group">
+                        <label>Yeni Kullanıcı Adı</label>
+                        <input type="text" id="editUsernameSetting" class="form-control"
+                            placeholder="Yeni kullanıcı adı">
+                        <small>Kullanıcı adınız en az 3 karakter olmalı, boşluk içermemelidir.</small>
+                        <button class="btn-update" onclick="window.doctorApp.updateUsernameFromSettings()">
+                            <i class="fas fa-save"></i> Kullanıcı Adını Güncelle
+                        </button>
+                        <span id="usernameStatus" class="status-badge-small" style="display: none;"></span>
+                    </div>
                 </div>
 
-                <!-- Uyarılar -->
-                <div id="tcknWarning" class="warning-box"
-                    style="display: none; background: #fff3cd; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
-                </div>
-                <div id="emailWarning" class="warning-box"
-                    style="display: none; background: #fff3cd; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                <!-- TC Kimlik No -->
+                <div class="settings-card">
+                    <h3><i class="fas fa-id-card"></i> TC Kimlik No</h3>
+                    <div class="input-field-group">
+                        <label>TC Kimlik No</label>
+                        <input type="text" id="editTcknSetting" class="form-control" placeholder="11 haneli TCKN"
+                            maxlength="11">
+                        <small>TC Kimlik numaranız 11 haneli ve sadece rakamlardan oluşmalıdır.</small>
+                        <button class="btn-update" onclick="window.doctorApp.updateTcknFromSettings()">
+                            <i class="fas fa-save"></i> TC Kimlik No Güncelle
+                        </button>
+                        <span id="tcknStatus" class="status-badge-small" style="display: none;"></span>
+                    </div>
                 </div>
 
-                <!-- Düzenleme Formu -->
-                <div id="profile-edit-form"></div>
+                <!-- E-posta -->
+                <div class="settings-card">
+                    <h3><i class="fas fa-envelope"></i> E-posta Adresi</h3>
+                    <div id="emailStep1">
+                        <div class="input-field-group">
+                            <label>Yeni E-posta</label>
+                            <input type="email" id="newEmail" class="form-control" placeholder="ornek@mail.com">
+                            <small>Geçerli bir email adresi giriniz.</small>
+                            <button class="btn-update-code" onclick="window.doctorApp.sendEmailVerification()">
+                                <i class="fas fa-paper-plane"></i> Kod Gönder
+                            </button>
+                        </div>
+                    </div>
+                    <div id="emailStep2" style="display: none;">
+                        <div class="input-field-group">
+                            <label>Onay Kodu</label>
+                            <input type="text" id="emailVerifyCode" class="form-control" maxlength="6"
+                                placeholder="6 haneli kod">
+                            <button class="btn-update-confirm" onclick="window.doctorApp.confirmEmailUpdate()">
+                                <i class="fas fa-check"></i> Onayla
+                            </button>
+                        </div>
+                    </div>
+                    <span id="emailStatus" class="status-badge-small" style="display: none;"></span>
+                </div>
+
+                <!-- Şifre -->
+                <div class="settings-card">
+                    <h3><i class="fas fa-key"></i> Şifre Değiştir</h3>
+                    <div class="input-field-group">
+                        <label>Mevcut Şifre</label>
+                        <input type="password" id="currentPassword" class="form-control" placeholder="Mevcut şifreniz">
+                    </div>
+                    <div class="input-field-group">
+                        <label>Yeni Şifre</label>
+                        <input type="password" id="newPassword" class="form-control"
+                            placeholder="Yeni şifreniz (en az 6 karakter)">
+                    </div>
+                    <div class="input-field-group">
+                        <label>Yeni Şifre (Tekrar)</label>
+                        <input type="password" id="confirmPassword" class="form-control"
+                            placeholder="Yeni şifrenizi tekrar girin">
+                    </div>
+                    <button class="btn-update" onclick="window.doctorApp.handlePasswordUpdate()">
+                        <i class="fas fa-key"></i> Şifreyi Güncelle
+                    </button>
+                    <span id="passwordStatus" class="status-badge-small" style="display: none;"></span>
+                </div>
             </div>
         </section>
 
@@ -150,47 +222,7 @@
             </div>
         </section>
 
-        <!-- GÜVENLİK AYARLARI TABI -->
-        <section id="profile-settings" class="tab-content">
-            <div class="settings-wrapper">
-                <div class="settings-card">
-                    <h3><i class="fas fa-key"></i> Şifre Değiştir</h3>
-                    <div class="input-field-group">
-                        <label>Mevcut Şifre</label>
-                        <input type="password" id="currentPassword" class="form-control">
-                    </div>
-                    <div class="input-field-group">
-                        <label>Yeni Şifre</label>
-                        <input type="password" id="newPassword" class="form-control">
-                    </div>
-                    <div class="input-field-group">
-                        <label>Tekrar Yeni Şifre</label>
-                        <input type="password" id="confirmPassword" class="form-control">
-                    </div>
-                    <button class="btn-update" onclick="window.doctorApp.handlePasswordUpdate()">Şifreyi
-                        Güncelle</button>
-                </div>
 
-                <div class="settings-card">
-                    <h3><i class="fas fa-envelope"></i> E-posta Güncelle</h3>
-                    <div id="emailStep1">
-                        <div class="input-field-group">
-                            <label>Yeni E-posta</label>
-                            <input type="email" id="newEmail" class="form-control">
-                        </div>
-                        <button class="btn-update" onclick="window.doctorApp.sendEmailVerification()"
-                            style="background: #10b981;">Kod Gönder</button>
-                    </div>
-                    <div id="emailStep2" style="display: none;">
-                        <div class="input-field-group">
-                            <label>Onay Kodu</label>
-                            <input type="text" id="emailVerifyCode" class="form-control" maxlength="6">
-                        </div>
-                        <button class="btn-update" onclick="window.doctorApp.confirmEmailUpdate()">Onayla</button>
-                    </div>
-                </div>
-            </div>
-        </section>
     </main>
 
     <script src="javascript/doctor.js"></script>

@@ -23,6 +23,7 @@ public class AppointmentService {
     private final DoctorRepository doctorRepository;
     private final PenaltyService penaltyService;
     private final MailService mailService;
+    private final UserRepository userRepository;
 
     public List<Appointment> getAllAppointments() {
         return appointmentRepository.findAll();
@@ -104,7 +105,7 @@ public class AppointmentService {
 
         assertOwnerOrAdmin(doctor.getUser().getId());
 
-        return appointmentRepository.findByDoctorIdWithDetails(doctorId); 
+        return appointmentRepository.findByDoctorIdWithDetails(doctorId);
     }
 
     public List<Appointment> getDoctorActiveAppointments(Long doctorId) {
@@ -192,14 +193,31 @@ public class AppointmentService {
         return appointmentRepository.findByPatientId(patient.getId());
     }
 
+
     public List<Appointment> getMyDoctorAppointments() {
-
         String username = SecurityUtil.getCurrentUsername();
+       
+        // Önce user'ı username ile bul (TCKN veya username)
+        User user = userRepository.findByUsername(username)
+                .orElseGet(() -> userRepository.findByTckn(username).orElse(null));
 
-        Doctor doctor = doctorRepository.findByUserUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Doktor yok"));
+        if (user == null) {
+            System.err.println("❌ Kullanıcı bulunamadı: " + username);
+            throw new EntityNotFoundException("Kullanıcı bulunamadı: " + username);
+        }
 
-        return appointmentRepository.findBySlotDoctorId(doctor.getId());
+       
+        // Doctor'u user ID ile bul
+        Doctor doctor = doctorRepository.findByUserId(user.getId())
+                .orElseThrow(() -> {
+                    return new EntityNotFoundException("Doktor bulunamadı. User ID: " + user.getId());
+                });
+
+       
+        // Randevuları getir
+        List<Appointment> appointments = appointmentRepository.findBySlotDoctorId(doctor.getId());
+      
+        return appointments;
     }
 
     // HELPERS

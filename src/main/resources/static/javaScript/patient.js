@@ -3,17 +3,17 @@ window.showSection = function (sectionId, element) {
     const allSections = document.querySelectorAll('.tab-content');
     allSections.forEach(s => {
         s.classList.remove('active');
-        s.style.display = 'none'; 
+        s.style.display = 'none';
     });
 
 
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 
-   
+
     const target = document.getElementById(sectionId);
     if (target) {
         target.classList.add('active');
-        target.style.display = 'block'; 
+        target.style.display = 'block';
     }
 
 
@@ -24,12 +24,12 @@ window.showSection = function (sectionId, element) {
         if (link) link.classList.add('active');
     }
 
-   
+
     if (sectionId === 'get-appointment') {
         const frame = document.getElementById('appointmentFrame');
         if (frame) {
             // Iframe'in içindeki sayfayı (appointment.html) her tıklandığında tazeler
-            frame.contentWindow.location.reload(); 
+            frame.contentWindow.location.reload();
         }
     }
 };
@@ -207,96 +207,128 @@ window.logout = function () {
 
 // DOĞRULAMA KODU GÖNDERME
 window.sendEmailVerification = async function () {
-    const emailInput = document.getElementById('newEmail');
-    const sendCodeBtn = document.getElementById('send-code-btn');
-    const newEmail = emailInput.value.trim();
+    const email = document.getElementById("newEmail")?.value;
+    const errorBox = document.getElementById("errorBox");
+    const sendBtn = document.getElementById("sendVerificationBtn");
+    const step1Div = document.getElementById("emailStep1");
+    const step2Div = document.getElementById("emailStep2");
+    const verifyCodeInput = document.getElementById("emailVerifyCode");
 
-
-    const authData = JSON.parse(localStorage.getItem('user'));
-
-    if (!newEmail || !newEmail.includes('@')) {
-        alert('Lütfen geçerli bir e-posta adresi giriniz.');
+    if (!email) {
+        showError("Lütfen e-posta adresinizi giriniz!");
         return;
     }
 
-    if (!authData || !authData.user.tckn) {
-        alert('Oturum bilgileri bulunamadı, lütfen tekrar giriş yapın.');
+    if (!email.includes("@") || !email.includes(".")) {
+        showError("Geçerli bir e-posta adresi giriniz!");
         return;
     }
 
-    sendCodeBtn.disabled = true;
-    sendCodeBtn.innerText = 'Gönderiliyor...';
+    if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
+    }
 
     try {
-        const response = await fetch('http://localhost:8080/api/auth/send-verification-code', {
+        const token = localStorage.getItem("token");
+        const user = JSON.parse(localStorage.getItem("user"));
+        const tckn = user?.user?.tckn || user?.tckn;
+
+        const res = await fetch('http://localhost:8080/api/auth/send-verification-code', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + authData.token
+                'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({
-                email: newEmail,
-                tckn: authData.user.tckn
-            })
+            body: JSON.stringify({ email: email, tckn: tckn })
         });
 
-        if (response.ok) {
-            alert('Doğrulama kodu ' + newEmail + ' adresine gönderildi!');
-            document.getElementById('emailStep1').style.display = 'none';
-            document.getElementById('emailStep2').style.display = 'block';
+        const data = await res.json();
+
+        if (res.ok) {
+            // Step1'i gizle, Step2'yi göster
+            if (step1Div) step1Div.style.display = 'none';
+            if (step2Div) step2Div.style.display = 'block';
+            if (verifyCodeInput) verifyCodeInput.value = "";
+
+            showSuccess("✅ Doğrulama kodu e-posta adresinize gönderildi! 15 dakika içinde kullanınız.");
+
+            // 15 dakika sonra kod geçersiz olacak
+            setTimeout(() => {
+                if (verifyCodeInput) {
+                    showError("⏰ Kodun süresi doldu! Lütfen yeni kod isteyin.");
+                    if (step1Div) step1Div.style.display = 'block';
+                    if (step2Div) step2Div.style.display = 'none';
+                }
+            }, 14 * 60 * 1000); // 14 dakika
         } else {
-            const error = await response.json();
-            alert("Hata: " + (error.message || "Kod gönderilemedi"));
+            showError(data.message || "❌ Kod gönderilemedi!");
         }
-    } catch (error) {
-        console.error("Hata:", error);
-        alert('Sunucuya bağlanılamadı.');
+    } catch (e) {
+        console.error("Email doğrulama hatası:", e);
+        showError("❌ Bağlantı hatası! Lütfen tekrar deneyin.");
     } finally {
-        sendCodeBtn.disabled = false;
-        sendCodeBtn.innerText = 'Kod Gönder';
+        if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Kod Gönder';
+        }
     }
 };
 
-// 2. ADIM: KODU DOĞRULAMA VE E-POSTA GÜNCELLEME
+// Email güncelleme onaylama
 window.confirmEmailUpdate = async function () {
-    const incomingCode = document.getElementById('emailVerifyCode').value;
-    const newEmail = document.getElementById('newEmail').value;
-    const authData = JSON.parse(localStorage.getItem('user'));
+    const code = document.getElementById("emailVerifyCode")?.value;
+    const email = document.getElementById("newEmail")?.value;
+    const errorBox = document.getElementById("errorBox");
+    const confirmBtn = document.getElementById("confirmEmailBtn");
 
-    if (!incomingCode) {
-        alert("Lütfen doğrulama kodunu giriniz.");
+    if (!code || code.length !== 6) {
+        showError("Lütfen 6 haneli doğrulama kodunu giriniz!");
         return;
     }
 
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Onaylanıyor...';
+    }
+
     try {
-        const response = await fetch('http://localhost:8080/api/auth/verify-email-update', {
+        const token = localStorage.getItem("token");
+        const user = JSON.parse(localStorage.getItem("user"));
+        const tckn = user?.user?.tckn || user?.tckn;
+
+        const res = await fetch('http://localhost:8080/api/auth/verify-email-update', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + authData.token
+                'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({
-                code: incomingCode,
-                newEmail: newEmail,
-                tckn: authData.user.tckn
-            })
+            body: JSON.stringify({ code: code, newEmail: email, tckn: tckn })
         });
 
-        const data = await response.json();
+        const data = await res.json();
 
-        if (response.ok) {
-            alert("E-posta adresiniz başarıyla güncellendi.");
-            authData.user.email = newEmail;
-            localStorage.setItem('user', JSON.stringify(authData));
-            location.reload();
+        if (res.ok) {
+            alert("✅ E-posta başarıyla güncellendi! Lütfen tekrar giriş yapın.");
+            localStorage.clear();
+            window.location.href = "index.html";
         } else {
-            alert("Hata: " + (data.message || "Doğrulama başarısız."));
+            showError(data.message || data.error || "❌ Kod hatalı veya süresi dolmuş! Lütfen yeni kod isteyin.");
+            // Hata durumunda step1'i tekrar göster
+            document.getElementById("emailStep1").style.display = 'block';
+            document.getElementById("emailStep2").style.display = 'none';
         }
-    } catch (error) {
-        console.error("Hata:", error);
-        alert("Bağlantı hatası.");
+    } catch (e) {
+        console.error("Email onaylama hatası:", e);
+        showError("❌ Bağlantı hatası!");
+    } finally {
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check"></i> Onayla';
+        }
     }
 };
+
 // RANDEVU İPTAL ETME FONKSİYONU
 window.cancelAppointment = async function (appointmentId) {
     if (!confirm("Bu randevuyu iptal etmek istediğinize emin misiniz? (24 saat kuralı geçerlidir)")) return;
@@ -369,4 +401,34 @@ function renderTable(data) {
             </tr>
         `;
     }).join('');
+}
+
+function showError(msg) {
+    const errorBox = document.getElementById("errorBox");
+    if (errorBox) {
+        errorBox.style.display = "block";
+        errorBox.style.backgroundColor = "#fee2e2";
+        errorBox.style.color = "#991b1b";
+        errorBox.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${msg}`;
+        setTimeout(() => {
+            errorBox.style.display = "none";
+        }, 5000);
+    } else {
+        alert(msg);
+    }
+}
+
+function showSuccess(msg) {
+    const errorBox = document.getElementById("errorBox");
+    if (errorBox) {
+        errorBox.style.display = "block";
+        errorBox.style.backgroundColor = "#d1fae5";
+        errorBox.style.color = "#065f46";
+        errorBox.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+        setTimeout(() => {
+            errorBox.style.display = "none";
+        }, 5000);
+    } else {
+        alert(msg);
+    }
 }

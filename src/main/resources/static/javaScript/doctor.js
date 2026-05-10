@@ -2,26 +2,25 @@ window.doctorApp = {
     activeDoctor: null,
     currentUser: null,
     token: null,
+    isFirstLogin: true,
 
     init: async function () {
         console.log("🔵 Doktor paneli başlatılıyor...");
 
-        // Token ve kullanıcı bilgilerini al
         const userData = JSON.parse(localStorage.getItem("user") || '{}');
         this.token = userData.token || localStorage.getItem("token");
         this.currentUser = userData.user || userData;
 
-        console.log("🔵 Token var mı?", this.token ? "EVET" : "HAYIR");
-        console.log("🔵 Kullanıcı:", this.currentUser);
+        console.log("🔵 Token:", this.token ? this.token.substring(0, 50) + "..." : "YOK");
+        console.log("🔵 Kullanıcı ID:", this.currentUser?.id);
+        console.log("🔵 Kullanıcı Rol:", this.currentUser?.role);
 
-        // Token kontrolü
         if (!this.token) {
             alert("❌ Oturum bulunamadı! Lütfen tekrar giriş yapın.");
             window.location.href = "index.html";
             return;
         }
 
-        // Rol kontrolü
         const role = this.currentUser.role?.replace("ROLE_", "");
         if (role !== "DOCTOR") {
             alert("❌ Bu sayfaya sadece doktorlar erişebilir!");
@@ -29,21 +28,21 @@ window.doctorApp = {
             return;
         }
 
-        // UI güncellemeleri
         this.updateUI();
-
-        // Verileri yükle
         await this.loadDoctorData();
         this.renderUserDetails();
         this.renderProfile();
         this.fetchSlots();
         this.fetchAppointments();
         this.setupEventListeners();
-        this.renderProfileEditForm();
+
+        this.checkFirstLogin();
+        this.loadSettingsValues();
 
         console.log("✅ Doktor paneli hazır!");
     },
 
+    // ============ UI GÜNCELLEME FONKSİYONU ============
     updateUI: function () {
         const nameHeader = document.getElementById('userNameDisplay');
         if (nameHeader) {
@@ -59,6 +58,380 @@ window.doctorApp = {
         if (avatar) {
             avatar.innerText = (this.currentUser.firstName || 'D').charAt(0).toUpperCase();
         }
+    },
+
+    // ============ İLK GİRİŞ KONTROLÜ ============
+    checkFirstLogin: function () {
+        const email = this.currentUser.email;
+        const tckn = this.currentUser.tckn;
+        const username = this.currentUser.username;
+
+        const isTemporaryEmail = email && email.endsWith('@hastane.com');
+        const isTemporaryTckn = tckn && (tckn.startsWith('1') || tckn.length === 11 && tckn.match(/^\d+$/));
+        const isTemporaryUsername = username && (username.includes('.') || username.length < 5);
+
+        this.isFirstLogin = isTemporaryEmail || isTemporaryTckn || isTemporaryUsername;
+
+        if (this.isFirstLogin) {
+            const warning = document.getElementById('firstLoginWarning');
+            if (warning) {
+                warning.style.display = 'flex';
+            }
+
+            const logoutBtn = document.querySelector('.logout-item');
+            if (logoutBtn) {
+                logoutBtn.style.opacity = '0.5';
+                logoutBtn.style.pointerEvents = 'none';
+                logoutBtn.title = 'Önce tüm bilgilerinizi güncellemelisiniz!';
+            }
+
+            alert("⚠️ HOŞ GELDİNİZ!\n\nSistem tarafından size geçici bir kullanıcı adı, şifre ve TCKN oluşturulmuştur.\n\nGüvenlik Ayarları sekmesinden tüm bilgilerinizi güncellemeniz gerekmektedir.\n\nBilgileriniz güncellenmeden sistemden çıkış yapamazsınız!");
+        }
+    },
+
+    // ============ BİLGİLER TAMAMLANDI MI KONTROLÜ ============
+    checkAllInfoUpdated: function () {
+        const email = this.currentUser.email;
+        const tckn = this.currentUser.tckn;
+        const username = this.currentUser.username;
+
+        const isTemporaryEmail = email && email.endsWith('@hastane.com');
+        const isTemporaryTckn = tckn && (tckn.startsWith('1') || tckn.length === 11);
+        const isTemporaryUsername = username && (username.includes('.') || username.length < 5);
+
+        if (!isTemporaryEmail && !isTemporaryTckn && !isTemporaryUsername) {
+            this.isFirstLogin = false;
+
+            const warning = document.getElementById('firstLoginWarning');
+            if (warning) warning.style.display = 'none';
+
+            const logoutBtn = document.querySelector('.logout-item');
+            if (logoutBtn) {
+                logoutBtn.style.opacity = '1';
+                logoutBtn.style.pointerEvents = 'auto';
+            }
+            return true;
+        }
+        return false;
+    },
+
+    // ============ SETTINGS INPUTLARINA DEĞER YÜKLE ============
+    loadSettingsValues: function () {
+        const usernameInput = document.getElementById('editUsernameSetting');
+        const tcknInput = document.getElementById('editTcknSetting');
+        const emailInput = document.getElementById('newEmail');
+
+        if (usernameInput) usernameInput.value = this.currentUser.username || '';
+        if (tcknInput) tcknInput.value = this.currentUser.tckn || '';
+        if (emailInput) emailInput.value = this.currentUser.email || '';
+    },
+
+    // ============ KULLANICI ADI GÜNCELLEME ============
+    updateUsernameFromSettings: async function () {
+        const username = document.getElementById("editUsernameSetting")?.value.trim();
+        const oldUsername = this.currentUser.username;
+        const statusSpan = document.getElementById("usernameStatus");
+
+        if (!username) {
+            alert("Kullanıcı adı boş olamaz!");
+            return;
+        }
+        if (username.length < 3) {
+            alert("Kullanıcı adı en az 3 karakter olmalıdır!");
+            return;
+        }
+        if (username.includes(" ")) {
+            alert("Kullanıcı adı boşluk içeremez!");
+            return;
+        }
+        if (username === oldUsername) {
+            alert("⚠️ Kullanıcı adı değişmemiştir!");
+            return;
+        }
+
+        if (statusSpan) {
+            statusSpan.style.display = 'inline-block';
+            statusSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Güncelleniyor...';
+            statusSpan.style.color = '#f59e0b';
+        }
+
+        try {
+            const response = await fetch('http://localhost:8080/api/doctors/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: JSON.stringify({ username: username })
+            });
+
+            if (response.ok) {
+                this.currentUser.username = username;
+                this.updateUI();
+                this.renderUserDetails();
+
+                if (statusSpan) {
+                    statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> Güncellendi!';
+                    statusSpan.style.color = '#10b981';
+                    setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
+                }
+
+                alert("✅ Kullanıcı adı başarıyla güncellendi!");
+                this.checkAllInfoUpdated();
+            } else {
+                const error = await response.json();
+                alert("❌ Hata: " + (error.error || "Güncelleme başarısız"));
+                if (statusSpan) statusSpan.style.display = 'none';
+            }
+        } catch (error) {
+            console.error("Güncelleme hatası:", error);
+            alert("Güncellenirken bir hata oluştu!");
+            if (statusSpan) statusSpan.style.display = 'none';
+        }
+    },
+
+    // ============ TC KİMLİK NO GÜNCELLEME ============
+    updateTcknFromSettings: async function () {
+        const tckn = document.getElementById("editTcknSetting")?.value.trim();
+        const oldTckn = this.currentUser.tckn;
+        const statusSpan = document.getElementById("tcknStatus");
+
+        if (!tckn) {
+            alert("TC Kimlik No boş olamaz!");
+            return;
+        }
+        if (tckn.length !== 11) {
+            alert("TC Kimlik No 11 haneli olmalıdır!");
+            return;
+        }
+        if (!/^\d+$/.test(tckn)) {
+            alert("TC Kimlik No sadece rakamlardan oluşmalıdır!");
+            return;
+        }
+        if (tckn === oldTckn) {
+            alert("⚠️ TC Kimlik No değişmemiştir!");
+            return;
+        }
+
+        if (statusSpan) {
+            statusSpan.style.display = 'inline-block';
+            statusSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Güncelleniyor...';
+            statusSpan.style.color = '#f59e0b';
+        }
+
+        try {
+            const response = await fetch('http://localhost:8080/api/doctors/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: JSON.stringify({ tckn: tckn })
+            });
+
+            if (response.ok) {
+                this.currentUser.tckn = tckn;
+                this.renderUserDetails();
+
+                if (statusSpan) {
+                    statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> Güncellendi!';
+                    statusSpan.style.color = '#10b981';
+                    setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
+                }
+
+                alert("✅ TC Kimlik No başarıyla güncellendi!");
+                this.checkAllInfoUpdated();
+            } else {
+                const error = await response.json();
+                alert("❌ Hata: " + (error.error || "Güncelleme başarısız"));
+                if (statusSpan) statusSpan.style.display = 'none';
+            }
+        } catch (error) {
+            console.error("Güncelleme hatası:", error);
+            alert("Güncellenirken bir hata oluştu!");
+            if (statusSpan) statusSpan.style.display = 'none';
+        }
+    },
+
+    // ============ EMAIL DOĞRULAMA KODU GÖNDERME ============
+    sendEmailVerification: async function () {
+        const email = document.getElementById("newEmail")?.value;
+        const statusSpan = document.getElementById("emailStatus");
+
+        if (!email) {
+            alert("Lütfen e-posta adresinizi giriniz!");
+            return;
+        }
+        if (!this.isValidEmail(email)) {
+            alert("Geçerli bir e-posta adresi giriniz!");
+            return;
+        }
+        if (email === this.currentUser.email) {
+            alert("⚠️ E-posta adresi değişmemiştir!");
+            return;
+        }
+
+        if (statusSpan) {
+            statusSpan.style.display = 'inline-block';
+            statusSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Kod gönderiliyor...';
+            statusSpan.style.color = '#f59e0b';
+        }
+
+        try {
+            const res = await fetch('http://localhost:8080/api/auth/send-verification-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: JSON.stringify({ email: email, tckn: this.currentUser?.tckn })
+            });
+
+            if (res.ok) {
+                document.getElementById('emailStep1').style.display = 'none';
+                document.getElementById('emailStep2').style.display = 'block';
+
+                if (statusSpan) {
+                    statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> Kod gönderildi!';
+                    statusSpan.style.color = '#10b981';
+                    setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
+                }
+
+                alert("📧 Doğrulama kodu e-posta adresinize gönderildi!");
+            } else {
+                alert("❌ Kod gönderilemedi!");
+                if (statusSpan) statusSpan.style.display = 'none';
+            }
+        } catch (e) {
+            console.error("Email doğrulama hatası:", e);
+            alert("Hata!");
+            if (statusSpan) statusSpan.style.display = 'none';
+        }
+    },
+
+    // ============ EMAIL ONAYLAMA ============
+    confirmEmailUpdate: async function () {
+        const code = document.getElementById("emailVerifyCode")?.value;
+        const email = document.getElementById("newEmail")?.value;
+        const statusSpan = document.getElementById("emailStatus");
+
+        if (!code || code.length !== 6) {
+            alert("Lütfen 6 haneli doğrulama kodunu giriniz!");
+            return;
+        }
+
+        if (statusSpan) {
+            statusSpan.style.display = 'inline-block';
+            statusSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Onaylanıyor...';
+            statusSpan.style.color = '#f59e0b';
+        }
+
+        try {
+            const res = await fetch('http://localhost:8080/api/auth/verify-email-update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: JSON.stringify({ code: code, newEmail: email, tckn: this.currentUser?.tckn })
+            });
+
+            if (res.ok) {
+                this.currentUser.email = email;
+                this.renderUserDetails();
+
+                if (statusSpan) {
+                    statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> E-posta güncellendi!';
+                    statusSpan.style.color = '#10b981';
+                    setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
+                }
+
+                alert("✅ E-posta başarıyla güncellendi!");
+                this.checkAllInfoUpdated();
+
+                document.getElementById('emailStep2').style.display = 'none';
+                document.getElementById('emailStep1').style.display = 'block';
+                document.getElementById("emailVerifyCode").value = "";
+            } else {
+                alert("❌ Kod hatalı veya süresi dolmuş!");
+                if (statusSpan) statusSpan.style.display = 'none';
+            }
+        } catch (e) {
+            console.error("Email onaylama hatası:", e);
+            alert("Hata!");
+            if (statusSpan) statusSpan.style.display = 'none';
+        }
+    },
+
+    // ============ ŞİFRE DEĞİŞTİRME ============
+    handlePasswordUpdate: async function () {
+        const curPass = document.getElementById('currentPassword')?.value;
+        const newPass = document.getElementById('newPassword')?.value;
+        const confPass = document.getElementById('confirmPassword')?.value;
+        const statusSpan = document.getElementById("passwordStatus");
+
+        if (!curPass || !newPass) {
+            alert("Mevcut şifre ve yeni şifre gereklidir!");
+            return;
+        }
+        if (newPass !== confPass) {
+            alert("Yeni şifreler eşleşmiyor!");
+            return;
+        }
+        if (newPass.length < 6) {
+            alert("Yeni şifre en az 6 karakter olmalıdır!");
+            return;
+        }
+        if (curPass === newPass) {
+            alert("⚠️ Yeni şifre mevcut şifre ile aynı olamaz!");
+            return;
+        }
+
+        if (statusSpan) {
+            statusSpan.style.display = 'inline-block';
+            statusSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Güncelleniyor...';
+            statusSpan.style.color = '#f59e0b';
+        }
+
+        try {
+            const response = await fetch('http://localhost:8080/api/auth/reset-password-logged-in', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: JSON.stringify({
+                    tckn: this.currentUser?.tckn,
+                    currentPassword: curPass,
+                    newPassword: newPass
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                if (statusSpan) {
+                    statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> Şifre değişti!';
+                    statusSpan.style.color = '#10b981';
+                }
+
+                alert("✅ Şifre başarıyla değiştirildi!\n\nLütfen yeniden giriş yapın.");
+                this.logout();
+            } else {
+                alert("❌ " + (data.message || data.error || "Mevcut şifreniz hatalı!"));
+                if (statusSpan) statusSpan.style.display = 'none';
+            }
+        } catch (e) {
+            console.error("Şifre değiştirme hatası:", e);
+            alert("Bağlantı hatası! Lütfen tekrar deneyin.");
+            if (statusSpan) statusSpan.style.display = 'none';
+        }
+    },
+
+    // ============ DİĞER FONKSİYONLAR ============
+    isValidEmail: function (email) {
+        const emailRegex = /^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/;
+        return emailRegex.test(email);
     },
 
     loadDoctorData: async function () {
@@ -131,44 +504,101 @@ window.doctorApp = {
         const tbody = document.getElementById('appointments-table-body');
         if (!tbody) return;
 
-        tbody.innerHTML = '<tr><td colspan="5">Yükleniyor...<\/td><\/tr>';
+        tbody.innerHTML = '<td><td colspan="5">Yükleniyor...<\/td><\/tr>';
 
         try {
+            // DOĞRU ENDPOINT: /api/appointments/doctor/my
             const response = await fetch("http://localhost:8080/api/appointments/doctor/my", {
-                headers: { "Authorization": `Bearer ${this.token}` }
+                method: 'GET',
+                headers: {
+                    "Authorization": `Bearer ${this.token}`,
+                    "Content-Type": "application/json"
+                }
             });
+
+            console.log("Randevu API yanıt durumu:", response.status);
 
             if (response.status === 401) {
                 tbody.innerHTML = '<tr><td colspan="5">Oturum süresi doldu! <button onclick="window.doctorApp.logout()">Tekrar Giriş Yap<\/button><\/td><\/tr>';
                 return;
             }
 
-            if (!response.ok) throw new Error();
-
-            const appointments = await response.json();
-
-            if (appointments.length === 0) {
-                tbody.innerHTML = '</tr><td colspan="5">📋 Randevu bulunamadı.<\/td><\/tr>';
+            if (response.status === 403) {
+                tbody.innerHTML = '<tr><td colspan="5">⚠️ Bu işlem için yetkiniz yok.<\/td><\/tr>';
                 return;
             }
 
-            tbody.innerHTML = appointments.map(app => `
+            if (response.status === 404) {
+                tbody.innerHTML = '<tr><td colspan="5">⚠️ Randevu servisi bulunamadı. Lütfen daha sonra tekrar deneyin.<\/td><\/tr>';
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const appointments = await response.json();
+            console.log("Gelen randevular:", appointments);
+
+            if (!appointments || appointments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">📋 Henüz randevunuz bulunmamaktadır.<\/td><\/tr>';
+                return;
+            }
+
+            tbody.innerHTML = appointments.map(app => {
+                // Hasta bilgilerini güvenli al
+                const patientName = app.patient?.user?.firstName && app.patient?.user?.lastName
+                    ? `${app.patient.user.firstName} ${app.patient.user.lastName}`
+                    : app.patient?.user?.firstName || app.patient?.user?.lastName || 'Belirtilmemiş';
+
+                const patientTckn = app.patient?.user?.tckn || 'Belirtilmemiş';
+                const appointmentDate = app.slot?.startTime ? this.formatDate(app.slot.startTime) : 'Belirtilmemiş';
+                const status = app.status || 'SCHEDULED';
+
+                return `
                 <tr>
-                    <td>${app.patient?.user?.firstName || '-'} ${app.patient?.user?.lastName || ''}</td>
-                    <td>${app.patient?.user?.tckn || '-'}</td>
-                    <td>${this.formatDate(app.slot?.startTime)}</td>
-                    <td><span class="status-badge">${app.status || 'SCHEDULED'}</span></td>
+                    <td>${this.escapeHtml(patientName)}</td>
+                    <td>${this.escapeHtml(patientTckn)}</td>
+                    <td>${appointmentDate}</td>
+                    <td><span class="status-badge status-${status.toLowerCase()}">${this.getStatusText(status)}</span></td>
                     <td>
-                        ${app.status === 'SCHEDULED' ?
-                    `<button class="btn-not-attended" onclick="window.doctorApp.markAsNotAttended(${app.id})">❌ Gelmedi</button>` :
-                    '<span>-</span>'}
+                        ${status === 'SCHEDULED' ?
+                        `<button class="btn-not-attended" onclick="window.doctorApp.markAsNotAttended(${app.id})">
+                                <i class="fas fa-user-slash"></i> Gelmedi
+                            </button>` :
+                        '<span style="color:gray;">İşlem Kapalı</span>'}
                     </td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
+
         } catch (e) {
             console.error("Randevu hatası:", e);
-            tbody.innerHTML = '<tr><td colspan="5">❌ Randevular yüklenemedi.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5">❌ Randevular yüklenirken bir hata oluştu: ' + e.message + '<\/td><\/tr>';
         }
+    },
+
+    // Status text çevirisi
+    getStatusText: function (status) {
+        const statusMap = {
+            'SCHEDULED': 'Planlandı',
+            'APPROVED': 'Onaylandı',
+            'COMPLETED': 'Tamamlandı',
+            'CANCELLED': 'İptal Edildi',
+            'NOT_ATTENDED': 'Gelmedi'
+        };
+        return statusMap[status] || status;
+    },
+
+    // HTML escape
+    escapeHtml: function (str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     },
 
     markAsNotAttended: async function (appointmentId) {
@@ -195,7 +625,7 @@ window.doctorApp = {
         const tbody = document.getElementById('slot-table-body');
         if (!tbody || !this.activeDoctor?.id) return;
 
-        tbody.innerHTML = '<tr><td colspan="4">Yükleniyor...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4">Yükleniyor...<\/td><\/tr>';
 
         try {
             const response = await fetch(`http://localhost:8080/api/slots/doctor/${this.activeDoctor.id}`, {
@@ -207,7 +637,7 @@ window.doctorApp = {
             const slots = await response.json();
 
             if (slots.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4">📅 Henüz slot oluşturulmamış.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4">📅 Henüz slot oluşturulmamış.<\/td><\/tr>';
                 return;
             }
 
@@ -225,7 +655,7 @@ window.doctorApp = {
             `).join('');
         } catch (e) {
             console.error("Slot hatası:", e);
-            tbody.innerHTML = '<tr><td colspan="4">❌ Slotlar yüklenemedi.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4">❌ Slotlar yüklenemedi.<\/td><\/tr>';
         }
     },
 
@@ -294,124 +724,6 @@ window.doctorApp = {
         }
     },
 
-    handlePasswordUpdate: async function () {
-        const curPass = document.getElementById('currentPassword')?.value;
-        const newPass = document.getElementById('newPassword')?.value;
-        const confPass = document.getElementById('confirmPassword')?.value;
-
-        if (!curPass || !newPass) {
-            alert("Mevcut şifre ve yeni şifre gereklidir!");
-            return;
-        }
-        if (newPass !== confPass) {
-            alert("Yeni şifreler eşleşmiyor!");
-            return;
-        }
-
-        try {
-            const response = await fetch('http://localhost:8080/api/auth/reset-password-logged-in', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.token}`
-                },
-                body: JSON.stringify({
-                    tckn: this.currentUser?.tckn,
-                    currentPassword: curPass,
-                    newPassword: newPass
-                })
-            });
-
-            if (response.ok) {
-                alert("✅ Şifre değişti! Lütfen tekrar giriş yapın.");
-                this.logout();
-            } else {
-                alert("❌ Mevcut şifreniz hatalı!");
-            }
-        } catch (e) {
-            alert("Bağlantı hatası!");
-        }
-    },
-
-    updateDoctorProfile: async function () {
-        const username = document.getElementById("editUsername")?.value.trim();
-        const tckn = document.getElementById("editTckn")?.value.trim();
-        const email = document.getElementById("editEmail")?.value.trim();
-
-        const updateData = {};
-        if (username) updateData.username = username;
-        if (tckn) updateData.tckn = tckn;
-        if (email) updateData.email = email;
-
-        if (Object.keys(updateData).length === 0) {
-            alert("Güncellemek için en az bir alan doldurun!");
-            return;
-        }
-
-        try {
-            const response = await fetch('http://localhost:8080/api/doctors/profile', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.token}`
-                },
-                body: JSON.stringify(updateData)
-            });
-
-            if (response.ok) {
-                alert("✅ Profil güncellendi! Lütfen tekrar giriş yapın.");
-                this.logout();
-            } else {
-                alert("❌ Güncelleme başarısız!");
-            }
-        } catch (error) {
-            alert("Profil güncellenirken hata oluştu!");
-        }
-    },
-
-    renderProfileEditForm: function () {
-        const container = document.getElementById('profile-edit-form');
-        if (container && this.currentUser) {
-            container.innerHTML = `
-            <div class="form-group">
-                <label><i class="fas fa-user"></i> Kullanıcı Adı</label>
-                <input type="text" id="editUsername" class="form-input" value="${this.currentUser.username || ''}" placeholder="Kullanıcı adınız">
-                <small>Kullanıcı adınızı değiştirebilirsiniz</small>
-            </div>
-            <div class="form-group">
-                <label><i class="fas fa-id-card"></i> TC Kimlik No</label>
-                <input type="text" id="editTckn" class="form-input" value="${this.currentUser.tckn || ''}" placeholder="11 haneli TCKN" maxlength="11">
-                <small>TC Kimlik numaranızı giriniz (11 hane)</small>
-            </div>
-            <div class="form-group">
-                <label><i class="fas fa-envelope"></i> E-posta Adresi</label>
-                <input type="email" id="editEmail" class="form-input" value="${this.currentUser.email || ''}" placeholder="ornek@mail.com">
-                <small>Geçerli bir email adresi giriniz</small>
-            </div>
-            <button type="button" class="btn-primary" onclick="window.doctorApp.updateDoctorProfile()">
-                <i class="fas fa-save"></i> Bilgilerimi Güncelle
-            </button>
-        `;
-        }
-
-        // Uyarıları göster
-        if (!this.currentUser?.tckn || this.currentUser.tckn === '') {
-            const tcknWarning = document.getElementById('tcknWarning');
-            if (tcknWarning) {
-                tcknWarning.style.display = 'block';
-                tcknWarning.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ⚠️ TC Kimlik numaranız henüz kayıtlı değil! Lütfen güncelleyiniz.';
-            }
-        }
-
-        if (this.currentUser?.email && this.currentUser.email.endsWith('@hastane.com')) {
-            const emailWarning = document.getElementById('emailWarning');
-            if (emailWarning) {
-                emailWarning.style.display = 'block';
-                emailWarning.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ⚠️ Geçici bir email adresi kullanıyorsunuz. Lütfen güncelleyiniz!';
-            }
-        }
-    },
-
     showTab: function (tabId, element) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
@@ -432,5 +744,4 @@ window.doctorApp = {
     }
 };
 
-// Sayfa yüklendiğinde başlat
 document.addEventListener('DOMContentLoaded', () => window.doctorApp.init());

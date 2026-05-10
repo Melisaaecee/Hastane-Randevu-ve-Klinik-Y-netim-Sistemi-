@@ -746,10 +746,14 @@ select.form-control:disabled {
 #profile-edit-form button {
     margin-top: 10px;
     width: 100%;
+}
+
 /* Uygun slot bulunamadığında gösterilecek mesaj */
 .no-slot-msg {
-    background-color: #fff5f5; /* Çok hafif kırmızı arka plan */
-    color: #c53030; /* Koyu kırmızı metin */
+    background-color: #fff5f5;
+    /* Çok hafif kırmızı arka plan */
+    color: #c53030;
+    /* Koyu kırmızı metin */
     padding: 15px;
     border-radius: 10px;
     border: 1px solid #feb2b2;
@@ -761,4 +765,273 @@ select.form-control:disabled {
     align-items: center;
     justify-content: center;
     gap: 10px;
+}
+
+/* Profil düzenleme - her alan için ayrı kutu */
+.edit-section {
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.edit-section:hover {
+    border-color: var(--primary-blue);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.edit-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--light-blue);
+}
+
+.edit-header i {
+    font-size: 1.2rem;
+    color: var(--primary-blue);
+}
+
+.edit-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--dark-blue);
+}
+
+.edit-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.btn-update-section {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-update-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-update-section:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ============ GÜVENLİK AYARLARI - DÜZENLİ VERSİYON ============ */
+
+.settings-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.settings-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+}
+
+.settings-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.settings-card h3 {
+    margin-bottom: 20px;
+    color: var(--dark-blue);
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 2px solid var(--light-blue);
+    padding-bottom: 12px;
+}
+
+.settings-card h3 i {
+    color: #10b981;
+    font-size: 1.3rem;
+}
+
+/* Input grup düzeni */
+.input-field-group {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.input-field-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-gray);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.input-field-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+}
+
+.input-field-group input:focus {
+    outline: none;
+    border-color: #10b981;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.input-field-group small {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.7rem;
+    color: var(--text-gray);
+}
+
+/* YEŞİL GÜNCELLE BUTONLARI */
+.btn-update {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: white !important;
+    padding: 12px 20px !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.btn-update:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(16, 185, 129, 0.4);
+}
+
+/* Kod Gönder butonu (biraz farklı renk) */
+.btn-update-code {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+    color: white !important;
+    padding: 12px 20px !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.btn-update-code:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(14, 165, 233, 0.4);
+}
+
+/* Email onaylama butonu */
+.btn-update-confirm {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%) !important;
+    color: white !important;
+    padding: 12px 20px !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.btn-update-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(139, 92, 246, 0.4);
+}
+
+/* Status badge */
+.status-badge-small {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    font-size: 0.7rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: #ecfdf5;
+    color: #059669;
+    width: fit-content;
+}
+
+/* İlk giriş uyarısı */
+.warning-box {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+}
+
+.warning-box i {
+    font-size: 1.5rem;
+    color: #f59e0b;
+}
+
+.warning-box strong {
+    color: #92400e;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .settings-wrapper {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .settings-card {
+        padding: 20px;
+    }
 }

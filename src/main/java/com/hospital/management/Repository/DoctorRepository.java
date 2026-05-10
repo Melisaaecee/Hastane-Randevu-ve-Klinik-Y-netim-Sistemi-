@@ -24,8 +24,6 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
         // (Giriş yapan doktorun kendi bilgilerini görmesi için)
         Optional<Doctor> findByUserId(Long userId);
 
-        Optional<Doctor> findByUserUsername(String username);
-
         // 4. Belirli bir klinikte, doktorun adına göre arama yapmak için
         // (Not: Doctor içindeki User nesnesinin firstName alanına erişir)
         List<Doctor> findByClinicIdAndUserFirstNameContainingIgnoreCase(Long clinicId, String firstName);
@@ -69,4 +67,7 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
                         "WHERE d.clinic.id = :clinicId")
         List<Doctor> findByClinicIdWithDetails(@Param("clinicId") Long clinicId);
 
+      
+        @Query("SELECT d FROM Doctor d WHERE d.user.username = :username")
+        Optional<Doctor> findByUserUsername(@Param("username") String username);
 }

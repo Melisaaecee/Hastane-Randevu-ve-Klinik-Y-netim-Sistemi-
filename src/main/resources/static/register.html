@@ -3,27 +3,17 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Kayıt Ol | Sağlık Sistemi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kayıt Ol | MedSoft</title>
     <link rel="icon" href="https://api.iconify.design/fa6-solid:heart-pulse.svg?color=%23e11d48" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Değişkenler ve Body ayarı Login ile aynı (flex-center dahil) */
-        :root {
-            --primary-blue: #007bff;
-            --light-blue: #e3f2fd;
-            --dark-blue: #1e3a8a;
-            --bg-pattern: #f0f4f8;
-        }
-
+        /* Kayıt sayfasına özel ek merkezleme */
         body {
-            background-color: var(--bg-pattern);
-            background-image:
-                linear-gradient(var(--light-blue) 1.5px, transparent 1.5px),
-                linear-gradient(90deg, var(--light-blue) 1.5px, transparent 1.5px);
-            background-size: 40px 40px;
-            min-height: 100vh;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 40px 20px;
         }
 
@@ -32,127 +22,200 @@
             backdrop-filter: blur(10px);
             padding: 2.5rem;
             border-radius: 24px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 580px;
-            /* Register için biraz daha geniş */
+            max-width: 550px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.5);
         }
 
-        /* Paylaştığın Form Row Grid Yapısı */
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header h1 {
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-header h1 span {
+            color: var(--primary-blue);
+        }
+
+        .auth-header p {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+        }
+
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 10px;
+            gap: 15px;
+            margin-bottom: 0;
         }
 
         .input-group {
             margin-bottom: 1.2rem;
         }
 
-        label {
+        .input-group label {
             display: block;
-            margin-bottom: 0.5rem;
-            color: var(--dark-blue);
+            font-size: 0.75rem;
             font-weight: 700;
-            font-size: 0.8rem;
+            color: var(--text-gray);
+            margin-bottom: 8px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        input,
-        select {
+        .input-group label i {
+            margin-right: 6px;
+            color: var(--primary-blue);
+        }
+
+        .input-group input,
+        .input-group select {
             width: 100%;
-            padding: 0.8rem 1rem;
+            padding: 12px 15px;
             border: 2px solid #e2e8f0;
             border-radius: 12px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: #ffffff;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        .error-box {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            display: none;
+            border: 1px solid #fecaca;
         }
 
         .btn-primary {
             width: 100%;
-            padding: 1rem;
-            border-radius: 12px;
-            background: var(--primary-blue);
+            padding: 14px;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
             color: white;
-            font-weight: 700;
             border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
             cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
         }
 
-        /* Responsive ayarı: Mobilde yan yana duranlar alt alta gelsin */
-        @media (max-width: 768px) {
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 123, 255, 0.3);
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 0.85rem;
+            color: var(--text-gray);
+        }
+
+        .auth-footer a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 550px) {
             .form-row {
                 grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .auth-card {
+                padding: 1.8rem;
             }
         }
     </style>
-
 </head>
 
 <body>
-    <div class="center-wrapper">
-        <div class="auth-card" style="max-width: 500px;">
-            <div class="auth-header">
-                <h1>Yeni<span>Hesap</span></h1>
-                <p>Lütfen bilgilerinizi eksiksiz doldurunuz.</p>
+
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Yeni <span>Hesap</span></h1>
+            <p><i class="fas fa-user-plus"></i> Lütfen bilgilerinizi eksiksiz doldurunuz</p>
+        </div>
+
+        <!-- Hata Mesaj Alanı -->
+        <div id="errorBox" class="error-box"></div>
+
+        <form id="registerForm">
+            <div class="form-row">
+                <div class="input-group">
+                    <label><i class="fas fa-user"></i> Ad</label>
+                    <input type="text" id="firstName" placeholder="Adınız" required>
+                </div>
+                <div class="input-group">
+                    <label><i class="fas fa-user"></i> Soyad</label>
+                    <input type="text" id="lastName" placeholder="Soyadınız" required>
+                </div>
             </div>
 
-            <div id="errorBox" class="error-box" style="display: none; color: red; margin-bottom: 10px;"></div>
-
-            <form id="registerForm">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div class="input-group">
-                        <label>AD</label>
-                        <input type="text" id="firstName" placeholder="Adınız" required>
-                    </div>
-                    <div class="input-group">
-                        <label>SOYAD</label>
-                        <input type="text" id="lastName" placeholder="Soyadınız" required>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label>TC KİMLİK NO</label>
-                    <input type="text" id="tckn" maxlength="11" placeholder="11 haneli TCKN" required>
-                </div>
-
-                <div class="input-group">
-                    <label>E-POSTA</label>
-                    <input type="email" id="email" placeholder="ornek@mail.com" required>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div class="input-group">
-                        <label>DOĞUM TARİHİ</label>
-                        <input type="date" id="birthDate" required>
-                    </div>
-                    <div class="input-group">
-                        <label>KAN GRUBU</label>
-                        <select id="bloodType" required>
-                            <option value="">Seçiniz</option>
-                            <option value="A_POSITIVE">A Rh+</option>
-                            <option value="A_NEGATIVE">A Rh-</option>
-                            <option value="B_POSITIVE">B Rh+</option>
-                            <option value="B_NEGATIVE">B Rh-</option>
-                            <option value="AB_POSITIVE">AB Rh+</option>
-                            <option value="AB_NEGATIVE">AB Rh-</option>
-                            <option value="O_POSITIVE">0 Rh+</option>
-                            <option value="O_NEGATIVE">0 Rh-</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label>ŞİFRE</label>
-                    <input type="password" id="password" placeholder="En az 8 karakter" required>
-                </div>
-
-                <button type="submit" class="btn-primary">Kaydı Tamamla</button>
-            </form>
-
-            <div class="auth-footer">
-                Zaten hesabınız var mı? <a href="index.html">Giriş Yap</a>
+            <div class="input-group">
+                <label><i class="fas fa-id-card"></i> TC Kimlik No</label>
+                <input type="text" id="tckn" maxlength="11" placeholder="11 haneli TCKN" required>
             </div>
+
+            <div class="input-group">
+                <label><i class="fas fa-envelope"></i> E-posta</label>
+                <input type="email" id="email" placeholder="ornek@mail.com" required>
+            </div>
+
+            <div class="form-row">
+                <div class="input-group">
+                    <label><i class="fas fa-calendar"></i> Doğum Tarihi</label>
+                    <input type="date" id="birthDate" required>
+                </div>
+                <div class="input-group">
+                    <label><i class="fas fa-tint"></i> Kan Grubu</label>
+                    <select id="bloodType" required>
+                        <option value="">Seçiniz</option>
+                        <option value="A_POSITIVE">A Rh+</option>
+                        <option value="A_NEGATIVE">A Rh-</option>
+                        <option value="B_POSITIVE">B Rh+</option>
+                        <option value="B_NEGATIVE">B Rh-</option>
+                        <option value="AB_POSITIVE">AB Rh+</option>
+                        <option value="AB_NEGATIVE">AB Rh-</option>
+                        <option value="O_POSITIVE">0 Rh+</option>
+                        <option value="O_NEGATIVE">0 Rh-</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label><i class="fas fa-key"></i> Şifre</label>
+                <input type="password" id="password" placeholder="En az 8 karakter" required>
+            </div>
+
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-check-circle"></i> Kaydı Tamamla
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Zaten hesabınız var mı? <a href="index.html"><i class="fas fa-sign-in-alt"></i> Giriş Yap</a>
         </div>
     </div>
 

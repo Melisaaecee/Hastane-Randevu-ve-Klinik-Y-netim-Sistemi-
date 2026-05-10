@@ -44,9 +44,11 @@ public class AppointmentController {
     @GetMapping("/doctor/my")
     @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<List<Appointment>> myDoctorAppointments() {
-        return ResponseEntity.ok(appointmentService.getMyDoctorAppointments());
+        System.out.println("=== /api/appointments/doctor/my çağrıldı ===");
+        List<Appointment> appointments = appointmentService.getMyDoctorAppointments();
+        System.out.println("Gönderilen randevu sayısı: " + appointments.size());
+        return ResponseEntity.ok(appointments);
     }
-
     // --- HASTA VE DOKTOR ÖZEL GÖRÜNÜMLERİ (ID BAZLI) ---
 
     // Belirli bir hastanın tüm randevularını getirir (Admin ve Hasta görebilir).
