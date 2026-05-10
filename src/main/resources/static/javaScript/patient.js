@@ -25,8 +25,12 @@ window.showSection = function (sectionId, element) {
     }
 
    
-    if (sectionId === 'appointments') {
-        window.filterAppointments('all');
+    if (sectionId === 'get-appointment') {
+        const frame = document.getElementById('appointmentFrame');
+        if (frame) {
+            // Iframe'in içindeki sayfayı (appointment.html) her tıklandığında tazeler
+            frame.contentWindow.location.reload(); 
+        }
     }
 };
 // 2. RANDEVU FİLTRELEME VE BACKEND ENTEGRASYONU

@@ -1,5 +1,12 @@
 const BASE_URL = "http://localhost:8080/api";
-const token = localStorage.getItem("token"); // Auth token aldığınızı varsayıyorum
+// appointment.js en üst kısım
+const authData = JSON.parse(localStorage.getItem('user'));
+const token = authData ? authData.token : null;
+const patientId = authData ? authData.user.id : null; 
+
+if (!token) {
+    console.error("Token bulunamadı!");
+}
 
 // Element tanımlamaları
 const selects = {
@@ -93,9 +100,17 @@ function resetSelects(keys) {
 
 function renderSlots(slots) {
     slotGrid.innerHTML = '';
-    if (slots.length === 0) {
-        slotGrid.innerHTML = '<p style="color:red">Bu doktor için uygun randevu saati bulunamadı.</p>';
-    } else {
+    // appointment.js içindeki hata mesajını basan yeri bul ve şununla değiştir:
+if (slots.length === 0) {
+    slotGrid.innerHTML = `
+        <div class="no-slot-msg">
+            <i class="fas fa-exclamation-circle"></i>
+            Bu doktor için şu an uygun randevu saati bulunmamaktadır.
+        </div>
+    `;
+    confirmBtn.style.display = 'none'; // Butonu da gizlemiş olursun
+}
+     else {
         slots.forEach(slot => {
             const date = new Date(slot.startTime);
             const timeStr = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });

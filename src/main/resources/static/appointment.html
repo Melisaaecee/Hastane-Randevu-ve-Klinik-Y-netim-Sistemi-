@@ -6,63 +6,164 @@
     <title>Randevu Al</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #2c3e50; --secondary: #3498db; --success: #27ae60; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
-        .container { max-width: 700px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
-        h2 { text-align: center; color: var(--primary); margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .step-box { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
-        select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 15px; transition: 0.3s; background: white; }
-        select:focus { border-color: var(--secondary); outline: none; box-shadow: 0 0 5px rgba(52,152,219,0.3); }
-        select:disabled { background-color: #f9f9f9; cursor: not-allowed; }
+        :root { 
+            --primary: #2c3e50; 
+            --secondary: #3498db; 
+            --success: #27ae60; 
+            --bg: #f8fafc; 
+            --border: #e2e8f0;
+        }
         
-        .slot-section { margin-top: 30px; display: none; }
-        .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; margin-top: 15px; }
-        .slot-btn { padding: 12px; border: 2px solid var(--secondary); background: white; color: var(--secondary); border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; text-align: center; }
+        /* SCROLL AYARI: Sayfa içeriği sığmadığında kaydırmaya izin verir */
+        body { 
+            font-family: 'Inter', 'Segoe UI', sans-serif; 
+            background-color: var(--bg) !important; 
+            margin: 0 !important; 
+            padding: 20px 0 !important; 
+            display: flex !important;
+            justify-content: center !important;
+            align-items: flex-start !important;
+            min-height: 100vh;
+            /* Yatay kaymayı engeller, dikeyde otomatik scroll ekler */
+            overflow-y: auto !important; 
+            overflow-x: hidden !important;
+        }
+
+        /* MODERN SCROLLBAR: Çirkin kalın çubuğu modern ve ince hale getirir */
+        body::-webkit-scrollbar {
+            width: 6px;
+        }
+        body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        body::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        body::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .container { 
+            max-width: 550px; 
+            width: 90%;
+            background: white; 
+            padding: 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+            border: 1px solid var(--border);
+            margin-bottom: 40px; /* Formun en altında boşluk bırakarak butonun rahat görünmesini sağlar */
+        }
+
+        h2 { 
+            text-align: center; 
+            color: var(--primary); 
+            margin-top: 0; 
+            margin-bottom: 35px; 
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .step-box { margin-bottom: 24px; }
+        
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            color: #4a5568; 
+            font-size: 14px;
+        }
+
+        select { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 1.5px solid var(--border); 
+            border-radius: 10px; 
+            font-size: 15px; 
+            background-color: #ffffff;
+            color: #2d3748;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        select:hover:not(:disabled) { border-color: var(--secondary); }
+        select:focus { 
+            border-color: var(--secondary); 
+            outline: none; 
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); 
+        }
+
+        .slot-section { margin-top: 30px; border-top: 1px solid var(--border); padding-top: 25px; }
+        .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; }
+        
+        .slot-btn { 
+            padding: 10px; 
+            border: 1.5px solid var(--secondary); 
+            background: white; 
+            color: var(--secondary); 
+            border-radius: 8px; 
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
         .slot-btn:hover { background: var(--secondary); color: white; }
-        .slot-btn.selected { background: var(--success); color: white; border-color: var(--success); transform: scale(1.05); }
+        .slot-btn.selected { background: var(--success); color: white; border-color: var(--success); }
         
-        #confirmBtn { width: 100%; padding: 15px; margin-top: 30px; background: var(--success); color: white; border: none; border-radius: 8px; font-size: 17px; font-weight: bold; cursor: pointer; display: none; transition: 0.3s; }
-        #confirmBtn:hover { background: #219150; }
-        .loading { font-style: italic; color: var(--secondary); font-size: 0.9rem; }
+        #confirmBtn { 
+            width: 100%; 
+            padding: 16px; 
+            margin-top: 30px; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 16px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            transition: all 0.2s;
+        }
+        
+        #confirmBtn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2><i class="fas fa-calendar-check"></i> Randevu Al</h2>
+    <h2><i class="fas fa-calendar-alt" style="margin-right: 10px; color: var(--secondary);"></i>Randevu Al</h2>
 
     <div class="step-box">
-        <label><i class="fas fa-map-marker-alt"></i> Şehir Seçin</label>
-        <select id="citySelect"><option value="">Yükleniyor...</option></select>
+        <label>Şehir</label>
+        <select id="citySelect"><option value="">Şehir Seçin</option></select>
     </div>
 
     <div class="step-box">
-        <label><i class="fas fa-map-signs"></i> İlçe Seçin</label>
+        <label>İlçe</label>
         <select id="districtSelect" disabled><option value="">Önce Şehir Seçin</option></select>
     </div>
 
     <div class="step-box">
-        <label><i class="fas fa-hospital"></i> Hastane Seçin</label>
+        <label>Hastane</label>
         <select id="hospitalSelect" disabled><option value="">Önce İlçe Seçin</option></select>
     </div>
 
     <div class="step-box">
-        <label><i class="fas fa-notes-medical"></i> Klinik Seçin</label>
+        <label>Klinik</label>
         <select id="clinicSelect" disabled><option value="">Önce Hastane Seçin</option></select>
     </div>
 
     <div class="step-box">
-        <label><i class="fas fa-user-md"></i> Doktor Seçin</label>
+        <label>Doktor</label>
         <select id="doctorSelect" disabled><option value="">Önce Klinik Seçin</option></select>
     </div>
 
-    <div id="slotSection" class="slot-section">
-        <label><i class="fas fa-clock"></i> Uygun Randevu Saatleri</label>
+    <div id="slotSection" class="slot-section" style="display:none;">
+        <label style="margin-bottom: 15px;">Müsait Saatler</label>
         <div id="slotGrid" class="slot-grid"></div>
     </div>
 
-    <button id="confirmBtn"><i class="fas fa-check-circle"></i> Randevuyu Onayla</button>
+    <button id="confirmBtn" style="display:none;">Randevuyu Onayla</button>
 </div>
 
 <script src="javascript/appointment.js"></script>

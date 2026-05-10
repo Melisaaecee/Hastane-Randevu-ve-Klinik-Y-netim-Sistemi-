@@ -708,6 +708,7 @@ select.form-control:disabled {
     transition: all 0.2s;
     cursor: pointer;
 }
+<<<<<<< Updated upstream
 
 /* Profil düzenleme formu için ek stiller */
 #profile-edit-form .form-group {
@@ -746,4 +747,21 @@ select.form-control:disabled {
 #profile-edit-form button {
     margin-top: 10px;
     width: 100%;
+=======
+/* Uygun slot bulunamadığında gösterilecek mesaj */
+.no-slot-msg {
+    background-color: #fff5f5; /* Çok hafif kırmızı arka plan */
+    color: #c53030; /* Koyu kırmızı metin */
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #feb2b2;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+>>>>>>> Stashed changes
 }
