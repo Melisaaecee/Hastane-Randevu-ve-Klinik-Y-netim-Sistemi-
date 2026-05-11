@@ -10,10 +10,6 @@ window.doctorApp = {
         this.token = userData.token || localStorage.getItem("token");
         this.currentUser = userData.user || userData;
 
-        //   console.log("🔵 Token:", this.token ? this.token.substring(0, 50) + "..." : "YOK");
-        // console.log("🔵 Kullanıcı ID:", this.currentUser?.id);
-        //console.log("🔵 Kullanıcı Rol:", this.currentUser?.role);
-
         if (!this.token) {
             alert("❌ Oturum bulunamadı! Lütfen tekrar giriş yapın.");
             window.location.href = "index.html";
@@ -38,9 +34,7 @@ window.doctorApp = {
 
     },
 
-    // ============ UI GÜNCELLEME FONKSİYONU ============
     updateUI: function () {
-        // Ad soyad birleştir
         let fullName = `${this.currentUser.firstName || ''} ${this.currentUser.lastName || ''}`.trim();
 
         const nameHeader = document.getElementById('userNameDisplay');
@@ -55,7 +49,6 @@ window.doctorApp = {
 
         const avatar = document.getElementById('avatarInitial');
         if (avatar) {
-            // Gerçek ismin ilk harfini bul (ünvanları atla)
             let firstName = this.currentUser.firstName || '';
             let firstLetter = 'H';
             let nameParts = firstName.split(' ');
@@ -69,61 +62,6 @@ window.doctorApp = {
         }
     },
 
-
-
-    handlePasswordUpdate: async function () {
-        const curPass = document.getElementById('currentPassword')?.value;
-        const newPass = document.getElementById('newPassword')?.value;
-        const confPass = document.getElementById('confirmPassword')?.value;
-
-        if (!curPass || !newPass) {
-            alert("Mevcut şifre ve yeni şifre gereklidir!");
-            return;
-        }
-        if (newPass !== confPass) {
-            alert("Yeni şifreler eşleşmiyor!");
-            return;
-        }
-        if (newPass.length < 6) {
-            alert("Yeni şifre en az 6 karakter olmalıdır!");
-            return;
-        }
-        if (curPass === newPass) {
-            alert("⚠️ Yeni şifre mevcut şifre ile aynı olamaz!");
-            return;
-        }
-
-        try {
-            const response = await fetch('http://localhost:8080/api/auth/reset-password-logged-in', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.token}`
-                },
-                body: JSON.stringify({
-                    tckn: this.currentUser?.tckn,
-                    currentPassword: curPass,
-                    newPassword: newPass
-                })
-            });
-
-            if (response.ok) {
-                alert("✅ Şifre başarıyla değiştirildi!\nÇıkış yapılıyor...");
-
-                setTimeout(() => {
-                    localStorage.clear();
-                    window.location.href = 'index.html';
-                }, 500);
-            } else {
-                const data = await response.json();
-                alert("❌ " + (data.message || data.error || "Mevcut şifreniz hatalı!"));
-            }
-        } catch (e) {
-            console.error("Şifre değiştirme hatası:", e);
-            alert("Bağlantı hatası! Lütfen tekrar deneyin.");
-        }
-    },
-    // ============ SETTINGS INPUTLARINA DEĞER YÜKLE ============
     loadSettingsValues: function () {
         const usernameInput = document.getElementById('editUsernameSetting');
         const tcknInput = document.getElementById('editTcknSetting');
@@ -134,7 +72,6 @@ window.doctorApp = {
         if (emailInput) emailInput.value = this.currentUser.email || '';
     },
 
-    // ============ KULLANICI ADI GÜNCELLEME ============
     updateUsernameFromSettings: async function () {
         const username = document.getElementById("editUsernameSetting")?.value.trim();
         const oldUsername = this.currentUser.username;
@@ -164,7 +101,7 @@ window.doctorApp = {
         }
 
         try {
-            const response = await fetch('http://localhost:8080/api/doctors/profile', {
+            const response = await fetch(`https://medsoft.up.railway.app/api/doctors/profile`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -198,7 +135,6 @@ window.doctorApp = {
         }
     },
 
-    // ============ TC KİMLİK NO GÜNCELLEME ============
     updateTcknFromSettings: async function () {
         const tckn = document.getElementById("editTcknSetting")?.value.trim();
         const oldTckn = this.currentUser.tckn;
@@ -228,7 +164,7 @@ window.doctorApp = {
         }
 
         try {
-            const response = await fetch('http://localhost:8080/api/doctors/profile', {
+            const response = await fetch(`https://medsoft.up.railway.app/api/doctors/profile`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -261,7 +197,6 @@ window.doctorApp = {
         }
     },
 
-    // ============ EMAIL DOĞRULAMA KODU GÖNDERME ============
     sendEmailVerification: async function () {
         const email = document.getElementById("newEmail")?.value;
         const statusSpan = document.getElementById("emailStatus");
@@ -286,7 +221,7 @@ window.doctorApp = {
         }
 
         try {
-            const res = await fetch('http://localhost:8080/api/auth/send-verification-code', {
+            const res = await fetch(`https://medsoft.up.railway.app/api/auth/send-verification-code`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -317,7 +252,6 @@ window.doctorApp = {
         }
     },
 
-    // ============ EMAIL ONAYLAMA ============
     confirmEmailUpdate: async function () {
         const code = document.getElementById("emailVerifyCode")?.value;
         const email = document.getElementById("newEmail")?.value;
@@ -335,7 +269,7 @@ window.doctorApp = {
         }
 
         try {
-            const res = await fetch('http://localhost:8080/api/auth/verify-email-update', {
+            const res = await fetch(`https://medsoft.up.railway.app/api/auth/verify-email-update`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -371,7 +305,6 @@ window.doctorApp = {
         }
     },
 
-    // ============ ŞİFRE DEĞİŞTİRME ============
     handlePasswordUpdate: async function () {
         const curPass = document.getElementById('currentPassword')?.value;
         const newPass = document.getElementById('newPassword')?.value;
@@ -402,7 +335,7 @@ window.doctorApp = {
         }
 
         try {
-            const response = await fetch('http://localhost:8080/api/auth/reset-password-logged-in', {
+            const response = await fetch(`https://medsoft.up.railway.app/api/auth/reset-password-logged-in`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -436,7 +369,6 @@ window.doctorApp = {
         }
     },
 
-    // ============ DİĞER FONKSİYONLAR ============
     isValidEmail: function (email) {
         const emailRegex = /^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/;
         return emailRegex.test(email);
@@ -447,7 +379,7 @@ window.doctorApp = {
         if (!userId) return;
 
         try {
-            const response = await fetch(`http://localhost:8080/api/doctors/user/${userId}`, {
+            const response = await fetch(`https://medsoft.up.railway.app/api/doctors/user/${userId}`, {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
 
@@ -512,11 +444,11 @@ window.doctorApp = {
         const tbody = document.getElementById('appointments-table-body');
         if (!tbody) return;
 
-        tbody.innerHTML = '<td><td colspan="5">Yükleniyor...<\/td><\/tr>';
+        tbody.innerHTML = '<tr><td colspan="5">Yükleniyor...<\/td><\/tr>';
 
         try {
 
-            const response = await fetch("http://localhost:8080/api/appointments/doctor/my", {
+            const response = await fetch(`https://medsoft.up.railway.app/api/appointments/doctor/my`, {
                 method: 'GET',
                 headers: {
                     "Authorization": `Bearer ${this.token}`,
@@ -535,7 +467,7 @@ window.doctorApp = {
             }
 
             if (response.status === 404) {
-                tbody.innerHTML = '<tr><td colspan="5">⚠️ Randevu servisi bulunamadı. Lütfen daha sonra tekrar deneyin.<\/td><\/tr>';
+                tbody.innerHTML = '<td><td colspan="5">⚠️ Randevu servisi bulunamadı. Lütfen daha sonra tekrar deneyin.<\/td><\/tr>';
                 return;
             }
 
@@ -562,17 +494,17 @@ window.doctorApp = {
 
                 return `
                 <tr>
-                    <td>${this.escapeHtml(patientName)}</td>
-                    <td>${this.escapeHtml(patientTckn)}</td>
-                    <td>${appointmentDate}</td>
-                    <td><span class="status-badge status-${status.toLowerCase()}">${this.getStatusText(status)}</span></td>
+                    <td>${this.escapeHtml(patientName)}</span>
+                    <td>${this.escapeHtml(patientTckn)}</span>
+                    <td>${appointmentDate}</span>
+                    <td><span class="status-badge status-${status.toLowerCase()}">${this.getStatusText(status)}</span></span>
                     <td>
                         ${status === 'SCHEDULED' ?
                         `<button class="btn-not-attended" onclick="window.doctorApp.markAsNotAttended(${app.id})">
                                 <i class="fas fa-user-slash"></i> Gelmedi
                             </button>` :
                         '<span style="color:gray;">İşlem Kapalı</span>'}
-                    </td>
+                    </span>
                 </tr>
             `;
             }).join('');
@@ -583,7 +515,6 @@ window.doctorApp = {
         }
     },
 
-    // Status text çevirisi
     getStatusText: function (status) {
         const statusMap = {
             'SCHEDULED': 'Planlandı',
@@ -595,7 +526,6 @@ window.doctorApp = {
         return statusMap[status] || status;
     },
 
-    // HTML escape
     escapeHtml: function (str) {
         if (!str) return '';
         return str
@@ -610,7 +540,7 @@ window.doctorApp = {
         if (!confirm("Hasta gelmedi olarak işaretlensin mi?")) return;
 
         try {
-            const response = await fetch(`http://localhost:8080/api/appointments/${appointmentId}/not-attended`, {
+            const response = await fetch(`https://medsoft.up.railway.app/api/appointments/${appointmentId}/not-attended`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
@@ -632,7 +562,7 @@ window.doctorApp = {
         tbody.innerHTML = '<tr><td colspan="4">Yükleniyor...<\/td><\/tr>';
 
         try {
-            const response = await fetch(`http://localhost:8080/api/slots/doctor/${this.activeDoctor.id}`, {
+            const response = await fetch(`https://medsoft.up.railway.app/api/slots/doctor/${this.activeDoctor.id}`, {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
 
@@ -651,7 +581,7 @@ window.doctorApp = {
             console.log("Gelen slotlar:", slots);
 
             if (!slots || slots.length === 0) {
-                tbody.innerHTML = '<td><td colspan="4">📅 Henüz slot oluşturulmamış.<\/td><\/tr>';
+                tbody.innerHTML = '<tr><td colspan="4">📅 Henüz slot oluşturulmamış.<\/td><\/tr>';
                 return;
             }
 
@@ -684,7 +614,7 @@ window.doctorApp = {
         if (!confirm("Bu slotu iptal etmek istediğinizden emin misiniz?")) return;
 
         try {
-            const response = await fetch(`http://localhost:8080/api/slots/${slotId}`, {
+            const response = await fetch(`https://medsoft.up.railway.app/api/slots/${slotId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
@@ -705,7 +635,6 @@ window.doctorApp = {
             slotForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
 
-                // Güvenlik: activeDoctor yüklü mü?
                 if (!window.doctorApp.activeDoctor || !window.doctorApp.activeDoctor.id) {
                     alert("❌ Doktor verileri henüz yüklenmedi. Lütfen sayfayı yenileyip biraz bekleyin.");
                     return;
@@ -724,7 +653,7 @@ window.doctorApp = {
                 console.log("🔵 Gönderilen veri:", payload);
 
                 try {
-                    const response = await fetch('http://localhost:8080/api/slots', {
+                    const response = await fetch(`https://medsoft.up.railway.app/api/slots`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -740,7 +669,7 @@ window.doctorApp = {
                         console.log("✅ Slot oluşturuldu:", result);
                         alert("✅ Slot başarıyla oluşturuldu!");
                         slotForm.reset();
-                        this.fetchSlots(); // Listeyi yenile
+                        this.fetchSlots();
                     } else {
                         const error = await response.text();
                         console.error("❌ Slot hatası:", error);
@@ -767,7 +696,6 @@ window.doctorApp = {
     formatDate: function (d) {
         return d ? new Date(d).toLocaleString('tr-TR') : '-';
     },
-
 
     logout: function () {
         localStorage.clear();

@@ -4,11 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        // Önceki hataları gizle
+
         errorBox.style.display = 'none';
 
-        // Form verilerini DTO yapısına uygun topla
         const formData = {
             firstName: document.getElementById('firstName').value,
             lastName: document.getElementById('lastName').value,
@@ -17,11 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
             birthDate: document.getElementById('birthDate').value,
             bloodType: document.getElementById('bloodType').value,
             password: document.getElementById('password').value,
-            username: null // Backend'de PATIENT için null olması gerektiğini belirtmiştik
+            username: null
         };
 
         try {
-            const response = await fetch('http://localhost:8080/api/auth/register', {
+            const response = await fetch('https://medsoft.up.railway.app/api/auth/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -32,11 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
 
             if (response.ok) {
-                // Başarılı kayıt
                 alert("Kaydınız başarıyla oluşturuldu! Şimdi giriş yapabilirsiniz.");
-                window.location.href = 'index.html'; // Giriş ekranına yönlendir
+                window.location.href = 'index.html';
             } else {
-                // Backend'den gelen hata mesajı (BadRequestException vb.)
                 showError(result.message || "Kayıt işlemi başarısız.");
             }
         } catch (err) {

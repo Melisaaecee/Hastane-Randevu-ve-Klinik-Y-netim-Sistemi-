@@ -1,7 +1,6 @@
 document.getElementById('resetPasswordForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
 
@@ -14,8 +13,7 @@ document.getElementById('resetPasswordForm').addEventListener('submit', async (e
     }
 
     try {
-
-        const response = await fetch('http://localhost:8080/api/auth/reset-password', {
+        const response = await fetch('https://medsoft.up.railway.app/api/auth/reset-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -28,7 +26,6 @@ document.getElementById('resetPasswordForm').addEventListener('submit', async (e
             alert("Şifreniz başarıyla güncellendi! Giriş sayfasına yönlendiriliyorsunuz.");
             window.location.href = 'index.html';
         } else {
-            // Karmaşık JSON yerine sadece anlamlı mesajı ayıklıyoruz
             const errorData = await response.json();
             const cleanMessage = errorData.message || "İşlem sırasında bir hata oluştu.";
             alert(cleanMessage);

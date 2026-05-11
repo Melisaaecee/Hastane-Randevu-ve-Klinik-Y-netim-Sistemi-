@@ -1,4 +1,3 @@
-// Sayfa yüklendiğinde formu dinlemeye başla
 document.addEventListener("DOMContentLoaded", () => {
     const loginForm = document.getElementById("loginForm");
     if (loginForm) {
@@ -6,8 +5,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-
-// index.js dosyanın ilgili kısmı tam olarak böyle olsun:
 window.switchTab = function (role) {
     const label = document.querySelector('label[for="tckn"]');
     const input = document.getElementById('tckn');
@@ -27,7 +24,6 @@ window.switchTab = function (role) {
     }
 };
 
-// LOGIN İŞLEMİ
 window.handleLogin = async function (e) {
     e.preventDefault();
 
@@ -35,11 +31,10 @@ window.handleLogin = async function (e) {
     const password = document.getElementById("password").value;
     const errorBox = document.getElementById("errorBox");
 
-    // Hata kutusunu temizle
     if (errorBox) errorBox.style.display = "none";
 
     try {
-        const res = await fetch("http://localhost:8080/api/auth/login", {
+        const res = await fetch("https://medsoft.up.railway.app/api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ tckn, password })
@@ -52,10 +47,8 @@ window.handleLogin = async function (e) {
             return;
         }
 
-        // Başarılı Giriş: Veriyi kaydet
         localStorage.setItem("user", JSON.stringify(data));
 
-        // Rolü temizle ve yönlendir (Spring Security'den gelen ROLE_ ön ekini temizler)
         const rawRole = data.user?.role || data.role || "";
         const role = rawRole.replace("ROLE_", "");
 
@@ -69,7 +62,6 @@ window.handleLogin = async function (e) {
     }
 };
 
-// MODAL KONTROLLERİ
 window.openForgotModal = function () {
     document.getElementById("forgotModal").style.display = "flex";
 };
@@ -78,7 +70,6 @@ window.closeForgotModal = function () {
     document.getElementById("forgotModal").style.display = "none";
 };
 
-// HATA MESAJI GÖSTERİMİ
 window.showError = function (msg) {
     const box = document.getElementById("errorBox");
     if (box) {
@@ -89,31 +80,30 @@ window.showError = function (msg) {
     }
 };
 
-// ŞİFRE SIFIRLAMA
 window.sendResetLink = async function () {
     const email = document.getElementById("forgotEmail").value;
     const msg = document.getElementById("forgotMessage");
 
     if (!email.includes("@")) {
-        msg.style.color = "#991b1b"; // Koyu kırmızı
+        msg.style.color = "#991b1b";
         msg.textContent = "Geçerli bir email giriniz.";
         msg.style.display = "block";
         return;
     }
 
     msg.style.display = "block";
-    msg.style.color = "#1e40af"; // Mavi
+    msg.style.color = "#1e40af";
     msg.textContent = "Gönderiliyor...";
 
     try {
-        const res = await fetch("http://localhost:8080/api/auth/forgot-password", {
+        const res = await fetch("https://medsoft.up.railway.app/api/auth/forgot-password", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email })
         });
 
         if (res.ok) {
-            msg.style.color = "#15803d"; // Yeşil
+            msg.style.color = "#15803d";
             msg.textContent = "Sıfırlama bağlantısı gönderildi.";
         } else {
             msg.style.color = "#991b1b";

@@ -1,5 +1,3 @@
-const API_URL = "http://localhost:8080/api";
-
 // ================= TOKEN & FETCH =================
 async function fetchWithAuth(url, options = {}) {
     const rawData = localStorage.getItem("user");
@@ -69,11 +67,11 @@ window.switchTab = async function (tabId, event) {
 window.loadStats = async function () {
     try {
         const [u, h, d, a, c] = await Promise.all([
-            fetchWithAuth(`${API_URL}/users`),
-            fetchWithAuth(`${API_URL}/hospitals`),
-            fetchWithAuth(`${API_URL}/doctors`),
-            fetchWithAuth(`${API_URL}/appointments`),
-            fetchWithAuth(`${API_URL}/clinics`)
+            fetchWithAuth(`https://medsoft.up.railway.app/api/users`),
+            fetchWithAuth(`https://medsoft.up.railway.app/api/hospitals`),
+            fetchWithAuth(`https://medsoft.up.railway.app/api/doctors`),
+            fetchWithAuth(`https://medsoft.up.railway.app/api/appointments`),
+            fetchWithAuth(`https://medsoft.up.railway.app/api/clinics`)
         ]);
 
         if (u && u.ok) document.getElementById("count-users").textContent = (await u.json()).length;
@@ -89,7 +87,7 @@ window.loadStats = async function () {
 // ================= CITIES =================
 let citiesData = [], citySortAsc = true;
 window.loadCities = async function () {
-    const res = await fetchWithAuth(`${API_URL}/cities`);
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/cities`);
     if (res) { citiesData = await res.json(); renderCities(); }
 };
 function renderCities() {
@@ -97,13 +95,13 @@ function renderCities() {
     filtered.sort((a, b) => citySortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
     document.getElementById("cityTableBody").innerHTML = filtered.map(c => `
         <tr>
-            <td>${c.id}</table>
+            <td>${c.id}</td>
             <td><input type="text" id="cityName_${c.id}" value="${c.name}" class="form-input" style="width:100%"></td>
             <td class="action-buttons">
                 <button class="btn-update" onclick="updateCity(${c.id})">Güncelle</button>
                 <button class="btn-delete" onclick="deleteCity(${c.id})">Sil</button>
-            </td>
-        </tr>
+            </span>
+        </span>
     `).join("");
 }
 window.filterCities = () => renderCities();
@@ -111,24 +109,24 @@ window.sortCities = () => { citySortAsc = !citySortAsc; renderCities(); };
 window.addCity = async function () {
     const name = document.getElementById("cityNameInput").value.trim();
     if (!name) return alert("Şehir adı girin!");
-    const res = await fetchWithAuth(`${API_URL}/cities`, { method: "POST", body: JSON.stringify({ name }) });
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/cities`, { method: "POST", body: JSON.stringify({ name }) });
     if (res?.ok) { alert("Eklendi"); document.getElementById("cityNameInput").value = ""; loadCities(); }
 };
 window.updateCity = async function (id) {
     const name = document.getElementById(`cityName_${id}`).value.trim();
-    const res = await fetchWithAuth(`${API_URL}/cities/${id}`, { method: "PUT", body: JSON.stringify({ name }) });
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/cities/${id}`, { method: "PUT", body: JSON.stringify({ name }) });
     if (res?.ok) { alert("Güncellendi"); loadCities(); }
 };
 window.deleteCity = async function (id) {
     if (!confirm("Silmek istiyor musunuz?")) return;
-    const res = await fetchWithAuth(`${API_URL}/cities/${id}`, { method: "DELETE" });
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/cities/${id}`, { method: "DELETE" });
     if (res?.ok) { alert("Silindi"); loadCities(); }
 };
 
 // ================= DISTRICTS =================
 let districtsData = [], districtSortAsc = true;
 window.loadDistricts = async function () {
-    const res = await fetchWithAuth(`${API_URL}/districts`);
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/districts`);
     if (res) { districtsData = await res.json(); renderDistricts(); }
 };
 
@@ -143,8 +141,8 @@ function renderDistricts() {
             <td class="action-buttons">
                 <button class="btn-update" onclick="updateDistrict(${d.id})">Güncelle</button>
                 <button class="btn-delete" onclick="deleteDistrict(${d.id})">Sil</button>
-            </td>
-        </tr>
+            </span>
+        </span>
     `).join("");
 }
 
@@ -155,19 +153,19 @@ window.addDistrict = async function () {
     const name = document.getElementById("districtNameInput").value.trim();
     const cityId = document.getElementById("districtCitySelect").value;
     if (!name || !cityId) return alert("İlçe adı ve şehir seçin!");
-    const res = await fetchWithAuth(`${API_URL}/districts`, { method: "POST", body: JSON.stringify({ name, city: { id: parseInt(cityId) } }) });
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/districts`, { method: "POST", body: JSON.stringify({ name, city: { id: parseInt(cityId) } }) });
     if (res?.ok) { alert("Eklendi"); document.getElementById("districtNameInput").value = ""; loadDistricts(); }
 };
 
 window.updateDistrict = async function (id) {
     const name = document.getElementById(`districtName_${id}`).value.trim();
-    const res = await fetchWithAuth(`${API_URL}/districts/${id}`, { method: "PUT", body: JSON.stringify({ name }) });
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/districts/${id}`, { method: "PUT", body: JSON.stringify({ name }) });
     if (res?.ok) { alert("Güncellendi"); loadDistricts(); }
 };
 
 window.deleteDistrict = async function (id) {
     if (!confirm("Sil?")) return;
-    const res = await fetchWithAuth(`${API_URL}/districts/${id}`, { method: "DELETE" });
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/districts/${id}`, { method: "DELETE" });
     if (res?.ok) { alert("Silindi"); loadDistricts(); }
 };
 
@@ -176,7 +174,7 @@ let hospitalsData = [], hospitalSortAsc = true;
 
 window.loadHospitals = async function () {
     try {
-        const res = await fetchWithAuth(`${API_URL}/hospitals`);
+        const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/hospitals`);
         if (res && res.ok) {
             hospitalsData = await res.json();
             renderHospitals();
@@ -201,7 +199,6 @@ function renderHospitals() {
     if (!tbody) return;
 
     tbody.innerHTML = filtered.map(h => {
-        // Şehir bilgisini district üzerinden al
         const cityName = h.district?.city?.name || h.city?.name || '-';
         const districtName = h.district?.name || '-';
 
@@ -229,15 +226,15 @@ window.addHospital = async function () {
 
     if (!name) return alert("Hastane adı girin!");
     if (!cityId) return alert("Şehir seçin!");
-    if (!districtId) return alert("İlçe seçin!");  // ← İLÇE ZORUNLU
+    if (!districtId) return alert("İlçe seçin!");
 
     const hospitalData = {
         name: name,
-        district: { id: parseInt(districtId) }  // ← district objesi gönder
+        district: { id: parseInt(districtId) }
     };
 
     try {
-        const res = await fetchWithAuth(`${API_URL}/hospitals`, {
+        const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/hospitals`, {
             method: "POST",
             body: JSON.stringify(hospitalData)
         });
@@ -263,7 +260,7 @@ window.updateHospital = async function (id) {
     const name = nameInput.value.trim();
     if (!name) return alert("Hastane adı boş olamaz!");
     try {
-        const res = await fetchWithAuth(`${API_URL}/hospitals/${id}`, { method: "PUT", body: JSON.stringify({ name: name }) });
+        const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/hospitals/${id}`, { method: "PUT", body: JSON.stringify({ name: name }) });
         if (res && res.ok) { alert("Hastane güncellendi"); await loadHospitals(); }
         else { alert("Güncelleme başarısız"); }
     } catch (error) { alert("Güncelleme sırasında hata oluştu"); }
@@ -272,7 +269,7 @@ window.updateHospital = async function (id) {
 window.deleteHospital = async function (id) {
     if (!confirm("Bu hastaneyi silmek istediğinizden emin misiniz?")) return;
     try {
-        const res = await fetchWithAuth(`${API_URL}/hospitals/${id}`, { method: "DELETE" });
+        const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/hospitals/${id}`, { method: "DELETE" });
         if (res && res.ok) { alert("Hastane silindi"); await loadHospitals(); }
         else { alert("Silme başarısız"); }
     } catch (error) { alert("Silme sırasında hata oluştu"); }
@@ -281,7 +278,7 @@ window.deleteHospital = async function (id) {
 // ================= CLINICS =================
 let clinicsData = [], clinicSortAsc = true;
 window.loadClinics = async function () {
-    const res = await fetchWithAuth(`${API_URL}/clinics`);
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/clinics`);
     if (res) { clinicsData = await res.json(); renderClinics(); }
 };
 function renderClinics() {
@@ -295,8 +292,8 @@ function renderClinics() {
             <td class="action-buttons">
                 <button class="btn-update" onclick="updateClinic(${c.id})">Güncelle</button>
                 <button class="btn-delete" onclick="deleteClinic(${c.id})">Sil</button>
-             </td>
-        </tr>
+              </span>
+        </span>
     `).join("");
 }
 window.filterClinics = () => renderClinics();
@@ -305,17 +302,17 @@ window.addClinic = async function () {
     const name = document.getElementById("clinicNameInput").value.trim();
     const hospitalId = document.getElementById("clinicHospitalSelect").value;
     if (!name || !hospitalId) return alert("Klinik adı ve hastane seçin!");
-    const res = await fetchWithAuth(`${API_URL}/clinics`, { method: "POST", body: JSON.stringify({ name, hospital: { id: parseInt(hospitalId) } }) });
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/clinics`, { method: "POST", body: JSON.stringify({ name, hospital: { id: parseInt(hospitalId) } }) });
     if (res?.ok) { alert("Eklendi"); document.getElementById("clinicNameInput").value = ""; loadClinics(); }
 };
 window.updateClinic = async function (id) {
     const name = document.getElementById(`clinicName_${id}`).value.trim();
-    const res = await fetchWithAuth(`${API_URL}/clinics/${id}`, { method: "PUT", body: JSON.stringify({ name }) });
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/clinics/${id}`, { method: "PUT", body: JSON.stringify({ name }) });
     if (res?.ok) { alert("Güncellendi"); loadClinics(); }
 };
 window.deleteClinic = async function (id) {
     if (!confirm("Sil?")) return;
-    const res = await fetchWithAuth(`${API_URL}/clinics/${id}`, { method: "DELETE" });
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/clinics/${id}`, { method: "DELETE" });
     if (res?.ok) { alert("Silindi"); loadClinics(); }
 };
 
@@ -324,7 +321,7 @@ let doctorsData = [];
 window.loadDoctors = async function () {
 
     try {
-        const res = await fetchWithAuth(`${API_URL}/doctors`);
+        const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/doctors`);
         if (res && res.ok) {
             doctorsData = await res.json();
             renderDoctors();
@@ -351,22 +348,16 @@ function renderDoctors() {
     if (!tbody) return;
 
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">📋 Doktor bulunamadı</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">📋 Doktor bulunamadı</span></tr>';
         return;
     }
 
     tbody.innerHTML = filtered.map(d => {
-        // AD SOYAD: Sadece "Ad Soyad" olarak göster (ünvan ekleme)
-        // Backend'den gelen firstName "Uzm. Dr. Ahmet" formatında olabilir
-        // Biz sadece isim ve soyadı alalım
         const firstName = d.user?.firstName || '';
         const lastName = d.user?.lastName || '';
 
-        // İsimden sadece adı al (ünvanı temizle)
         let cleanFirstName = firstName;
-        // Eğer "Uzm. Dr. Ahmet" gibi bir format varsa, sadece "Ahmet" kısmını al
         if (cleanFirstName.includes('Dr.')) {
-            // "Uzm. Dr. Ahmet" -> "Ahmet"
             const parts = cleanFirstName.split('Dr.');
             if (parts.length > 1) {
                 cleanFirstName = parts[1].trim();
@@ -375,30 +366,28 @@ function renderDoctors() {
 
         const fullName = `${cleanFirstName} ${lastName}`.trim();
 
-        // UZMANLIK: Ünvanı göster (Uzm, Op, Prof, Doç)
         let specialty = d.specialization || '';
         let displayTitle = '';
         if (specialty && specialty !== '' && specialty !== 'Uzmanlık Belirtilmemiş') {
-            displayTitle = specialty;  // "Uzm", "Op", "Prof", "Doç"
+            displayTitle = specialty;
         } else {
             displayTitle = '-';
         }
 
-        // HASTANE ve KLİNİK
         const hospitalName = d.clinic?.hospital?.name || d.clinic?.name || '-';
         const clinicName = d.clinic?.name || '-';
 
         return `
             <tr>
-                <td>${d.id}</td>
-                <td>${escapeHtml(fullName)}</td>
-                <td>${escapeHtml(displayTitle)}</td>
-                <td>${escapeHtml(hospitalName)}</td>
-                <td>${escapeHtml(clinicName)}</td>
+                <td>${d.id}</span>
+                <td>${escapeHtml(fullName)}</span>
+                <td>${escapeHtml(displayTitle)}</span>
+                <td>${escapeHtml(hospitalName)}</span>
+                <td>${escapeHtml(clinicName)}</span>
                 <td class="action-buttons">
                     <button class="btn-delete" onclick="deleteDoctor(${d.id})">Sil</button>
-                </td>
-            </tr>
+                </span>
+            </span>
         `;
     }).join('');
 }
@@ -411,7 +400,7 @@ window.deleteDoctor = async function (id) {
     try {
         const token = localStorage.getItem("token") || JSON.parse(localStorage.getItem("user"))?.token;
 
-        const response = await fetch(`http://localhost:8080/api/doctors/${id}`, {
+        const response = await fetch(`https://medsoft.up.railway.app/api/doctors/${id}`, {
             method: "DELETE",
             headers: {
                 "Authorization": `Bearer ${token}`,
@@ -438,64 +427,60 @@ window.deleteDoctor = async function (id) {
 };
 // ================= USERS, APPOINTMENTS, SLOTS =================
 window.loadUsers = async function () {
-    const res = await fetchWithAuth(`${API_URL}/users`);
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/users`);
     if (res) {
         const data = await res.json();
         document.getElementById("userTableBody").innerHTML = data.map(u => `
             <tr>
-                <td>${u.id}</td>
-                <td>${u.tckn}</td>
-                <td>${u.role}</td>
-                <td><button class="btn-delete" onclick="deleteUser(${u.id})">Sil</button></td>
-            </tr>
+                <td>${u.id}</span>
+                <td>${u.tckn}</span>
+                <td>${u.role}</span>
+                <td><button class="btn-delete" onclick="deleteUser(${u.id})">Sil</button></span>
+            </span>
         `).join("");
     }
 };
 window.deleteUser = async function (id) {
     if (!confirm("Sil?")) return;
-    const res = await fetchWithAuth(`${API_URL}/users/${id}`, { method: "DELETE" });
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/users/${id}`, { method: "DELETE" });
     if (res?.ok) { alert("Silindi"); loadUsers(); }
 };
 window.loadAppointments = async function () {
-    const res = await fetchWithAuth(`${API_URL}/appointments`);
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/appointments`);
     if (res) {
         const data = await res.json();
         document.getElementById("appointmentTableBody").innerHTML = data.map(a => `
             <tr>
-                <td>${a.id}</td>
-                <td>${a.patient?.user?.firstName || '-'}</td>
-                <td>${a.slot?.doctor?.user?.firstName || '-'}</td>
-                <td>${a.status || '-'}</td>
-                <td><button class="btn-delete" onclick="cancelAppointment(${a.id})">İptal</button></td>
-            </tr>
+                <td>${a.id}</span>
+                <td>${a.patient?.user?.firstName || '-'}</span>
+                <td>${a.slot?.doctor?.user?.firstName || '-'}</span>
+                <td>${a.status || '-'}</span>
+                <td><button class="btn-delete" onclick="cancelAppointment(${a.id})">İptal</button></span>
+            </span>
         `).join("");
     }
 };
 window.cancelAppointment = async function (id) {
-    await fetchWithAuth(`${API_URL}/appointments/${id}/cancel`, { method: "PUT" });
+    await fetchWithAuth(`https://medsoft.up.railway.app/api/appointments/${id}/cancel`, { method: "PUT" });
     loadAppointments();
 };
 window.loadSlots = async function () {
-    const res = await fetchWithAuth(`${API_URL}/slots`);
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/slots`);
     if (res) {
         const data = await res.json();
         document.getElementById("slotTableBody").innerHTML = data.map(s => {
-            // DOKTOR ADINI DOĞRU ŞEKİLDE AL
             let doctorName = '-';
             if (s.doctor) {
-                // Önce doctor.user üzerinden dene
                 if (s.doctor.user) {
                     const firstName = s.doctor.user.firstName || '';
                     const lastName = s.doctor.user.lastName || '';
                     doctorName = `${firstName} ${lastName}`.trim();
                 }
-                // Alternatif: s.doctor.firstName, s.doctor.lastName direkt varsa
                 else if (s.doctor.firstName || s.doctor.lastName) {
                     doctorName = `${s.doctor.firstName || ''} ${s.doctor.lastName || ''}`.trim();
                 }
             }
 
-            // ZAMAN formatını düzelt (saat dakika saniye)
             let formattedTime = '-';
             if (s.startTime) {
                 const date = new Date(s.startTime);
@@ -509,17 +494,16 @@ window.loadSlots = async function () {
                 });
             }
 
-            // DURUM
             const statusText = s.available ? "Boş" : "Dolu";
             const statusClass = s.available ? 'status-available' : 'status-reserved';
 
             return `
                 <tr>
-                    <td>${s.id}</td>
+                    <td>${s.id}</span>
                     <td>${escapeHtml(doctorName)}</span>
                     <td>${formattedTime}</span>
                     <td><span class="status-badge ${statusClass}">${statusText}</span></span>
-                </tr>
+                </span>
             `;
         }).join('');
     }
@@ -527,7 +511,7 @@ window.loadSlots = async function () {
 
 // ================= PROFILE =================
 window.loadMyProfile = async function () {
-    const res = await fetchWithAuth(`${API_URL}/users/me`);
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/users/me`);
     if (res) {
         const user = await res.json();
         document.getElementById("me-fullname").textContent = `${user.firstName || ''} ${user.lastName || ''}`.trim() || '-';
@@ -541,7 +525,7 @@ window.loadMyProfile = async function () {
 window.handleUsernameUpdate = async function () {
     const newUsername = document.getElementById("new-username-input").value.trim();
     if (!newUsername) return alert("Kullanıcı adı girin!");
-    const res = await fetchWithAuth(`${API_URL}/users/me`, { method: "PUT", body: JSON.stringify({ username: newUsername }) });
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/users/me`, { method: "PUT", body: JSON.stringify({ username: newUsername }) });
     if (res?.ok) { alert("Güncellendi! Tekrar giriş yapın."); logout(); }
 };
 window.handlePasswordUpdate = async function () {
@@ -551,7 +535,7 @@ window.handlePasswordUpdate = async function () {
     if (!current || !newPass) return alert("Şifreleri doldurun!");
     if (newPass !== confirm) return alert("Yeni şifreler eşleşmiyor!");
     const user = JSON.parse(localStorage.getItem("user"));
-    const res = await fetch(`${API_URL}/auth/reset-password-logged-in`, {
+    const res = await fetch(`https://medsoft.up.railway.app/api/auth/reset-password-logged-in`, {
         method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${user?.token}` },
         body: JSON.stringify({ tckn: user?.tckn, currentPassword: current, newPassword: newPass })
     });
@@ -562,7 +546,7 @@ window.handlePasswordUpdate = async function () {
 // ================= HELPERS =================
 async function loadCitiesForSelect(selectId) {
     try {
-        const res = await fetchWithAuth(`${API_URL}/cities`);
+        const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/cities`);
         if (res && res.ok) {
             const cities = await res.json();
             const select = document.getElementById(selectId);
@@ -574,7 +558,7 @@ async function loadCitiesForSelect(selectId) {
 }
 async function loadHospitalsForSelect(selectId) {
     try {
-        const res = await fetchWithAuth(`${API_URL}/hospitals`);
+        const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/hospitals`);
         if (res && res.ok) {
             const hospitals = await res.json();
             const select = document.getElementById(selectId);
@@ -593,7 +577,7 @@ async function loadDistrictsByCity(cityId, selectElement) {
 
     try {
 
-        const res = await fetchWithAuth(`${API_URL}/districts/city/${cityId}`);
+        const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/districts/city/${cityId}`);
 
         if (res && res.ok) {
             const districts = await res.json();
@@ -633,7 +617,7 @@ window.addDoctor = async function () {
         if (specialty) params.append("specialization", specialty);
         params.append("clinicId", clinicId);
         const token = localStorage.getItem("token") || JSON.parse(localStorage.getItem("user"))?.token;
-        const response = await fetch(`http://localhost:8080/api/doctors/create-with-user?${params.toString()}`, {
+        const response = await fetch(`https://medsoft.up.railway.app/api/doctors/create-with-user?${params.toString()}`, {
             method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
@@ -689,13 +673,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
             try {
-                const res = await fetchWithAuth(`${API_URL}/clinics/hospital/${hospitalId}`);
+                const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/clinics/hospital/${hospitalId}`);
                 if (res && res.ok) {
                     const clinics = await res.json();
                     clinicSelect.innerHTML = '<option value="">Klinik Seç</option>' +
                         clinics.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
                 } else {
-                    const allClinicsRes = await fetchWithAuth(`${API_URL}/clinics`);
+                    const allClinicsRes = await fetchWithAuth(`https://medsoft.up.railway.app/api/clinics`);
                     if (allClinicsRes && allClinicsRes.ok) {
                         const allClinics = await allClinicsRes.json();
                         const filtered = allClinics.filter(c => c.hospital?.id === parseInt(hospitalId));

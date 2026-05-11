@@ -1,21 +1,17 @@
 window.showSection = function (sectionId, element) {
-    // 1. ADIM: Tüm içerik bölümlerini (section) bul ve 'active' sınıfını sil (Hepsini Gizle)
     const allSections = document.querySelectorAll('.tab-content');
     allSections.forEach(s => {
         s.classList.remove('active');
         s.style.display = 'none';
     });
 
-
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-
 
     const target = document.getElementById(sectionId);
     if (target) {
         target.classList.add('active');
         target.style.display = 'block';
     }
-
 
     if (element) {
         element.classList.add('active');
@@ -24,39 +20,32 @@ window.showSection = function (sectionId, element) {
         if (link) link.classList.add('active');
     }
 
-
     if (sectionId === 'get-appointment') {
         const frame = document.getElementById('appointmentFrame');
         if (frame) {
-            // Iframe'in içindeki sayfayı (appointment.html) her tıklandığında tazeler
             frame.contentWindow.location.reload();
         }
     }
 };
 
 window.filterAppointments = async function (type) {
-    // 1. Butonların aktiflik durumunu görsel olarak ayarla
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
     const activeBtn = document.getElementById('btn-' + type);
     if (activeBtn) activeBtn.classList.add('active-filter');
 
-    // 2. LocalStorage'dan kullanıcı ve token bilgilerini al
     const authData = JSON.parse(localStorage.getItem('user'));
     if (!authData || !authData.token) {
         console.error("Kullanıcı oturum verisi bulunamadı!");
         return;
     }
 
-    const userId = authData.user.id; 
-    const BASE_URL = 'http://localhost:8080/api/appointments';
+    const userId = authData.user.id;
+    const BASE_URL = 'https://medsoft.up.railway.app/api/appointments';
     let url = '';
 
-    // 3. Endpoint Belirleme
-    // DTO dönüşü yapan endpoint'lerini çağırıyoruz
     if (type === 'past') {
         url = `${BASE_URL}/patient/${userId}/past`;
     } else {
-        // 'all' (Tümü) ve 'active' (Aktif) için ana listeyi çekiyoruz
         url = `${BASE_URL}/patient/${userId}`;
     }
 
@@ -73,66 +62,64 @@ window.filterAppointments = async function (type) {
 
         let data = await response.json();
 
-        // 4. MANTIKSAL FİLTRELEME (DTO UYUMLU)
-        // Hata buradaydı: Artık app.slot.startTime yok!
-        // Java'da canCancel'ı (gelecekteyse true) olarak ayarladığımız için bunu kullanıyoruz.
-        
         if (type === 'active') {
-            // Sadece gelecekteki (iptal edilebilir) randevuları göster
             data = data.filter(app => app.canCancel === true);
         } else if (type === 'past' && !url.includes('/past')) {
-            // Eğer backend'den tüm liste geldiyse ama biz 'geçmiş' istiyorsak
             data = data.filter(app => app.canCancel === false);
         }
-        // 'all' ise filtre yapmadan devam eder.
 
-        // 5. Tabloyu yeni veriyle güncelle
         renderTable(data);
 
     } catch (error) {
         console.error("Filtreleme sırasında hata oluştu:", error);
-        // Hata anında tabloya "Kayıt bulunamadı" mesajı düşmesi için boş dizi gönderiyoruz
-        renderTable([]); 
+        renderTable([]);
     }
 };
-// 3. TABLO RENDER FONKSİYONU (Backend Entity Yapısına Uygun)
+
 function renderTable(data) {
-    console.log("Backend'den gelen veri:", data);
     const tbody = document.getElementById('appointmentTableBody');
     if (!tbody) return;
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Kayıt bulunamadı.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Kayıt bulunamadı.</span></tr>';
         return;
     }
 
     tbody.innerHTML = data.map(app => {
-        // 1. Güvenli isimleri alıyoruz (Tanımladığın değişkenleri kullanmalısın!)
-        const dName = app.doctorName || app.doctor_name || "Bilinmeyen Doktor";
-        const cName = app.clinicName || app.clinic_name || "Bilinmeyen Klinik";
-        const aDate = app.appointmentDate || app.appointment_date || "Tarih Yok";
-        
-        // 2. Tabloyu oluştururken yukarıdaki GÜVENLİ değişkenleri basıyoruz
+        const doctorName = app.slot?.doctor?.user
+            ? `Dr. ${app.slot.doctor.user.firstName} ${app.slot.doctor.user.lastName}`
+            : "Bilinmeyen Doktor";
+
+        const clinicName = app.slot?.doctor?.clinic?.name || "Bilinmeyen Klinik";
+        const startTime = app.slot?.startTime ? new Date(app.slot.startTime) : new Date();
+        const dateStr = startTime.toLocaleString('tr-TR');
+        const now = new Date();
+
+        const isCancelable = startTime > now && (app.status === 'PENDING' || app.status === 'CONFIRMED');
+
         return `
             <tr>
-                <td class="fw-bold text-primary">${dName}</td>
-                <td>${cName}</td>
-                <td>${aDate}</td>
+                <td>${doctorName}</span>
+                <td>${clinicName}</span>
+                <td>${dateStr}</span>
                 <td>
-                    <span class="status-badge ${app.canCancel ? 'status-active' : 'status-past'}">
-                        ${app.status || 'BELİRSİZ'}
+                    <span class="status-badge ${startTime >= now ? 'status-active' : 'status-past'}">
+                        ${app.status} 
                     </span>
-                </td>
+                </span>
                 <td>
-                    ${app.canCancel 
-                        ? `<button onclick="cancelAppointment(${app.id})" class="btn-cancel">İptal Et</button>` 
-                        : '<span class="text-muted" style="font-size: 0.85rem;">İşlem Yapılamaz</span>'}
-                </td>
+                    ${isCancelable ?
+                `<button onclick="cancelAppointment(${app.id})" class="btn-cancel-table">
+                            <i class="fas fa-times"></i> İptal Et
+                         </button>` :
+                `<span style="color: #cbd5e1; font-size: 0.8rem;">İşlem Yapılamaz</span>`
+            }
+                </span>
             </tr>
         `;
     }).join('');
 }
-// 4. ŞİFRE VE PROFİL GÜNCELLEME (Mevcut Fonksiyonların Korundu)
+
 window.handlePasswordUpdate = async function () {
     const cpEl = document.getElementById('currentPassword');
     const npEl = document.getElementById('newPassword');
@@ -146,7 +133,7 @@ window.handlePasswordUpdate = async function () {
     const authData = JSON.parse(localStorage.getItem('user'));
 
     try {
-        const response = await fetch('http://localhost:8080/api/auth/reset-password-logged-in', {
+        const response = await fetch('https://medsoft.up.railway.app/api/auth/reset-password-logged-in', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -171,7 +158,6 @@ window.handlePasswordUpdate = async function () {
     }
 };
 
-// 5. SAYFA YÜKLENDİĞİNDE ÇALIŞACAK KISIM
 document.addEventListener('DOMContentLoaded', () => {
     const authData = JSON.parse(localStorage.getItem('user'));
     if (!authData || !authData.user) {
@@ -181,7 +167,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const user = authData.user;
 
-    // --- YENİ EKLEDİĞİMİZ FORMATLAMA YARDIMCILARI ---
     const capitalize = (str) => str ? str.toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) : "";
     const formatBloodGroup = (bg) => {
         const mapping = {
@@ -191,7 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return mapping[bg] || bg;
     };
 
-    // İsimleri formatlayarak birleştir
     const fullName = capitalize(`${user.firstName} ${user.lastName}`);
 
     if (document.getElementById('patientFullName')) {
@@ -205,11 +189,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('avatarInitial').textContent = user.firstName.charAt(0).toUpperCase();
     }
 
-    // --- KİŞİSEL BİLGİLERİ DOLDURMA  ---
     const fields = {
         'infoTckn': user.tckn,
         'infoEmail': user.email,
-        'infoBlood': formatBloodGroup(user.bloodGroup), // A_POSITIVE -> A+ çevrimi
+        'infoBlood': formatBloodGroup(user.bloodGroup),
         'infoAge': user.age || "--"
     };
 
@@ -224,7 +207,6 @@ window.logout = function () {
     window.location.href = 'index.html';
 };
 
-// DOĞRULAMA KODU GÖNDERME
 window.sendEmailVerification = async function () {
     const email = document.getElementById("newEmail")?.value;
     const errorBox = document.getElementById("errorBox");
@@ -253,7 +235,7 @@ window.sendEmailVerification = async function () {
         const user = JSON.parse(localStorage.getItem("user"));
         const tckn = user?.user?.tckn || user?.tckn;
 
-        const res = await fetch('http://localhost:8080/api/auth/send-verification-code', {
+        const res = await fetch('https://medsoft.up.railway.app/api/auth/send-verification-code', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -265,21 +247,18 @@ window.sendEmailVerification = async function () {
         const data = await res.json();
 
         if (res.ok) {
-            // Step1'i gizle, Step2'yi göster
             if (step1Div) step1Div.style.display = 'none';
             if (step2Div) step2Div.style.display = 'block';
             if (verifyCodeInput) verifyCodeInput.value = "";
-
             showSuccess("✅ Doğrulama kodu e-posta adresinize gönderildi! 15 dakika içinde kullanınız.");
 
-            // 15 dakika sonra kod geçersiz olacak
             setTimeout(() => {
                 if (verifyCodeInput) {
                     showError("⏰ Kodun süresi doldu! Lütfen yeni kod isteyin.");
                     if (step1Div) step1Div.style.display = 'block';
                     if (step2Div) step2Div.style.display = 'none';
                 }
-            }, 14 * 60 * 1000); // 14 dakika
+            }, 14 * 60 * 1000);
         } else {
             showError(data.message || "❌ Kod gönderilemedi!");
         }
@@ -294,7 +273,6 @@ window.sendEmailVerification = async function () {
     }
 };
 
-// Email güncelleme onaylama
 window.confirmEmailUpdate = async function () {
     const code = document.getElementById("emailVerifyCode")?.value;
     const email = document.getElementById("newEmail")?.value;
@@ -316,7 +294,7 @@ window.confirmEmailUpdate = async function () {
         const user = JSON.parse(localStorage.getItem("user"));
         const tckn = user?.user?.tckn || user?.tckn;
 
-        const res = await fetch('http://localhost:8080/api/auth/verify-email-update', {
+        const res = await fetch('https://medsoft.up.railway.app/api/auth/verify-email-update', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -333,7 +311,6 @@ window.confirmEmailUpdate = async function () {
             window.location.href = "index.html";
         } else {
             showError(data.message || data.error || "❌ Kod hatalı veya süresi dolmuş! Lütfen yeni kod isteyin.");
-            // Hata durumunda step1'i tekrar göster
             document.getElementById("emailStep1").style.display = 'block';
             document.getElementById("emailStep2").style.display = 'none';
         }
@@ -348,14 +325,13 @@ window.confirmEmailUpdate = async function () {
     }
 };
 
-// RANDEVU İPTAL ETME FONKSİYONU
 window.cancelAppointment = async function (appointmentId) {
     if (!confirm("Bu randevuyu iptal etmek istediğinize emin misiniz? (24 saat kuralı geçerlidir)")) return;
 
     const authData = JSON.parse(localStorage.getItem('user'));
 
     try {
-        const response = await fetch(`http://localhost:8080/api/appointments/${appointmentId}/cancel`, {
+        const response = await fetch(`https://medsoft.up.railway.app/api/appointments/${appointmentId}/cancel`, {
             method: 'PUT',
             headers: {
                 'Authorization': 'Bearer ' + authData.token,
@@ -375,52 +351,6 @@ window.cancelAppointment = async function (appointmentId) {
         alert("Bağlantı hatası oluştu.");
     }
 };
-
-// RenderTable fonksiyonunu şu şekilde güncelleyin:
-function renderTable(data) {
-    const tbody = document.getElementById('appointmentTableBody');
-    if (!tbody) return;
-
-    if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Kayıt bulunamadı.</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = data.map(app => {
-
-        const doctorName = app.slot?.doctor?.user
-            ? `Dr. ${app.slot.doctor.user.firstName} ${app.slot.doctor.user.lastName}`
-            : "Bilinmeyen Doktor";
-
-        const clinicName = app.slot?.doctor?.clinic?.name || "Bilinmeyen Klinik";
-        const startTime = app.slot?.startTime ? new Date(app.slot.startTime) : new Date();
-        const dateStr = startTime.toLocaleString('tr-TR');
-        const now = new Date();
-
-        const isCancelable = startTime > now && (app.status === 'PENDING' || app.status === 'CONFIRMED');
-
-        return `
-            <tr>
-                <td>${doctorName}</td>
-                <td>${clinicName}</td>
-                <td>${dateStr}</td>
-                <td>
-                    <span class="status-badge ${startTime >= now ? 'status-active' : 'status-past'}">
-                        ${app.status} 
-                    </span>
-                </td>
-                <td>
-                    ${isCancelable ?
-                `<button onclick="cancelAppointment(${app.id})" class="btn-cancel-table">
-                            <i class="fas fa-times"></i> İptal Et
-                         </button>` :
-                `<span style="color: #cbd5e1; font-size: 0.8rem;">İşlem Yapılamaz</span>`
-            }
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
 
 function showError(msg) {
     const errorBox = document.getElementById("errorBox");
