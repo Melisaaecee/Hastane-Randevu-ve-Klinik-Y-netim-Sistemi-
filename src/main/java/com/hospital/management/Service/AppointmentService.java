@@ -106,39 +106,33 @@ public List<AppointmentResponseDTO> getPatientPastAppointments(Long userId) {
 
 // --- YARDIMCI DÖNÜŞTÜRÜCÜ (Private Mapper) ---
 private List<AppointmentResponseDTO> convertToDtoList(List<Appointment> appointments) {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
     
     return appointments.stream().map(app -> {
         AppointmentResponseDTO dto = new AppointmentResponseDTO();
         dto.setId(app.getId());
         dto.setStatus(app.getStatus().toString());
 
-        // ZİNCİRİ KURUYORUZ: Appointment -> Slot -> Doctor -> User
-        if (app.getSlot() != null && 
-            app.getSlot().getDoctor() != null && 
-            app.getSlot().getDoctor().getUser() != null) {
+        // 1. ZİNCİRİ BURADA KURUYORUZ (Hatanın çözümü burası):
+        if (app.getSlot() != null && app.getSlot().getDoctor() != null) {
             
-            // İşte burada User tablosundan veriyi çekip DTO'ya hapsediyoruz
-            var user = app.getSlot().getDoctor().getUser(); 
-            dto.setDoctorName("Dr. " + user.getFirstName() + " " + user.getLastName());
-            
-            // Klinik de Doctor üzerinden geliyor
-            if (app.getSlot().getDoctor().getClinic() != null) {
-                dto.setClinicName(app.getSlot().getDoctor().getClinic().getName());
-            } else {
-                dto.setClinicName("Klinik Belirtilmemiş");
-            }
+            // İşte burada 'user' değişkenini tanımlıyoruz:
+            var doctor = app.getSlot().getDoctor();
+            var user = doctor.getUser(); 
 
+            // Şimdi System.out.println hata vermeyecek!
+            System.out.println("DTO Hazırlanıyor - Doktor: " + user.getFirstName());
+            
+            dto.setDoctorName("Dr. " + user.getFirstName() + " " + user.getLastName());
+            dto.setClinicName(doctor.getClinic() != null ? doctor.getClinic().getName() : "Klinik Yok");
+            
+            // SAAT SORUNUNUN ÇÖZÜMÜ: LocalDateTime.now() DEĞİL, app içindeki saati alıyoruz
             dto.setAppointmentDate(app.getSlot().getStartTime().format(formatter));
             
-            // İptal kontrolü
-            boolean isFuture = app.getSlot().getStartTime().isAfter(LocalDateTime.now());
-            dto.setCanCancel(isFuture && "APPROVED".equals(app.getStatus().toString()));
-            
+            dto.setCanCancel(app.getSlot().getStartTime().isAfter(LocalDateTime.now()));
         } else {
-            // Eğer bu zincirde biri null ise hata vermemesi için:
-            dto.setDoctorName("Doktor Bilgisi Eksik");
-            dto.setClinicName("Klinik Bilgisi Eksik");
+            dto.setDoctorName("Bilinmeyen Doktor");
+            dto.setClinicName("Bilinmeyen Klinik");
             dto.setAppointmentDate("Tarih Yok");
         }
         
