@@ -8,7 +8,6 @@
     <link rel="icon" href="https://api.iconify.design/fa6-solid:heart-pulse.svg?color=%23e11d48" type="image/svg+xml">
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Giriş sayfasına özel ek merkezleme */
         body {
             display: flex;
             justify-content: center;
@@ -54,9 +53,7 @@
             transition: all 0.2s ease;
             background: transparent;
             color: #64748b;
-            /* Pasif yazı rengi */
         }
-
 
         .tab-btn.active {
             background: #ffffff;
@@ -98,7 +95,6 @@
             margin-bottom: 20px;
             font-size: 0.85rem;
             display: none;
-            /* JS tarafından açılacak */
             border: 1px solid #fecaca;
             line-height: 1.4;
         }
@@ -129,7 +125,6 @@
             font-weight: 700;
         }
 
-        /* Modal Stilleri */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -162,6 +157,24 @@
             cursor: pointer;
             color: var(--text-gray);
         }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 123, 255, 0.3);
+        }
     </style>
 </head>
 
@@ -174,12 +187,10 @@
         </div>
 
         <div class="auth-tabs">
-            <button type="button" class="tab-btn active" id="btnPatient" onclick="switchTab('PATIENT')">Hasta
-                Girişi</button>
+            <button type="button" class="tab-btn active" id="btnPatient" onclick="switchTab('PATIENT')">Hasta Girişi</button>
             <button type="button" class="tab-btn" id="btnStaff" onclick="switchTab('STAFF')">Personel Girişi</button>
         </div>
 
-        <!-- Hata Mesaj Alanı -->
         <div id="errorBox" class="error-box"></div>
 
         <form id="loginForm">
@@ -196,7 +207,7 @@
                 <span class="forgot-link" onclick="openForgotModal()">Şifremi Unuttum?</span>
             </div>
 
-            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">Giriş Yap</button>
+            <button type="submit" class="btn-primary">Giriş Yap</button>
         </form>
 
         <div class="auth-footer">
@@ -204,7 +215,6 @@
         </div>
     </div>
 
-    <!-- Şifremi Unuttum Modalı -->
     <div id="forgotModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-modal" onclick="closeForgotModal()">&times;</span>
@@ -218,16 +228,147 @@
                 <input type="email" id="forgotEmail" placeholder="ornek@mail.com">
             </div>
 
-            <div id="forgotMessage"
-                style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem;">
-            </div>
+            <div id="forgotMessage" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem;"></div>
 
-            <button type="button" class="btn-primary" id="btnReset" onclick="sendResetLink()"
-                style="width: 100%; justify-content: center;">Link Gönder</button>
+            <button type="button" class="btn-primary" id="btnReset" onclick="sendResetLink()">Link Gönder</button>
         </div>
     </div>
 
-    <script src="/javascript/index.js"></script>
+    <script>
+        // ================= KONFIGÜRASYON =================
+        const BASE_URL = 'https://medsoft.up.railway.app/api';
+
+        // ================= TAB SWITCH =================
+        window.switchTab = function (role) {
+            const label = document.querySelector('label[for="tckn"]');
+            const input = document.getElementById('tckn');
+            const patientBtn = document.getElementById("btnPatient");
+            const staffBtn = document.getElementById("btnStaff");
+
+            if (role === "STAFF") {
+                label.innerText = "Kullanıcı Adı / TCKN";
+                input.placeholder = "Doktor/Admin kullanıcı adı";
+                staffBtn.classList.add("active");
+                patientBtn.classList.remove("active");
+            } else {
+                label.innerText = "TC Kimlik Numarası";
+                input.placeholder = "11 haneli TCKN";
+                patientBtn.classList.add("active");
+                staffBtn.classList.remove("active");
+            }
+        };
+
+        // ================= LOGIN =================
+        window.handleLogin = async function (e) {
+            e.preventDefault();
+
+            const tckn = document.getElementById("tckn").value;
+            const password = document.getElementById("password").value;
+            const errorBox = document.getElementById("errorBox");
+
+            if (errorBox) errorBox.style.display = "none";
+
+            try {
+                const res = await fetch(`${BASE_URL}/auth/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ tckn, password })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError(data.message || "Giriş bilgileri hatalı!");
+                    return;
+                }
+
+                localStorage.setItem("user", JSON.stringify(data));
+
+                const rawRole = data.user?.role || data.role || "";
+                const role = rawRole.replace("ROLE_", "");
+
+                // DOĞRUDAN LİNKLER - sayfalar mevcutsa çalışır
+                if (role === "ADMIN") {
+                    window.location.href = "admin.html";
+                } else if (role === "DOCTOR") {
+                    window.location.href = "doctor-dashboard.html";
+                } else if (role === "PATIENT") {
+                    window.location.href = "patient.html";
+                } else {
+                    showError("Bilinmeyen Yetki!");
+                }
+
+            } catch (err) {
+                showError("Sunucu bağlantı hatası!");
+            }
+        };
+
+        // ================= MODAL =================
+        window.openForgotModal = function () {
+            document.getElementById("forgotModal").style.display = "flex";
+        };
+
+        window.closeForgotModal = function () {
+            document.getElementById("forgotModal").style.display = "none";
+        };
+
+        window.showError = function (msg) {
+            const box = document.getElementById("errorBox");
+            if (box) {
+                box.style.display = "block";
+                box.textContent = msg;
+            } else {
+                alert(msg);
+            }
+        };
+
+        // ================= ŞİFRE SIFIRLAMA =================
+        window.sendResetLink = async function () {
+            const email = document.getElementById("forgotEmail").value;
+            const msg = document.getElementById("forgotMessage");
+
+            if (!email.includes("@")) {
+                msg.style.color = "#991b1b";
+                msg.textContent = "Geçerli bir email giriniz.";
+                msg.style.display = "block";
+                return;
+            }
+
+            msg.style.display = "block";
+            msg.style.color = "#1e40af";
+            msg.textContent = "Gönderiliyor...";
+
+            try {
+                const res = await fetch(`${BASE_URL}/auth/forgot-password`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email })
+                });
+
+                if (res.ok) {
+                    msg.style.color = "#15803d";
+                    msg.textContent = "Sıfırlama bağlantısı gönderildi.";
+                    setTimeout(() => {
+                        closeForgotModal();
+                    }, 2000);
+                } else {
+                    msg.style.color = "#991b1b";
+                    msg.textContent = "E-posta bulunamadı.";
+                }
+            } catch (e) {
+                msg.style.color = "#991b1b";
+                msg.textContent = "Sistem hatası.";
+            }
+        };
+
+        // ================= SAYFA YÜKLENDİ =================
+        document.addEventListener("DOMContentLoaded", () => {
+            const loginForm = document.getElementById("loginForm");
+            if (loginForm) {
+                loginForm.addEventListener("submit", handleLogin);
+            }
+        });
+    </script>
 </body>
 
 </html>
