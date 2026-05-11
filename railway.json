@@ -11,7 +11,7 @@
                 },
                 "install": {
                     "cmds": [
-                        "chmod +x mvnw && ./mvnw install -DskipTests"
+                        "chmod +x mvnw && ./mvnw clean install -DskipTests -Dmaven.test.skip=true"
                     ]
                 }
             }
