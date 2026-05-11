@@ -33,8 +33,8 @@ public class AppointmentService {
     @Transactional
     public Appointment createAppointment(Long patientId, Long slotId) {
 
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new EntityNotFoundException("Hasta bulunamadı"));
+        Patient patient = patientRepository.findByUserId(patientId) 
+    .orElseThrow(() -> new EntityNotFoundException("Bu kullanıcıya ait hasta kaydı bulunamadı"));
 
         assertOwnerOrAdmin(patient.getUser().getId());
 

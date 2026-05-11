@@ -43,56 +43,32 @@ public class SlotService {
     }
 
 @Transactional
-    public Slot createSlot(Slot slot) {
-
-        // --- PROFESYONEL ÇÖZÜM: Nesneyi Doldurma (Hydration) ---
-        // Frontend'den sadece ID geliyor, User NULL olduğu için veritabanından tam
-        // halini çekiyoruz.
-        Doctor doctor = doctorRepository.findById(slot.getDoctor().getId())
-                .orElseThrow(() -> new EntityNotFoundException("Doktor bulunamadı."));
-                
-                
-                if (slot.getClinic() == null) {
-               slot.setClinic(doctor.getClinic());
-               }
-
-        
-        // Slot nesnesine veritabanından gelen tam dolu Doktor nesnesini set ediyoruz.
-        // Böylece .getUser().getId() artık NullPointerException vermeyecek.
-        slot.setDoctor(doctor);
-        
-        // --- EKLEMEN GEREKEN SATIR: Kliniği doktordan alıp slota set ediyoruz ---
-        slot.setClinic(doctor.getClinic()); 
-        // -------------------------------------------------------
-
-        if (!SecurityUtil.isOwner(slot.getDoctor().getUser().getId()) && !SecurityUtil.isAdmin()) {
-            throw new AccessDeniedException("Başka bir doktor adına çalışma saati (slot) oluşturamazsınız.");
-        }
-
-        LocalDateTime start = slot.getStartTime();
-        LocalDateTime end = slot.getEndTime();
-
-        // Geçmiş kontrolü - BadRequestException kullanımı
-        if (start.isBefore(LocalDateTime.now())) {
-            throw new BadRequestException("Geçmiş bir tarihe çalışma saati eklenemez.");
-        }
-
-        // Zaman kontrolü
-        if (!start.isBefore(end)) {
-            throw new BadRequestException("Başlangıç zamanı bitişten önce olmalıdır.");
-        }
-
-        // ÇAKIŞMA KONTROLÜ (Repository @Query kullanılıyor)
-        List<Slot> conflicts = slotRepository.findConflictingSlots(slot.getDoctor().getId(), start, end);
-
-        if (!conflicts.isEmpty()) {
-            throw new BadRequestException("Bu saat aralığında doktorun zaten mevcut bir planı/slotu bulunuyor.");
-        }
-
-        slot.setStatus(SlotStatus.AVAILABLE);
-        return slotRepository.save(slot);
+public Slot createSlot(Slot slot) {
+    // 1. Veri kontrolü
+    if (slot.getDoctor() == null || slot.getDoctor().getId() == null) {
+        throw new BadRequestException("Doktor ID bilgisi eksik.");
     }
 
+    // 2. Veritabanından doktoru bul (Kendi ID'si ile)
+    Doctor doctor = doctorRepository.findById(slot.getDoctor().getId())
+            .orElseThrow(() -> new EntityNotFoundException("Doktor bulunamadı."));
+
+    // 3. Eksik bilgileri tamamla
+    slot.setDoctor(doctor);
+    slot.setClinic(doctor.getClinic()); 
+    slot.setStatus(SlotStatus.AVAILABLE);
+
+    // 4. Güvenlik ve Tarih Kontrolleri (Senin mevcut kodun)
+    if (!SecurityUtil.isOwner(doctor.getUser().getId()) && !SecurityUtil.isAdmin()) {
+        throw new AccessDeniedException("Yetkisiz işlem!");
+    }
+
+    if (slot.getStartTime().isBefore(LocalDateTime.now())) {
+        throw new BadRequestException("Geçmiş tarihe slot eklenemez.");
+    }
+
+    return slotRepository.save(slot);
+}
     // SLOT İPTAL (IDOR Korumalı)
     @Transactional
     public void cancelSlot(Long slotId) {

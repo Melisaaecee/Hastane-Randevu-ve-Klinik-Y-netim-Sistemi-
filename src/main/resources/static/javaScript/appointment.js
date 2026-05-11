@@ -77,14 +77,24 @@ async function fetchData(endpoint, callback) {
         console.error("Veri çekme hatası:", error);
     }
 }
-
 function fillSelect(selectElement, data, placeholder) {
     selectElement.innerHTML = `<option value="">${placeholder}</option>`;
+    
     data.forEach(item => {
-        // City/District/Hospital/Clinic 'name' kullanırken, Doctor 'firstName' kullanıyor
-        const name = item.name || `${item.firstName} ${item.lastName} (${item.specialization})`;
+        let name = "";
+        
+        // Eğer bu bir Doktor objesi ise (user alanı varsa)
+        if (item.user && item.user.firstName) {
+            name = ` ${item.user.firstName} ${item.user.lastName} (${item.specialization || 'Uzm.'})`;
+        } 
+        // Eğer City/Hospital/Clinic gibi düz isim içeren bir objeyse
+        else {
+            name = item.name || "İsimsiz Kayıt";
+        }
+
         selectElement.innerHTML += `<option value="${item.id}">${name}</option>`;
     });
+    
     selectElement.disabled = false;
 }
 
@@ -133,15 +143,15 @@ if (slots.length === 0) {
 // RANDEVU ONAYI (POST)
 confirmBtn.addEventListener('click', async () => {
     // LocalStorage'dan hasta ID'sini almalısın (Login sırasında set etmiş olmalısın)
-    const patientId = localStorage.getItem("patientId"); 
-
-    if (!patientId || !selectedSlotId) {
+    const currentPatientId = authData?.user?.id;
+    if (!currentPatientId|| !selectedSlotId) {
+        console.log("Eksik veri:", { currentPatientId, selectedSlotId });
         alert("Lütfen tüm seçimleri yapın!");
         return;
     }
 
     try {
-        const response = await fetch(`${BASE_URL}/appointments?patientId=${patientId}&slotId=${selectedSlotId}`, {
+        const response = await fetch(`${BASE_URL}/appointments?patientId=${currentPatientId}&slotId=${selectedSlotId}`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` }
         });

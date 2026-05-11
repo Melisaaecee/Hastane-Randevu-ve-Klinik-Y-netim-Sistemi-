@@ -686,35 +686,29 @@ window.doctorApp = {
             alert("Sunucu hatası!");
         }
     },
-    setupEventListeners: function () {
-        const slotForm = document.getElementById('slot-form');
-        if (slotForm) {
-            slotForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
+setupEventListeners: function () {
+    const slotForm = document.getElementById('slot-form');
+    if (slotForm) {
+        slotForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-                const startTime = document.getElementById('startTime')?.value;
-                const endTime = document.getElementById('endTime')?.value;
+            // Güvenlik: activeDoctor yüklü mü?
+            if (!window.doctorApp.activeDoctor || !window.doctorApp.activeDoctor.id) {
+                alert("❌ Doktor verileri henüz yüklenmedi. Lütfen sayfayı yenileyip biraz bekleyin.");
+                return;
+            }
 
-                if (!startTime || !endTime) {
-                    alert("Başlangıç ve bitiş zamanını giriniz!");
-                    return;
-                }
+            const startTime = document.getElementById('startTime')?.value;
+            const endTime = document.getElementById('endTime')?.value;
 
-                // DOKTOR ID'SİNİ KONTROL ET
-                const doctorId = this.activeDoctor?.id;
-                if (!doctorId) {
-                    alert("❌ Doktor bilgisi bulunamadı! Lütfen sayfayı yenileyin.");
-                    return;
-                }
+            const payload = {
+                startTime: startTime,
+                endTime: endTime,
+                doctor: { id: parseInt(window.doctorApp.activeDoctor.id) },
+                status: "AVAILABLE" 
+            };
 
-                // SADECE DOKTOR ID'Sİ GÖNDER (tüm doctor nesnesi değil)
-                const payload = {
-                    startTime: startTime,
-                    endTime: endTime,
-                    doctor: { id: doctorId },  // Sadece ID gönder
-                    status: "AVAILABLE"
-                };
-
+            console.log("🔵 Gönderilen veri:", payload);
                 
                 try {
                     const response = await fetch('http://localhost:8080/api/slots', {
