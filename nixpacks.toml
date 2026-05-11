@@ -1,2 +1,8 @@
 [variables]
-    NIXPACKS_JDK_VERSION = '21'
+    NIXPACKS_JDK_VERSION = '17'
+
+[phases.setup]
+    nixPkgs = ['jdk17_headless', 'maven']
+
+[phases.build]
+    cmds = ['mvn -DskipTests clean install']
