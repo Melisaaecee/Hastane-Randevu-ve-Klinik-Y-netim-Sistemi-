@@ -1,8 +1,14 @@
 [variables]
     NIXPACKS_JDK_VERSION = '17'
+    # Java'nın Railway'in kısıtlı RAM'ini aşmasını engeller
+    JAVA_TOOL_OPTIONS = '-Xmx300m -Xss512k' 
 
 [phases.setup]
     nixPkgs = ['jdk17_headless', 'maven']
 
 [phases.build]
     cmds = ['mvn -DskipTests clean install']
+
+[start]
+    # Uygulamanın Railway tarafından atanan portu kullanmasını sağlar
+    cmd = "java -jar target/*.jar --server.port=$PORT"

@@ -26,94 +26,105 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter;
+        private final JwtAuthFilter jwtAuthFilter;
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults())
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .headers(headers -> headers
-                        .frameOptions(frame -> frame.sameOrigin()) // Bu satırı ekle
-                        .xssProtection(xss -> xss.headerValue(
-                                org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
-                        // MIME tipi hatalarını önlemek için CSP ayarını genişlettik
-                        .contentSecurityPolicy(cps -> cps.policyDirectives(
-                                "script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com")))
-                .authorizeHttpRequests(auth -> auth
-                        // 1. STATİK DOSYALAR (MIME hatalarını önlemek için burası kritik)
-                        .requestMatchers(
-                                "/",
-                                "/index.html",
-                                "/login.html",
-                                "/register.html",
-                                "/reset-password.html",
-                                "/patient.html",
-                                "/doctor-dashboard.html",
-                                "/admin.html",
-                                "/style.css",
-                                "/admin.js",
-                                "/appointment.html",
-                                "/css/**",
-                                "/js/**",
-                                "/javascript/**",
-                                "/images/**",
-                                "/favicon.ico")
-                        .permitAll()
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http
+                                .csrf(csrf -> csrf.disable())
+                                .cors(Customizer.withDefaults())
+                                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .headers(headers -> headers
+                                                .frameOptions(frame -> frame.sameOrigin())
+                                                .xssProtection(xss -> xss.headerValue(
+                                                                org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+                                                .contentSecurityPolicy(cps -> cps.policyDirectives(
+                                                                "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com")))
+                                .authorizeHttpRequests(auth -> auth
+                                                // 1. STATİK DOSYALAR (Herkes erişebilmeli)
+                                                .requestMatchers(
+                                                                "/",
+                                                                "/index.html",
+                                                                "/login.html",
+                                                                "/register.html",
+                                                                "/reset-password.html",
+                                                                "/patient.html",
+                                                                "/doctor-dashboard.html",
+                                                                "/admin.html",
+                                                                "/appointment.html",
+                                                                "/style.css",
+                                                                "/css/**",
+                                                                "/js/**",
+                                                                "/javascript/**",
+                                                                "/images/**",
+                                                                "/favicon.ico",
+                                                                "/static/**",
+                                                                "/resources/**",
+                                                                "/public/**")
+                                                .permitAll()
 
-                        // 2. GENEL API ENDPOINTLERİ
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/cities/**", "/api/districts/**").permitAll()
-                        .requestMatchers("/api/doctors/**").permitAll()
-                        .requestMatchers("/api/slots/**").permitAll()
+                                                // 2. GENEL API ENDPOINTLERİ
+                                                .requestMatchers("/api/auth/**").permitAll()
+                                                .requestMatchers("/api/cities/**", "/api/districts/**").permitAll()
+                                                .requestMatchers("/api/doctors/**").permitAll()
+                                                .requestMatchers("/api/slots/**").permitAll()
 
-                        // 3. ROL BAZLI ERİŞİM (Backend'deki ROLE_ ön eki ile eşleşir)
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+                                                // ÖNEMLİ: Railway sağlık kontrolleri (health checks) için gerekebilir
+                                                .requestMatchers("/actuator/**").permitAll()
 
-                        // 4. DİĞER HER ŞEY
-                        .anyRequest().authenticated())
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            response.setContentType("application/json");
-                            response.getWriter()
-                                    .write("{\"message\": \"Kimlik dogrulama basarisiz veya yetkiniz yok.\"}");
-                        }))
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                                                // 3. ROL BAZLI ERİŞİM
+                                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                                .requestMatchers("/api/users/**").hasRole("ADMIN")
 
-        return http.build();
-    }
+                                                // 4. DİĞER HER ŞEY
+                                                .anyRequest().authenticated())
+                                .exceptionHandling(ex -> ex
+                                                .authenticationEntryPoint((request, response, authException) -> {
+                                                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                                        response.setContentType("application/json");
+                                                        response.getWriter()
+                                                                        .write("{\"message\": \"Kimlik dogrulama basarisiz veya yetkiniz yok.\"}");
+                                                }))
+                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+                return http.build();
+        }
 
-        // ÖNEMLİ: Eğer Live Server kullanıyorsan "http://127.0.0.1:5500" eklemelisin
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:8080"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
-        configuration.setAllowCredentials(true);
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration configuration = new CorsConfiguration();
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+                // Railway ve Localhost için CORS ayarları
+                configuration.setAllowedOrigins(Arrays.asList(
+                                "http://localhost:8080",
+                                "http://127.0.0.1:5500", // Live Server için
+                                "https://medsoft.up.railway.app", // Kendi Railway adresin
+                                "https://medsoft.com" // Eklediğin özel domain
+                ));
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+                configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+                configuration.setAllowedHeaders(
+                                Arrays.asList("Authorization", "Content-Type", "Accept", "X-Requested-With"));
+                configuration.setAllowCredentials(true);
+                configuration.setMaxAge(3600L); // Tarayıcı önbelleği için
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration);
+                return source;
+        }
 
-    @jakarta.annotation.PostConstruct
-    public void enableAuthOnAsyncThreads() {
-        SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
+
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+                return config.getAuthenticationManager();
+        }
+
+        @jakarta.annotation.PostConstruct
+        public void enableAuthOnAsyncThreads() {
+                SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+        }
 }
