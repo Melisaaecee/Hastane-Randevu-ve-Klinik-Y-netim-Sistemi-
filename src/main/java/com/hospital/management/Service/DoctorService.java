@@ -14,10 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,10 +26,92 @@ public class DoctorService {
     private final ClinicRepository clinicRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // ==================== ORTAK NORMALİZASYON METODLARI ====================
+
+    /**
+     * Doktor listesini normalize eder:
+     * - Ünvanları kısaltır (Uzman → Uzm, Profesör → Prof, vb.)
+     * - İsimleri "Uzm. Dr. Ahmet" formatına çevirir
+     * - İsme göre sıralar
+     */
+    private List<Doctor> normalizeDoctors(List<Doctor> doctors) {
+        if (doctors == null || doctors.isEmpty()) {
+            return doctors;
+        }
+
+        // Ünvan eşleme tablosu (uzun kelime → kısaltma)
+        Map<String, String> titleToShort = new HashMap<>();
+        titleToShort.put("uzman", "Uzm");
+        titleToShort.put("operatör", "Op");
+        titleToShort.put("operator", "Op");
+        titleToShort.put("profesör", "Prof");
+        titleToShort.put("professor", "Prof");
+        titleToShort.put("doçent", "Doç");
+
+        // Geçerli kısaltmalar
+        Set<String> validShorts = new HashSet<>(
+                Arrays.asList("uzm", "op", "prof", "doç", "uzm.", "op.", "prof.", "doç."));
+
+        return doctors.stream()
+                .sorted((d1, d2) -> {
+                    String name1 = d1.getUser() != null ? d1.getUser().getFirstName() : "";
+                    String name2 = d2.getUser() != null ? d2.getUser().getFirstName() : "";
+                    return name1.compareTo(name2);
+                })
+                .peek(doctor -> {
+                    if (doctor.getUser() == null)
+                        return;
+
+                    String specialization = doctor.getSpecialization();
+                    String firstName = doctor.getUser().getFirstName();
+
+                    if (specialization != null && !specialization.isEmpty()
+                            && !specialization.equals("Uzmanlık Belirtilmemiş")) {
+
+                        String normalized = specialization.trim().toLowerCase().replaceAll("\\.$", "");
+                        String title = normalized.split(" ")[0];
+
+                        String shortTitle;
+
+                        if (validShorts.contains(title)) {
+                            shortTitle = title.replaceAll("\\.$", "");
+                            shortTitle = shortTitle.substring(0, 1).toUpperCase()
+                                    + shortTitle.substring(1).toLowerCase();
+                        } else if (titleToShort.containsKey(title)) {
+                            shortTitle = titleToShort.get(title);
+                        } else {
+                            shortTitle = specialization;
+                        }
+
+                        doctor.setSpecialization(shortTitle);
+
+                        if (firstName != null && !firstName.startsWith("Dr.")) {
+                            doctor.getUser().setFirstName(shortTitle + ". Dr. " + firstName);
+                        }
+                    } else {
+                        if (firstName != null && !firstName.startsWith("Dr.")) {
+                            doctor.getUser().setFirstName("Dr. " + firstName);
+                        }
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Tek bir doktoru normalize eder
+     */
+    private Doctor normalizeDoctor(Doctor doctor) {
+        if (doctor == null)
+            return null;
+        List<Doctor> normalized = normalizeDoctors(Arrays.asList(doctor));
+        return normalized.isEmpty() ? doctor : normalized.get(0);
+    }
+
     // ==================== LİSTELEME METODLARI ====================
 
     public List<Doctor> getAllDoctors() {
-        return doctorRepository.findAllWithDetails(); 
+        List<Doctor> doctors = doctorRepository.findAllWithDetails();
+        return normalizeDoctors(doctors);
     }
 
     public List<Doctor> getAllDoctorsInClinic(Long clinicId) {
@@ -40,43 +119,26 @@ public class DoctorService {
         if (doctors.isEmpty()) {
             throw new EntityNotFoundException("Bu klinikte kayıtlı doktor bulunamadı.");
         }
-        return doctors.stream()
-                .sorted((d1, d2) -> d1.getUser().getFirstName().compareTo(d2.getUser().getFirstName()))
-                .peek(doc -> {
-                    String firstName = doc.getUser().getFirstName();
-                    String specialization = doc.getSpecialization();
-
-                    if (firstName != null && !firstName.startsWith("Dr.")) {
-                        if (specialization != null && !specialization.isEmpty()
-                                && !specialization.equals("Uzmanlık Belirtilmemiş")) {
-                            
-                            String shortSpec = specialization.length() >= 3
-                                    ? specialization.substring(0, 3).toUpperCase()
-                                    : specialization.toUpperCase();
-                            doc.getUser().setFirstName(shortSpec + ". Dr. " + firstName);
-                        } else {
-                            
-                            doc.getUser().setFirstName("Dr. " + firstName);
-                        }
-                    }
-                })
-                .collect(Collectors.toList());
+        return normalizeDoctors(doctors);
     }
 
     public List<Doctor> getDoctorsBySpecialization(String specialization) {
-        return doctorRepository.findBySpecialization(specialization);
+        List<Doctor> doctors = doctorRepository.findBySpecialization(specialization);
+        return normalizeDoctors(doctors);
     }
 
     public Doctor getDoctorByUserId(Long userId) {
         if (!SecurityUtil.isOwner(userId) && !SecurityUtil.isAdmin()) {
             throw new AccessDeniedException("Bu doktor profiline erişim yetkiniz yok.");
         }
-        return doctorRepository.findByUserId(userId)
+        Doctor doctor = doctorRepository.findByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Bu kullanıcıya ait bir doktor profili bulunamadı!"));
+        return normalizeDoctor(doctor);
     }
 
     public List<Doctor> searchDoctorInClinic(Long clinicId, String name) {
-        return doctorRepository.findByClinicIdAndUserFirstNameContainingIgnoreCase(clinicId, name);
+        List<Doctor> doctors = doctorRepository.findByClinicIdAndUserFirstNameContainingIgnoreCase(clinicId, name);
+        return normalizeDoctors(doctors);
     }
 
     // ==================== DOKTOR OLUŞTURMA (Admin için) ====================
@@ -120,12 +182,15 @@ public class DoctorService {
 
         Doctor savedDoctor = doctorRepository.save(doctor);
 
-        // 5. Response hazırla
+        // 5. Normalize et
+        Doctor normalizedDoctor = normalizeDoctor(savedDoctor);
+
+        // 6. Response hazırla
         Map<String, Object> response = new HashMap<>();
-        response.put("id", savedDoctor.getId());
-        response.put("firstName", savedUser.getFirstName());
-        response.put("lastName", savedUser.getLastName());
-        response.put("specialty", savedDoctor.getSpecialization());
+        response.put("id", normalizedDoctor.getId());
+        response.put("firstName", normalizedDoctor.getUser().getFirstName());
+        response.put("lastName", normalizedDoctor.getUser().getLastName());
+        response.put("specialty", normalizedDoctor.getSpecialization());
         response.put("clinicName", clinic.getName());
         response.put("username", username);
         response.put("temporaryPassword", plainPassword);
@@ -143,7 +208,8 @@ public class DoctorService {
         if (doctor.getUser() != null && !SecurityUtil.isOwner(doctor.getUser().getId()) && !SecurityUtil.isAdmin()) {
             throw new AccessDeniedException("Bu doktor profilini güncelleme yetkiniz yok.");
         }
-        return doctorRepository.save(doctor);
+        Doctor savedDoctor = doctorRepository.save(doctor);
+        return normalizeDoctor(savedDoctor);
     }
 
     // ==================== SİLME METODLARI ====================
@@ -159,13 +225,11 @@ public class DoctorService {
 
         // DOKTORU SİL
         doctorRepository.delete(doctor);
-        doctorRepository.flush(); // Hemen veritabanına yaz
+        doctorRepository.flush();
 
         // KULLANICIYI DA SİL
         userRepository.deleteById(userId);
         userRepository.flush();
-
-        System.out.println("✅ Doktor ve kullanıcı silindi - Doctor ID: " + id + ", User ID: " + userId);
     }
 
     // ==================== PRIVATE HELPER METODLAR ====================
@@ -233,7 +297,8 @@ public class DoctorService {
     }
 
     private String generateRandomPassword() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
+    
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
         StringBuilder password = new StringBuilder();
         Random random = new Random();
         for (int i = 0; i < 8; i++) {

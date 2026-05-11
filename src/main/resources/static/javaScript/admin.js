@@ -31,7 +31,7 @@ async function fetchWithAuth(url, options = {}) {
 
 
 // ================= TAB SYSTEM =================
-window.switchTab = async function (tabId, event) {  
+window.switchTab = async function (tabId, event) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     const targetTab = document.getElementById(tabId);
     if (targetTab) targetTab.classList.add('active');
@@ -192,25 +192,31 @@ window.loadHospitals = async function () {
     }
 };
 
-
 function renderHospitals() {
     const searchTerm = (document.getElementById('hospitalSearchInput')?.value || '').toLowerCase();
     let filtered = hospitalsData.filter(h => h.name && h.name.toLowerCase().includes(searchTerm));
     filtered.sort((a, b) => hospitalSortAsc ? (a.name || '').localeCompare(b.name || '') : (b.name || '').localeCompare(a.name || ''));
+
     const tbody = document.getElementById("hospitalTableBody");
     if (!tbody) return;
-    tbody.innerHTML = filtered.map(h => `
+
+    tbody.innerHTML = filtered.map(h => {
+        // Şehir bilgisini district üzerinden al
+        const cityName = h.district?.city?.name || h.city?.name || '-';
+        const districtName = h.district?.name || '-';
+
+        return `
         <tr>
             <td>${h.id || '-'}</td>
             <td><input type="text" id="hospitalName_${h.id}" value="${escapeHtml(h.name || '')}" class="form-input" style="width:100%"></td>
-            <td>${escapeHtml(h.city?.name || '-')}</td>
-            <td>${escapeHtml(h.district?.name || '-')}</td>
+            <td>${escapeHtml(cityName)}</span></td>
+            <td>${escapeHtml(districtName)}</span></td>
             <td class="action-buttons">
                 <button class="btn-update" onclick="updateHospital(${h.id})">Güncelle</button>
                 <button class="btn-delete" onclick="deleteHospital(${h.id})">Sil</button>
-            </td>
-        </tr>
-    `).join("");
+            </span>
+        </span>
+    `}).join('');
 }
 
 window.filterHospitals = () => renderHospitals();
@@ -316,7 +322,7 @@ window.deleteClinic = async function (id) {
 // ================= DOCTORS =================
 let doctorsData = [];
 window.loadDoctors = async function () {
-    
+
     try {
         const res = await fetchWithAuth(`${API_URL}/doctors`);
         if (res && res.ok) {
@@ -333,7 +339,6 @@ window.loadDoctors = async function () {
         renderDoctors();
     }
 };
-
 function renderDoctors() {
     let searchTerm = (document.getElementById('doctorSearchInput')?.value || '').toLowerCase();
 
@@ -351,23 +356,45 @@ function renderDoctors() {
     }
 
     tbody.innerHTML = filtered.map(d => {
-       
-        let specialty = d.specialization || d.specialty || '-';
-        if (specialty !== '-' && specialty !== 'Uzmanlık Belirtilmemiş') {
-           
-            let shortSpec = specialty.length >= 3 ? specialty.substring(0, 3).toUpperCase() : specialty.toUpperCase();
-            specialty = `${shortSpec}. Uzm.`;
-        } else if (specialty === 'Uzmanlık Belirtilmemiş') {
-            specialty = 'Uzm. Yok';
+        // AD SOYAD: Sadece "Ad Soyad" olarak göster (ünvan ekleme)
+        // Backend'den gelen firstName "Uzm. Dr. Ahmet" formatında olabilir
+        // Biz sadece isim ve soyadı alalım
+        const firstName = d.user?.firstName || '';
+        const lastName = d.user?.lastName || '';
+
+        // İsimden sadece adı al (ünvanı temizle)
+        let cleanFirstName = firstName;
+        // Eğer "Uzm. Dr. Ahmet" gibi bir format varsa, sadece "Ahmet" kısmını al
+        if (cleanFirstName.includes('Dr.')) {
+            // "Uzm. Dr. Ahmet" -> "Ahmet"
+            const parts = cleanFirstName.split('Dr.');
+            if (parts.length > 1) {
+                cleanFirstName = parts[1].trim();
+            }
         }
+
+        const fullName = `${cleanFirstName} ${lastName}`.trim();
+
+        // UZMANLIK: Ünvanı göster (Uzm, Op, Prof, Doç)
+        let specialty = d.specialization || '';
+        let displayTitle = '';
+        if (specialty && specialty !== '' && specialty !== 'Uzmanlık Belirtilmemiş') {
+            displayTitle = specialty;  // "Uzm", "Op", "Prof", "Doç"
+        } else {
+            displayTitle = '-';
+        }
+
+        // HASTANE ve KLİNİK
+        const hospitalName = d.clinic?.hospital?.name || d.clinic?.name || '-';
+        const clinicName = d.clinic?.name || '-';
 
         return `
             <tr>
                 <td>${d.id}</td>
-                <td>${escapeHtml(d.user?.firstName || '-')} ${escapeHtml(d.user?.lastName || '-')}</td>
-                <td>${escapeHtml(specialty)}</td>
-                <td>${escapeHtml(d.clinic?.hospital?.name || d.clinic?.name || '-')}</td>
-                <td>${escapeHtml(d.clinic?.name || '-')}</td>
+                <td>${escapeHtml(fullName)}</td>
+                <td>${escapeHtml(displayTitle)}</td>
+                <td>${escapeHtml(hospitalName)}</td>
+                <td>${escapeHtml(clinicName)}</td>
                 <td class="action-buttons">
                     <button class="btn-delete" onclick="deleteDoctor(${d.id})">Sil</button>
                 </td>
@@ -375,7 +402,6 @@ function renderDoctors() {
         `;
     }).join('');
 }
-
 window.filterDoctors = () => renderDoctors();
 window.deleteDoctor = async function (id) {
     console.log("🔵 Silinecek ID:", id);
@@ -453,14 +479,49 @@ window.loadSlots = async function () {
     const res = await fetchWithAuth(`${API_URL}/slots`);
     if (res) {
         const data = await res.json();
-        document.getElementById("slotTableBody").innerHTML = data.map(s => `
-            <tr>
-                <td>${s.id}</td>
-                <td>${s.doctor?.user?.firstName || '-'}</td>
-                <td>${new Date(s.startTime).toLocaleString('tr-TR')}</td>
-                <td><span class="status-badge ${s.available ? 'status-available' : 'status-reserved'}">${s.available ? "Boş" : "Dolu"}</span></td>
-            </tr>
-        `).join("");
+        document.getElementById("slotTableBody").innerHTML = data.map(s => {
+            // DOKTOR ADINI DOĞRU ŞEKİLDE AL
+            let doctorName = '-';
+            if (s.doctor) {
+                // Önce doctor.user üzerinden dene
+                if (s.doctor.user) {
+                    const firstName = s.doctor.user.firstName || '';
+                    const lastName = s.doctor.user.lastName || '';
+                    doctorName = `${firstName} ${lastName}`.trim();
+                }
+                // Alternatif: s.doctor.firstName, s.doctor.lastName direkt varsa
+                else if (s.doctor.firstName || s.doctor.lastName) {
+                    doctorName = `${s.doctor.firstName || ''} ${s.doctor.lastName || ''}`.trim();
+                }
+            }
+
+            // ZAMAN formatını düzelt (saat dakika saniye)
+            let formattedTime = '-';
+            if (s.startTime) {
+                const date = new Date(s.startTime);
+                formattedTime = date.toLocaleString('tr-TR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            }
+
+            // DURUM
+            const statusText = s.available ? "Boş" : "Dolu";
+            const statusClass = s.available ? 'status-available' : 'status-reserved';
+
+            return `
+                <tr>
+                    <td>${s.id}</td>
+                    <td>${escapeHtml(doctorName)}</span>
+                    <td>${formattedTime}</span>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></span>
+                </tr>
+            `;
+        }).join('');
     }
 };
 
@@ -531,7 +592,7 @@ async function loadDistrictsByCity(cityId, selectElement) {
     }
 
     try {
-        
+
         const res = await fetchWithAuth(`${API_URL}/districts/city/${cityId}`);
 
         if (res && res.ok) {

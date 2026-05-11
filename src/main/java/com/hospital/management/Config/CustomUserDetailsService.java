@@ -15,10 +15,12 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String tckn) throws UsernameNotFoundException {
-      
-        User user = userRepository.findByTckn(tckn)
-                .orElseThrow(() -> new UsernameNotFoundException("TCKN bulunamadı: " + tckn));
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // Önce TCKN ile ara (hastalar için)
+        // Sonra username ile ara (doktor ve admin için)
+        User user = userRepository.findByTckn(username)
+                .orElseGet(() -> userRepository.findByUsername(username)
+                        .orElseThrow(() -> new UsernameNotFoundException("Kullanıcı bulunamadı: " + username)));
 
         return new CustomUserDetails(user);
     }

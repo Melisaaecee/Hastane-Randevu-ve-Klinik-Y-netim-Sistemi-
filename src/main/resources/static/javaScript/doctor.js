@@ -35,28 +35,41 @@ window.doctorApp = {
         this.fetchAppointments();
         this.setupEventListeners();
         this.loadSettingsValues();
-        
+
     },
 
     // ============ UI GÜNCELLEME FONKSİYONU ============
     updateUI: function () {
+        // Ad soyad birleştir
+        let fullName = `${this.currentUser.firstName || ''} ${this.currentUser.lastName || ''}`.trim();
+
         const nameHeader = document.getElementById('userNameDisplay');
         if (nameHeader) {
-            nameHeader.innerText = `Dr. ${this.currentUser.firstName || ''} ${this.currentUser.lastName || ''}`;
+            nameHeader.innerText = fullName;
         }
 
         const sidebarName = document.getElementById('doctorNameSidebar');
         if (sidebarName) {
-            sidebarName.innerText = `Dr. ${this.currentUser.firstName || ''} ${this.currentUser.lastName || ''}`;
+            sidebarName.innerText = fullName;
         }
 
         const avatar = document.getElementById('avatarInitial');
         if (avatar) {
-            avatar.innerText = (this.currentUser.firstName || 'D').charAt(0).toUpperCase();
+            // Gerçek ismin ilk harfini bul (ünvanları atla)
+            let firstName = this.currentUser.firstName || '';
+            let firstLetter = 'H';
+            let nameParts = firstName.split(' ');
+            for (let part of nameParts) {
+                if (!part.includes('.') && part.length > 0) {
+                    firstLetter = part.charAt(0).toUpperCase();
+                    break;
+                }
+            }
+            avatar.innerText = firstLetter;
         }
     },
 
-    
+
 
     handlePasswordUpdate: async function () {
         const curPass = document.getElementById('currentPassword')?.value;
@@ -440,7 +453,7 @@ window.doctorApp = {
 
             if (response.ok) {
                 this.activeDoctor = await response.json();
-              
+
             } else {
                 this.activeDoctor = { specialization: "Belirtilmemiş", clinic: { name: "-" } };
             }
@@ -502,7 +515,7 @@ window.doctorApp = {
         tbody.innerHTML = '<td><td colspan="5">Yükleniyor...<\/td><\/tr>';
 
         try {
-           
+
             const response = await fetch("http://localhost:8080/api/appointments/doctor/my", {
                 method: 'GET',
                 headers: {
@@ -531,14 +544,14 @@ window.doctorApp = {
             }
 
             const appointments = await response.json();
-          
+
             if (!appointments || appointments.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5">📋 Henüz randevunuz bulunmamaktadır.<\/td><\/tr>';
                 return;
             }
 
             tbody.innerHTML = appointments.map(app => {
-               
+
                 const patientName = app.patient?.user?.firstName && app.patient?.user?.lastName
                     ? `${app.patient.user.firstName} ${app.patient.user.lastName}`
                     : app.patient?.user?.firstName || app.patient?.user?.lastName || 'Belirtilmemiş';
@@ -686,30 +699,30 @@ window.doctorApp = {
             alert("Sunucu hatası!");
         }
     },
-setupEventListeners: function () {
-    const slotForm = document.getElementById('slot-form');
-    if (slotForm) {
-        slotForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+    setupEventListeners: function () {
+        const slotForm = document.getElementById('slot-form');
+        if (slotForm) {
+            slotForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
 
-            // Güvenlik: activeDoctor yüklü mü?
-            if (!window.doctorApp.activeDoctor || !window.doctorApp.activeDoctor.id) {
-                alert("❌ Doktor verileri henüz yüklenmedi. Lütfen sayfayı yenileyip biraz bekleyin.");
-                return;
-            }
+                // Güvenlik: activeDoctor yüklü mü?
+                if (!window.doctorApp.activeDoctor || !window.doctorApp.activeDoctor.id) {
+                    alert("❌ Doktor verileri henüz yüklenmedi. Lütfen sayfayı yenileyip biraz bekleyin.");
+                    return;
+                }
 
-            const startTime = document.getElementById('startTime')?.value;
-            const endTime = document.getElementById('endTime')?.value;
+                const startTime = document.getElementById('startTime')?.value;
+                const endTime = document.getElementById('endTime')?.value;
 
-            const payload = {
-                startTime: startTime,
-                endTime: endTime,
-                doctor: { id: parseInt(window.doctorApp.activeDoctor.id) },
-                status: "AVAILABLE" 
-            };
+                const payload = {
+                    startTime: startTime,
+                    endTime: endTime,
+                    doctor: { id: parseInt(window.doctorApp.activeDoctor.id) },
+                    status: "AVAILABLE"
+                };
 
-            console.log("🔵 Gönderilen veri:", payload);
-                
+                console.log("🔵 Gönderilen veri:", payload);
+
                 try {
                     const response = await fetch('http://localhost:8080/api/slots', {
                         method: 'POST',

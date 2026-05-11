@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 
 @Service
@@ -19,6 +20,7 @@ public class AuthService {
         private final PatientRepository patientRepository;
         private final PasswordEncoder passwordEncoder;
         private final JwtUtil jwtUtil;
+        private final EntityManager entityManager; // EntityManager eklendi
 
         private static final int MAX_FAILED_ATTEMPTS = 3;
         private static final int LOCK_TIME_DURATION = 15;
@@ -51,12 +53,27 @@ public class AuthService {
                 return new AuthResponse(token, mapToUserResponse(savedUser));
         }
 
-        @Transactional
+        @Transactional(noRollbackFor = BadRequestException.class)
         public AuthResponse login(LoginRequest request) {
-                // TCKN veya Username ile bul
-                User user = userRepository.findByTckn(request.getTckn())
-                                .orElseGet(() -> userRepository.findByUsername(request.getTckn())
-                                                .orElseThrow(() -> new BadRequestException("Giriş bilgileri hatalı.")));
+                User user = null;
+                String loginInput = request.getTckn(); // Bu username veya TCKN olabilir
+
+                // 1. Önce username olarak ara (Doktor ve Admin için)
+                if (userRepository.findByUsername(loginInput).isPresent()) {
+                        user = userRepository.findByUsername(loginInput).get();
+                        System.out.println("✅ Username ile giriş: " + loginInput);
+                }
+                // 2. Bulamazsa TCKN olarak ara (Hastalar için)
+                else if (userRepository.findByTckn(loginInput).isPresent()) {
+                        user = userRepository.findByTckn(loginInput).get();
+                        System.out.println("✅ TCKN ile giriş: " + loginInput);
+                }
+
+                if (user == null) {
+                        throw new BadRequestException("TC Kimlik No / Kullanıcı adı veya şifre hatalı");
+                }
+
+                entityManager.refresh(user);
 
                 // Hesap kilitli mi kontrol et
                 if (Boolean.FALSE.equals(user.getAccountNonLocked())) {
@@ -67,17 +84,35 @@ public class AuthService {
                                 user.setLockTime(null);
                                 userRepository.save(user);
                         } else {
-                                throw new BadRequestException("Hesabınız kilitli.");
+                                long remainingMinutes = 0;
+                                if (user.getLockTime() != null) {
+                                        remainingMinutes = LOCK_TIME_DURATION -
+                                                        java.time.Duration
+                                                                        .between(user.getLockTime(),
+                                                                                        LocalDateTime.now())
+                                                                        .toMinutes();
+                                        if (remainingMinutes < 0)
+                                                remainingMinutes = 0;
+                                }
+                                throw new BadRequestException("Hesabınız kilitlenmiştir. " + remainingMinutes
+                                                + " dakika sonra tekrar deneyin.");
                         }
                 }
 
                 // Şifre kontrolü
                 if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
                         processFailedAttempt(user);
-                        throw new BadRequestException("TC Kimlik No veya şifre hatalı");
+                        entityManager.refresh(user);
+                        int newFailedAttempt = user.getFailedAttempt() != null ? user.getFailedAttempt() : 0;
+                        int remainingAttempts = MAX_FAILED_ATTEMPTS - newFailedAttempt;
+                        throw new BadRequestException("TC Kimlik No / Kullanıcı adı veya şifre hatalı. " +
+                                        remainingAttempts + " hakkınız kaldı.");
                 }
 
+                // Başarılı giriş
                 user.setFailedAttempt(0);
+                user.setAccountNonLocked(true);
+                user.setLockTime(null);
                 userRepository.save(user);
 
                 String token = jwtUtil.generateToken(user.getId(), user.getTckn(), user.getRole().name());
@@ -85,14 +120,24 @@ public class AuthService {
         }
 
         private void processFailedAttempt(User user) {
-                int newAttempts = user.getFailedAttempt() + 1;
-                user.setFailedAttempt(newAttempts);
+                int currentAttempts = user.getFailedAttempt() != null ? user.getFailedAttempt() : 0;
+                int newAttempts = currentAttempts + 1;
 
                 if (newAttempts >= MAX_FAILED_ATTEMPTS) {
+                        // Hesabı kilitle
                         user.setAccountNonLocked(false);
                         user.setLockTime(LocalDateTime.now());
+                        user.setFailedAttempt(newAttempts);
+                        userRepository.save(user);
+
+                } else {
+
+                        user.setFailedAttempt(newAttempts);
+                        userRepository.save(user);
                 }
-                userRepository.save(user);
+
+                // Değişikliklerin hemen veritabanına yazılmasını sağla
+                userRepository.flush();
         }
 
         private void validateUser(String email, String tckn) {
@@ -123,5 +168,4 @@ public class AuthService {
                                 bloodGroup,
                                 age);
         }
-
 }
