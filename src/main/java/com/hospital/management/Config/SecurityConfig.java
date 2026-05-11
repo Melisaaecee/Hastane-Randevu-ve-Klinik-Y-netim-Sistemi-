@@ -18,6 +18,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
 
@@ -126,5 +128,14 @@ public class SecurityConfig {
         @jakarta.annotation.PostConstruct
         public void enableAuthOnAsyncThreads() {
                 SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+        }
+
+        @Configuration
+        public class WebConfig implements WebMvcConfigurer {
+                @Override
+                public void addResourceHandlers(ResourceHandlerRegistry registry) {
+                        registry.addResourceHandler("/javascript/**")
+                                        .addResourceLocations("classpath:/static/javascript/");
+                }
         }
 }
