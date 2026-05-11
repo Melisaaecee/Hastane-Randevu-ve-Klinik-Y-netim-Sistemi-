@@ -1,11 +1,11 @@
 {
-  "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "./mvnw clean package -DskipTests"
-  },
-  "deploy": {
-    "startCommand": "java -jar target/*.jar",
-    "healthcheckPath": "/actuator/health",
-    "restartPolicyType": "ON_FAILURE"
-  }
+    "build": {
+        "builder": "NIXPACKS",
+        "buildCommand": "bash mvnw clean package -DskipTests"
+    },
+    "deploy": {
+        "startCommand": "java -jar target/*.jar",
+        "healthcheckPath": "/actuator/health",
+        "restartPolicyType": "ON_FAILURE"
+    }
 }
