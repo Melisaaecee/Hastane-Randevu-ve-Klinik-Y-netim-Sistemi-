@@ -7,7 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/appointments")
@@ -21,10 +23,19 @@ public class AppointmentController {
 
     // Randevu oluşturur. Hasta ID ve Slot ID parametreleri ile çalışır. 24 saat
     // kuralı ve uygunluk kontrolü serviste yapılır.
-    @PostMapping
+   @PostMapping
     @PreAuthorize("hasAnyRole('PATIENT', 'ADMIN')")
-    public ResponseEntity<Appointment> create(@RequestParam Long patientId, @RequestParam Long slotId) {
-        return ResponseEntity.ok(appointmentService.createAppointment(patientId, slotId));
+    public ResponseEntity<?> create(@RequestParam Long userId, @RequestParam Long slotId) {
+        try {
+            // Başarılı olursa Appointment nesnesi döner
+            Appointment appointment = appointmentService.createAppointment(userId, slotId);
+            return ResponseEntity.ok(appointment);
+        } catch (Exception e) {
+            // Hata olursa Map içinde mesaj döner. '?' sayesinde ikisi de kabul edilir.
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
     }
 
     @GetMapping

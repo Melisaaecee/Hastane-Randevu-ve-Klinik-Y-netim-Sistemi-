@@ -2,6 +2,8 @@ package com.hospital.management.Entity;
 
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 
@@ -25,11 +27,13 @@ public class Appointment {
     @Column(nullable = false)
     private AppointmentStatus status;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.EAGER)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @JoinColumn(name = "slot_id", nullable = false, unique = true)
     private Slot slot;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 

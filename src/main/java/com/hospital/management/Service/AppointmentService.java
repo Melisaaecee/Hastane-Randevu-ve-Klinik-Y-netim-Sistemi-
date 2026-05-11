@@ -30,29 +30,38 @@ public class AppointmentService {
     }
 
     // CREATE
-    @Transactional
+  @Transactional
     public Appointment createAppointment(Long patientId, Long slotId) {
 
         Patient patient = patientRepository.findByUserId(patientId) 
-    .orElseThrow(() -> new EntityNotFoundException("Bu kullanıcıya ait hasta kaydı bulunamadı"));
+                .orElseThrow(() -> new EntityNotFoundException("Bu kullanıcıya ait hasta kaydı bulunamadı"));
 
         assertOwnerOrAdmin(patient.getUser().getId());
 
         Slot slot = slotRepository.findById(slotId)
                 .orElseThrow(() -> new EntityNotFoundException("Seçilen randevu saati bulunamadı."));
 
-        boolean hasConflict = appointmentRepository.existsByPatientIdAndSlotStartTime(patientId, slot.getStartTime());
-        if (hasConflict) {
-            throw new BadRequestException("Bu tarih ve saatte zaten başka bir randevunuz bulunuyor.");
+        // --- KONTROL 1: AYNI SAATTE ÇAKIŞMA (DETAYLI MESAJ) ---
+        appointmentRepository.findConflictDetail(patient.getId(), slot.getStartTime()).ifPresent(conflict -> {
+            String hName = conflict.getSlot().getDoctor().getClinic().getHospital().getName();
+            String cName = conflict.getSlot().getDoctor().getClinic().getName();
+            throw new BadRequestException("Bu saatte zaten " + hName + " (" + cName + ") randevunuz bulunuyor.");
+        });
+
+        // --- KONTROL 2: AYNI GÜN İÇİNDE BAŞKA RANDEVU (GÜNLÜK ENGEL) ---
+        if (appointmentRepository.hasAnyAppointmentOnDate(patient.getId(), slot.getStartTime())) {
+            throw new BadRequestException("Aynı gün içerisinde sadece bir randevu alabilirsiniz. Lütfen mevcut randevunuzu iptal ediniz.");
         }
 
+        // --- KONTROL 3: SLOT DURUMU ---
         if (slot.getStatus() != SlotStatus.AVAILABLE)
             throw new BadRequestException("Bu randevu saati az önce başkası tarafından alındı.");
 
-        if (penaltyService.hasActivePenalty(patientId))
-            throw new BadRequestException(
-                    "Sisteme gelmediğiniz randevular nedeniyle geçici süreyle randevu alamazsınız.");
+        // --- KONTROL 4: CEZA DURUMU ---
+        if (penaltyService.hasActivePenalty(patient.getId())) // patientId yerine patient.getId() kullandık (ID eşleme için)
+            throw new BadRequestException("Sisteme gelmediğiniz randevular nedeniyle geçici süreyle randevu alamazsınız.");
 
+        // --- RANDEVU OLUŞTURMA ---
         Appointment appointment = new Appointment();
         appointment.setPatient(patient);
         appointment.setSlot(slot);
@@ -61,7 +70,7 @@ public class AppointmentService {
         slot.setStatus(SlotStatus.BOOKED);
         slotRepository.save(slot);
 
-        // --- Randevu alındığı zaman onay Maili Gönder ---
+        // Mail gönderimi (Senin mevcut kodun)
         try {
             mailService.sendAppointmentConfirmationMail(
                     patient.getUser().getEmail(),
@@ -70,13 +79,11 @@ public class AppointmentService {
                     slot.getDoctor().getClinic().getName(),
                     slot.getStartTime().toString());
         } catch (Exception e) {
-            // Mail gitmese bile randevu kaydedilmiş olsun diye hatayı sadece logluyoruz
             System.err.println("Randevu onay maili gönderilirken hata oluştu: " + e.getMessage());
         }
 
         return appointmentRepository.save(appointment);
     }
-
     // HASTA RANDEVULARI
     public List<Appointment> getPatientAppointments(Long patientId) {
         Patient patient = patientRepository.findById(patientId)

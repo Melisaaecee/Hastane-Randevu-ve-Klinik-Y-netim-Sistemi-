@@ -33,9 +33,8 @@ window.showSection = function (sectionId, element) {
         }
     }
 };
-// 2. RANDEVU FİLTRELEME VE BACKEND ENTEGRASYONU
 window.filterAppointments = async function (type) {
-
+    // Buton aktiflik sınıflarını ayarla
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
     const activeBtn = document.getElementById('btn-' + type);
     if (activeBtn) activeBtn.classList.add('active-filter');
@@ -43,18 +42,18 @@ window.filterAppointments = async function (type) {
     const authData = JSON.parse(localStorage.getItem('user'));
     if (!authData || !authData.token) return;
 
-    let url = 'http://localhost:8080/api/appointments';
+    const patientId = authData.user.id; // LocalStorage'dan hasta ID'sini aldık
+    const BASE_URL = 'http://localhost:8080/api/appointments';
+    let url = '';
 
-
+    // --- KRİTİK DÜZELTME BURASI ---
     if (type === 'past') {
-
-        url += `/patient/${authData.user.id}/past`;
-    } else if (type === 'active') {
-
-        url += '/my';
+        // Backend'deki: @GetMapping("/patient/{patientId}/past")
+        url = `${BASE_URL}/patient/${patientId}/past`;
     } else {
-
-        url += '/my';
+        // Backend'deki: @GetMapping("/patient/{patientId}")
+        // Aktif randevuları da bunun içinden filtreleyerek alacağız
+        url = `${BASE_URL}/patient/${patientId}`;
     }
 
     try {
@@ -66,20 +65,20 @@ window.filterAppointments = async function (type) {
             }
         });
 
-        if (!response.ok) throw new Error("Veri çekilemedi");
+        if (!response.ok) throw new Error("Veri çekilemedi. Durum: " + response.status);
 
         let data = await response.json();
 
-
+        // Eğer 'active' filtresi seçildiyse, tüm randevuların içinden zamanı geçmemiş olanları süz
         if (type === 'active') {
             const now = new Date();
-            data = data.filter(app => new Date(app.slot.startTime) >= now);
+            data = data.filter(app => new Date(app.slot.startTime) >= now && app.status !== 'CANCELLED');
         }
 
         renderTable(data);
     } catch (error) {
         console.error("Filtreleme hatası:", error);
-        renderTable([]);
+        renderTable([]); // Hata olursa tabloyu boşalt
     }
 };
 

@@ -140,44 +140,84 @@ if (slots.length === 0) {
     slotSection.style.display = 'block';
 }
 
-// RANDEVU ONAYI (POST)
+
+
+
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toastNotification');
+    const msgSpan = document.getElementById('toastMessage');
+    const icon = document.getElementById('toastIcon');
+
+    if (!toast || !msgSpan || !icon) return; 
+
+    msgSpan.innerText = message;
+    
+    // Sınıfları temizle ve yeni tipi ekle
+    toast.className = 'toast-container';
+    toast.classList.add(type === 'success' ? 'toast-success' : 'toast-error');
+    
+    // İkonu ayarla
+    icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
+
+    // Göster
+    toast.classList.add('show');
+
+    // 3 saniye sonra gizle
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+/**
+ * RANDEVU ONAYI (POST)
+ */
 confirmBtn.addEventListener('click', async () => {
-    // LocalStorage'dan hasta ID'sini almalısın (Login sırasında set etmiş olmalısın)
     const currentPatientId = authData?.user?.id;
-    if (!currentPatientId|| !selectedSlotId) {
-        console.log("Eksik veri:", { currentPatientId, selectedSlotId });
-        alert("Lütfen tüm seçimleri yapın!");
+    
+    // Basit bir kontrol: ID veya Slot seçimi yoksa durdur
+    if (!currentPatientId || !selectedSlotId) {
+        showToast("Lütfen önce bir randevu saati seçiniz!", "error");
         return;
     }
 
     try {
-        const response = await fetch(`${BASE_URL}/appointments?patientId=${currentPatientId}&slotId=${selectedSlotId}`, {
+        const response = await fetch(`${BASE_URL}/appointments?userId=${currentPatientId}&slotId=${selectedSlotId}`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json' 
+            }
         });
 
-        const data = await response.json(); // Backend'den dönen JSON'u (başarılı veya hatalı) alıyoruz
+        // Backend'den gelen cevabı JSON olarak al
+        const data = await response.json();
 
-       // appointment.js içindeki fetch(save_appointment) bloğunun başarı (ok) kısmı:
-if (response.ok) {
-    alert("Randevunuz başarıyla oluşturuldu!");
-    // Ana sayfadaki tabloyu güncelle ve oraya odaklan
-    if (window.parent && typeof window.parent.showSection === 'function') {
-        window.parent.showSection('appointments'); 
-        window.parent.filterAppointments('all');
-    }
-    else {
-        location.reload(); // Eğer iframe içinde değilse sayfayı yenile
-        }
+        if (response.ok) {
+            // BAŞARILI DURUM
+            showToast("✅ Randevunuz başarıyla oluşturuldu!", "success");
 
-}   else {
-            // --- BURASI KRİTİK: Ceza veya Çakışma mesajını gösterir ---
-            // Backend'den gelen 'BadRequestException' mesajını alert olarak basıyoruz
-            alert(data.message || "Randevu oluşturulamadı.");
+            // Kullanıcı bildirimi görsün diye 2 saniye bekleyip yönlendiriyoruz
+            setTimeout(() => {
+                if (window.parent && typeof window.parent.showSection === 'function') {
+                    // Ana sayfadaki Randevularım sekmesine geç
+                    window.parent.showSection('appointments'); 
+                    // Tabloyu güncelle
+                    if (typeof window.parent.filterAppointments === 'function') {
+                        window.parent.filterAppointments('all');
+                    }
+                } else {
+                    location.reload(); 
+                }
+            }, 2000);
+
+        } else {
+            // HATALI DURUM (Backend'den gelen mesaj: Ceza, Çakışma vb.)
+            showToast(data.message || "Randevu oluşturulamadı.", "error");
         }
 
     } catch (error) {
         console.error("Hata detayı:", error);
-        alert("Sunucuyla bağlantı kurulamadı veya sistem hatası oluştu.");
+        showToast("🚀 Sunucuyla bağlantı kurulamadı veya sistem hatası.", "error");
     }
 });
+
