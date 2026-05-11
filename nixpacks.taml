@@ -1,0 +1,6 @@
+[variables]
+    NIXPACKS_JDK_VERSION = "21"
+
+[phases.install]
+    dependsOn = ["setup"]
+    cmds = ["chmod +x mvnw", "./mvnw clean install -DskipTests"]

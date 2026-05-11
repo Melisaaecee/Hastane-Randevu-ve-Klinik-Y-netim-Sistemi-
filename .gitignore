@@ -1,50 +1,25 @@
+# Build ve Geçici Dosyalar
 target/
-!.mvn/wrapper/maven-wrapper.jar
-/dev-tools.log
-.idea/
-.vscode/
+build/
 *.class
 *.log
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Maven Wrapper
+!.mvn/wrapper/maven-wrapper.jar
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# IDE Ayarları
+.idea/
 *.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code (ÖNEMLİ!) ###
 .vscode/
-.history/
-*.code-workspace
+.settings/
+.classpath
+.project
 
-# ============ GÜVENLİK ============
+# GİZLİLİK (Kritik)
 .env
-.env.*
+.env.local
 application-local.properties
-application-dev.properties
-*.p12
-*.jks
-*.key
-*.log
-logs/
+
+# Sistem Dosyaları
 .DS_Store
 Thumbs.db
