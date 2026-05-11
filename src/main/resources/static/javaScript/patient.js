@@ -33,27 +33,31 @@ window.showSection = function (sectionId, element) {
         }
     }
 };
+
 window.filterAppointments = async function (type) {
-    // Buton aktiflik sınıflarını ayarla
+    // 1. Butonların aktiflik durumunu görsel olarak ayarla
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
     const activeBtn = document.getElementById('btn-' + type);
     if (activeBtn) activeBtn.classList.add('active-filter');
 
+    // 2. LocalStorage'dan kullanıcı ve token bilgilerini al
     const authData = JSON.parse(localStorage.getItem('user'));
-    if (!authData || !authData.token) return;
+    if (!authData || !authData.token) {
+        console.error("Kullanıcı oturum verisi bulunamadı!");
+        return;
+    }
 
-    const patientId = authData.user.id; // LocalStorage'dan hasta ID'sini aldık
+    const userId = authData.user.id; 
     const BASE_URL = 'http://localhost:8080/api/appointments';
     let url = '';
 
-    // --- KRİTİK DÜZELTME BURASI ---
+    // 3. Endpoint Belirleme
+    // DTO dönüşü yapan endpoint'lerini çağırıyoruz
     if (type === 'past') {
-        // Backend'deki: @GetMapping("/patient/{patientId}/past")
-        url = `${BASE_URL}/patient/${patientId}/past`;
+        url = `${BASE_URL}/patient/${userId}/past`;
     } else {
-        // Backend'deki: @GetMapping("/patient/{patientId}")
-        // Aktif randevuları da bunun içinden filtreleyerek alacağız
-        url = `${BASE_URL}/patient/${patientId}`;
+        // 'all' (Tümü) ve 'active' (Aktif) için ana listeyi çekiyoruz
+        url = `${BASE_URL}/patient/${userId}`;
     }
 
     try {
@@ -65,53 +69,69 @@ window.filterAppointments = async function (type) {
             }
         });
 
-        if (!response.ok) throw new Error("Veri çekilemedi. Durum: " + response.status);
+        if (!response.ok) throw new Error(`Sunucu hatası: ${response.status}`);
 
         let data = await response.json();
 
-        // Eğer 'active' filtresi seçildiyse, tüm randevuların içinden zamanı geçmemiş olanları süz
+        // 4. MANTIKSAL FİLTRELEME (DTO UYUMLU)
+        // Hata buradaydı: Artık app.slot.startTime yok!
+        // Java'da canCancel'ı (gelecekteyse true) olarak ayarladığımız için bunu kullanıyoruz.
+        
         if (type === 'active') {
-            const now = new Date();
-            data = data.filter(app => new Date(app.slot.startTime) >= now && app.status !== 'CANCELLED');
+            // Sadece gelecekteki (iptal edilebilir) randevuları göster
+            data = data.filter(app => app.canCancel === true);
+        } else if (type === 'past' && !url.includes('/past')) {
+            // Eğer backend'den tüm liste geldiyse ama biz 'geçmiş' istiyorsak
+            data = data.filter(app => app.canCancel === false);
         }
+        // 'all' ise filtre yapmadan devam eder.
 
+        // 5. Tabloyu yeni veriyle güncelle
         renderTable(data);
+
     } catch (error) {
-        console.error("Filtreleme hatası:", error);
-        renderTable([]); // Hata olursa tabloyu boşalt
+        console.error("Filtreleme sırasında hata oluştu:", error);
+        // Hata anında tabloya "Kayıt bulunamadı" mesajı düşmesi için boş dizi gönderiyoruz
+        renderTable([]); 
     }
 };
-
 // 3. TABLO RENDER FONKSİYONU (Backend Entity Yapısına Uygun)
 function renderTable(data) {
+    console.log("Backend'den gelen veri:", data);
     const tbody = document.getElementById('appointmentTableBody');
     if (!tbody) return;
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Kayıt bulunamadı.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Kayıt bulunamadı.</td></tr>';
         return;
     }
 
-
     tbody.innerHTML = data.map(app => {
-        const date = new Date(app.slot.startTime).toLocaleString('tr-TR');
-        const isFuture = new Date(app.slot.startTime) >= new Date();
-
+        // 1. Güvenli isimleri alıyoruz (Tanımladığın değişkenleri kullanmalısın!)
+        const dName = app.doctorName || app.doctor_name || "Bilinmeyen Doktor";
+        const cName = app.clinicName || app.clinic_name || "Bilinmeyen Klinik";
+        const aDate = app.appointmentDate || app.appointment_date || "Tarih Yok";
+        
+        // 2. Tabloyu oluştururken yukarıdaki GÜVENLİ değişkenleri basıyoruz
         return `
             <tr>
-                <td>Dr. ${app.slot.doctor.user.firstName} ${app.slot.doctor.user.lastName}</td>
-                <td>${app.slot.doctor.clinic.name}</td>
-                <td>${date}</td>
+                <td class="fw-bold text-primary">${dName}</td>
+                <td>${cName}</td>
+                <td>${aDate}</td>
                 <td>
-                    <span class="status-badge ${isFuture ? 'status-active' : 'status-past'}">
-                        ${app.status} 
+                    <span class="status-badge ${app.canCancel ? 'status-active' : 'status-past'}">
+                        ${app.status || 'BELİRSİZ'}
                     </span>
+                </td>
+                <td>
+                    ${app.canCancel 
+                        ? `<button onclick="cancelAppointment(${app.id})" class="btn-cancel">İptal Et</button>` 
+                        : '<span class="text-muted" style="font-size: 0.85rem;">İşlem Yapılamaz</span>'}
                 </td>
             </tr>
         `;
     }).join('');
 }
-
 // 4. ŞİFRE VE PROFİL GÜNCELLEME (Mevcut Fonksiyonların Korundu)
 window.handlePasswordUpdate = async function () {
     const cpEl = document.getElementById('currentPassword');

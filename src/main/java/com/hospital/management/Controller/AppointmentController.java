@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.hospital.management.Config.SecurityUtil;
+import com.hospital.management.DTO.AppointmentResponseDTO;
 
 import java.util.HashMap;
 import java.util.List;
@@ -47,8 +49,9 @@ public class AppointmentController {
     // Login olan hastanın kendi randevularını listeler.
     @GetMapping("/my")
     @PreAuthorize("hasRole('PATIENT')")
-    public ResponseEntity<List<Appointment>> myAppointments() {
-        return ResponseEntity.ok(appointmentService.getMyAppointments());
+    public ResponseEntity<List<AppointmentResponseDTO>> myAppointments() {
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        return ResponseEntity.ok(appointmentService.getMyAppointments(currentUserId));
     }
 
     // Login olan doktorun kendi randevularını listeler.
@@ -65,14 +68,14 @@ public class AppointmentController {
     // Belirli bir hastanın tüm randevularını getirir (Admin ve Hasta görebilir).
     @GetMapping("/patient/{patientId}")
     @PreAuthorize("hasAnyRole('PATIENT', 'ADMIN')")
-    public ResponseEntity<List<Appointment>> getPatientAppointments(@PathVariable Long patientId) {
+    public ResponseEntity<List<AppointmentResponseDTO>> getPatientAppointments(@PathVariable Long patientId) {
         return ResponseEntity.ok(appointmentService.getPatientAppointments(patientId));
     }
 
     // Belirli bir hastanın geçmiş randevularını getirir.
     @GetMapping("/patient/{patientId}/past")
     @PreAuthorize("hasAnyRole('PATIENT', 'ADMIN')")
-    public ResponseEntity<List<Appointment>> getPatientPastAppointments(@PathVariable Long patientId) {
+    public ResponseEntity<List<AppointmentResponseDTO>> getPatientPastAppointments(@PathVariable Long patientId) {
         return ResponseEntity.ok(appointmentService.getPatientPastAppointments(patientId));
     }
 
@@ -110,4 +113,7 @@ public class AppointmentController {
     public ResponseEntity<List<Appointment>> getByClinic(@PathVariable Long clinicId) {
         return ResponseEntity.ok(appointmentService.getClinicAppointments(clinicId));
     }
+
+
+    
 }

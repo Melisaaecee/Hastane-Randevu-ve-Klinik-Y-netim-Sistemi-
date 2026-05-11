@@ -1,6 +1,7 @@
 package com.hospital.management.Service;
 
 import com.hospital.management.Config.SecurityUtil;
+import com.hospital.management.DTO.AppointmentResponseDTO;
 import com.hospital.management.Entity.*;
 import com.hospital.management.Repository.*;
 import com.hospital.management.Exception.AccessDeniedException;
@@ -11,7 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +27,7 @@ public class AppointmentService {
     private final PenaltyService penaltyService;
     private final MailService mailService;
     private final UserRepository userRepository;
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     public List<Appointment> getAllAppointments() {
         return appointmentRepository.findAll();
@@ -85,25 +89,65 @@ public class AppointmentService {
         return appointmentRepository.save(appointment);
     }
     // HASTA RANDEVULARI
-    public List<Appointment> getPatientAppointments(Long patientId) {
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new EntityNotFoundException("Hasta yok"));
+// 1. TÜM RANDEVULAR
+public List<AppointmentResponseDTO> getPatientAppointments(Long userId) {
+    assertOwnerOrAdmin(userId);
+    List<Appointment> appointments = appointmentRepository.findByPatient_User_Id(userId);
+    return convertToDtoList(appointments);
+}
 
-        assertOwnerOrAdmin(patient.getUser().getId());
+// 2. GEÇMİŞ RANDEVULAR
+public List<AppointmentResponseDTO> getPatientPastAppointments(Long userId) {
+    assertOwnerOrAdmin(userId);
+    List<Appointment> appointments = appointmentRepository.findByPatient_User_IdAndSlot_StartTimeBefore(
+            userId, LocalDateTime.now());
+    return convertToDtoList(appointments);
+}
 
-        return appointmentRepository.findByPatientIdWithDetails(patientId);
-    }
+// --- YARDIMCI DÖNÜŞTÜRÜCÜ (Private Mapper) ---
+private List<AppointmentResponseDTO> convertToDtoList(List<Appointment> appointments) {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+    
+    return appointments.stream().map(app -> {
+        AppointmentResponseDTO dto = new AppointmentResponseDTO();
+        dto.setId(app.getId());
+        dto.setStatus(app.getStatus().toString());
 
-    public List<Appointment> getPatientPastAppointments(Long patientId) {
+        // ZİNCİRİ KURUYORUZ: Appointment -> Slot -> Doctor -> User
+        if (app.getSlot() != null && 
+            app.getSlot().getDoctor() != null && 
+            app.getSlot().getDoctor().getUser() != null) {
+            
+            // İşte burada User tablosundan veriyi çekip DTO'ya hapsediyoruz
+            var user = app.getSlot().getDoctor().getUser(); 
+            dto.setDoctorName("Dr. " + user.getFirstName() + " " + user.getLastName());
+            
+            // Klinik de Doctor üzerinden geliyor
+            if (app.getSlot().getDoctor().getClinic() != null) {
+                dto.setClinicName(app.getSlot().getDoctor().getClinic().getName());
+            } else {
+                dto.setClinicName("Klinik Belirtilmemiş");
+            }
 
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new EntityNotFoundException("Hasta yok"));
+            dto.setAppointmentDate(app.getSlot().getStartTime().format(formatter));
+            
+            // İptal kontrolü
+            boolean isFuture = app.getSlot().getStartTime().isAfter(LocalDateTime.now());
+            dto.setCanCancel(isFuture && "APPROVED".equals(app.getStatus().toString()));
+            
+        } else {
+            // Eğer bu zincirde biri null ise hata vermemesi için:
+            dto.setDoctorName("Doktor Bilgisi Eksik");
+            dto.setClinicName("Klinik Bilgisi Eksik");
+            dto.setAppointmentDate("Tarih Yok");
+        }
+        
+        return dto;
+    }).collect(Collectors.toList());
+}
 
-        assertOwnerOrAdmin(patient.getUser().getId());
 
-        return appointmentRepository.findByPatientIdAndSlotStartTimeBefore(
-                patientId, LocalDateTime.now());
-    }
+
 
     // DOCTOR
     public List<Appointment> getDoctorAppointments(Long doctorId) {
@@ -189,16 +233,15 @@ public class AppointmentService {
         return appointmentRepository.findBySlotDoctorClinicId(clinicId);
     }
 
-    // MY APPOINTMENTS
-    public List<Appointment> getMyAppointments() {
-
-        String username = SecurityUtil.getCurrentUsername();
-
-        Patient patient = patientRepository.findByUserUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Hasta yok"));
-
-        return appointmentRepository.findByPatientId(patient.getId());
+ public List<AppointmentResponseDTO> getMyAppointments(Long userId) {
+    List<Appointment> appointments = appointmentRepository.findByPatient_User_Id(userId);
+    
+    if (appointments == null || appointments.isEmpty()) {
+        throw new EntityNotFoundException("Bu kullanıcıya ait randevu kaydı bulunamadı.");
     }
+    
+    return convertToDtoList(appointments);
+}
 
 
     public List<Appointment> getMyDoctorAppointments() {

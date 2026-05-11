@@ -20,7 +20,11 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     List<Appointment> findByPatientIdAndStatus(Long patientId, AppointmentStatus status);
 
-    List<Appointment> findByPatientIdAndSlotStartTimeBefore(Long patientId, LocalDateTime now);
+    // Geçmiş (Bunu bu isimle ekle veya güncelle)
+List<Appointment> findByPatient_User_IdAndSlot_StartTimeBefore(Long userId, LocalDateTime now);
+
+// Aktif (Bunu bu isimle ekle veya güncelle)
+    List<Appointment> findByPatient_User_IdAndSlot_StartTimeAfter(Long userId, LocalDateTime now);
 
     List<Appointment> findBySlotDoctorIdAndSlotStartTimeBefore(Long doctorId, LocalDateTime now);
 
@@ -31,6 +35,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findBySlotDoctorIdAndStatus(Long doctorId, AppointmentStatus status);
 
     List<Appointment> findBySlotDoctorId(Long doctorId);
+
+
+
+    List<Appointment> findByPatient_User_Id(Long userId);
 
     // --- YENİ EKLENEN KRİTİK METODLAR ---
 
@@ -43,6 +51,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
            "AND a.status = com.hospital.management.Entity.AppointmentStatus.APPROVED")
     boolean hasAnyAppointmentOnDate(@Param("patientId") Long patientId, @Param("date") LocalDateTime date);
 
+
+    
     /**
      * 2. KURAL: Aynı saatte çakışma detayını getir.
      * Kullanıcıya "Şu hastanede randevunuz var" diyebilmek için tüm ilişkileri Fetch ediyoruz.
