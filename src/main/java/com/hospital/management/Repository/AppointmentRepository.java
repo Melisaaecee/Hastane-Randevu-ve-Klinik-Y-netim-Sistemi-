@@ -14,25 +14,49 @@ import java.util.Optional;
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 
+    // --- MEVCUT METODLARIN ---
+    
     List<Appointment> findByPatientId(Long patientId);
 
-    // DOKTOR VE KLİNİK BİLGİSİNİ TAM GETİREN KRİTİK SORGULAR
-    @Query("SELECT a FROM Appointment a " +
-           "JOIN FETCH a.slot s " +
-           "JOIN FETCH s.doctor d " +
-           "JOIN FETCH d.user u " +
-           "JOIN FETCH d.clinic c " +
-           "WHERE a.patient.user.id = :userId")
-    List<Appointment> findAllByUserIdWithDetails(@Param("userId") Long userId);
+    List<Appointment> findByPatientIdAndStatus(Long patientId, AppointmentStatus status);
 
-    @Query("SELECT a FROM Appointment a " +
-           "JOIN FETCH a.slot s " +
-           "JOIN FETCH s.doctor d " +
-           "JOIN FETCH d.user u " +
-           "JOIN FETCH d.clinic c " +
-           "WHERE a.patient.user.id = :userId AND s.startTime < :now")
-    List<Appointment> findPastByUserIdWithDetails(@Param("userId") Long userId, @Param("now") LocalDateTime now);
+    // Geçmiş (Bunu bu isimle ekle veya güncelle)
+List<Appointment> findByPatient_User_IdAndSlot_StartTimeBefore(Long userId, LocalDateTime now);
 
+// Aktif (Bunu bu isimle ekle veya güncelle)
+    List<Appointment> findByPatient_User_IdAndSlot_StartTimeAfter(Long userId, LocalDateTime now);
+
+    List<Appointment> findBySlotDoctorIdAndSlotStartTimeBefore(Long doctorId, LocalDateTime now);
+
+    long countByPatientIdAndStatus(Long patientId, AppointmentStatus status);
+
+    List<Appointment> findBySlotDoctorClinicId(Long clinicId);
+
+    List<Appointment> findBySlotDoctorIdAndStatus(Long doctorId, AppointmentStatus status);
+
+    List<Appointment> findBySlotDoctorId(Long doctorId);
+
+
+
+    List<Appointment> findByPatient_User_Id(Long userId);
+
+    // --- YENİ EKLENEN KRİTİK METODLAR ---
+
+    /**
+     * 1. KURAL: Aynı gün başka randevu var mı?
+     * SQL'deki CAST(... AS date) ile zaman damgasının sadece tarih kısmını karşılaştırıyoruz.
+     */
+    @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.patient.id = :patientId " +
+           "AND CAST(a.slot.startTime AS date) = CAST(:date AS date) " +
+           "AND a.status = com.hospital.management.Entity.AppointmentStatus.APPROVED")
+    boolean hasAnyAppointmentOnDate(@Param("patientId") Long patientId, @Param("date") LocalDateTime date);
+
+
+    
+    /**
+     * 2. KURAL: Aynı saatte çakışma detayını getir.
+     * Kullanıcıya "Şu hastanede randevunuz var" diyebilmek için tüm ilişkileri Fetch ediyoruz.
+     */
     @Query("SELECT a FROM Appointment a " +
            "JOIN FETCH a.slot s " +
            "JOIN FETCH s.doctor d " +
@@ -43,13 +67,31 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
            "AND a.status = com.hospital.management.Entity.AppointmentStatus.APPROVED")
     Optional<Appointment> findConflictDetail(@Param("patientId") Long patientId, @Param("startTime") LocalDateTime startTime);
 
-    @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.patient.id = :patientId " +
-           "AND CAST(a.slot.startTime AS date) = CAST(:date AS date) " +
-           "AND a.status = com.hospital.management.Entity.AppointmentStatus.APPROVED")
-    boolean hasAnyAppointmentOnDate(@Param("patientId") Long patientId, @Param("date") LocalDateTime date);
+    // --- FETCH JOIN SORGULARIN (DOKUNULMADI) ---
 
-    // Diğer yardımcı metodlar aynen kalıyor
-    List<Appointment> findBySlotDoctorId(Long doctorId);
-    List<Appointment> findBySlotDoctorClinicId(Long clinicId);
-    List<Appointment> findBySlotDoctorIdAndStatus(Long doctorId, AppointmentStatus status);
+    @Query("SELECT DISTINCT a FROM Appointment a " +
+            "LEFT JOIN FETCH a.patient p " +
+            "LEFT JOIN FETCH p.user " +
+            "LEFT JOIN FETCH a.slot s " +
+            "LEFT JOIN FETCH s.doctor d " +
+            "LEFT JOIN FETCH d.user " +
+            "LEFT JOIN FETCH d.clinic c " +
+            "LEFT JOIN FETCH c.hospital h " +
+            "LEFT JOIN FETCH h.district dist " +
+            "LEFT JOIN FETCH dist.city " +
+            "WHERE s.doctor.id = :doctorId")
+    List<Appointment> findByDoctorIdWithDetails(@Param("doctorId") Long doctorId);
+
+    @Query("SELECT DISTINCT a FROM Appointment a " +
+            "LEFT JOIN FETCH a.patient p " +
+            "LEFT JOIN FETCH p.user " +
+            "LEFT JOIN FETCH a.slot s " +
+            "LEFT JOIN FETCH s.doctor d " +
+            "LEFT JOIN FETCH d.user " +
+            "LEFT JOIN FETCH d.clinic c " +
+            "LEFT JOIN FETCH c.hospital h " +
+            "LEFT JOIN FETCH h.district dist " +
+            "LEFT JOIN FETCH dist.city " +
+            "WHERE a.patient.id = :patientId")
+    List<Appointment> findByPatientIdWithDetails(@Param("patientId") Long patientId);
 }
