@@ -39,19 +39,6 @@ public class DoctorService {
             return doctors;
         }
 
-        // Ünvan eşleme tablosu (uzun kelime → kısaltma)
-        Map<String, String> titleToShort = new HashMap<>();
-        titleToShort.put("uzman", "Uzm");
-        titleToShort.put("operatör", "Op");
-        titleToShort.put("operator", "Op");
-        titleToShort.put("profesör", "Prof");
-        titleToShort.put("professor", "Prof");
-        titleToShort.put("doçent", "Doç");
-
-        // Geçerli kısaltmalar
-        Set<String> validShorts = new HashSet<>(
-                Arrays.asList("uzm", "op", "prof", "doç", "uzm.", "op.", "prof.", "doç."));
-
         return doctors.stream()
                 .sorted((d1, d2) -> {
                     String name1 = d1.getUser() != null ? d1.getUser().getFirstName() : "";
@@ -65,31 +52,36 @@ public class DoctorService {
                     String specialization = doctor.getSpecialization();
                     String firstName = doctor.getUser().getFirstName();
 
+                    // Eğer firstName zaten ünvan içeriyorsa dokunma
+                    if (firstName != null && (firstName.contains("Dr.") || firstName.contains("Prof.")
+                            || firstName.contains("Doç.") || firstName.contains("Uzm.") || firstName.contains("Op."))) {
+                        return;
+                    }
+
+                    // Sadece ham isim geldiyse düzenle
                     if (specialization != null && !specialization.isEmpty()
                             && !specialization.equals("Uzmanlık Belirtilmemiş")) {
 
-                        String normalized = specialization.trim().toLowerCase().replaceAll("\\.$", "");
-                        String title = normalized.split(" ")[0];
+                        String title = specialization.trim();
+                        String fullTitle = title;
 
-                        String shortTitle;
-
-                        if (validShorts.contains(title)) {
-                            shortTitle = title.replaceAll("\\.$", "");
-                            shortTitle = shortTitle.substring(0, 1).toUpperCase()
-                                    + shortTitle.substring(1).toLowerCase();
-                        } else if (titleToShort.containsKey(title)) {
-                            shortTitle = titleToShort.get(title);
-                        } else {
-                            shortTitle = specialization;
+                        if (title.equalsIgnoreCase("Uzm") || title.equalsIgnoreCase("Uzm.")) {
+                            fullTitle = "Uzm.";
+                        } else if (title.equalsIgnoreCase("Prof") || title.equalsIgnoreCase("Prof.")) {
+                            fullTitle = "Prof.";
+                        } else if (title.equalsIgnoreCase("Doç") || title.equalsIgnoreCase("Doç.")) {
+                            fullTitle = "Doç.";
+                        } else if (title.equalsIgnoreCase("Op") || title.equalsIgnoreCase("Op.")) {
+                            fullTitle = "Op.";
+                        } else if (title.equalsIgnoreCase("Dr") || title.equalsIgnoreCase("Dr.")) {
+                            fullTitle = "Dr.";
                         }
 
-                        doctor.setSpecialization(shortTitle);
-
-                        if (firstName != null && !firstName.startsWith("Dr.")) {
-                            doctor.getUser().setFirstName(shortTitle + ". Dr. " + firstName);
+                        if (firstName != null && !firstName.contains(" ")) {
+                            doctor.getUser().setFirstName(fullTitle + " Dr. " + firstName);
                         }
                     } else {
-                        if (firstName != null && !firstName.startsWith("Dr.")) {
+                        if (firstName != null && !firstName.contains("Dr.") && !firstName.contains(" ")) {
                             doctor.getUser().setFirstName("Dr. " + firstName);
                         }
                     }
@@ -105,6 +97,49 @@ public class DoctorService {
             return null;
         List<Doctor> normalized = normalizeDoctors(Arrays.asList(doctor));
         return normalized.isEmpty() ? doctor : normalized.get(0);
+    }
+
+    // Ünvan doğrulama
+    private String validateAndFixTitle(String title) {
+        if (title == null || title.isEmpty()) {
+            return null;
+        }
+
+        String lowerTitle = title.toLowerCase().trim();
+
+        // Geçerli ünvanlar ve doğru yazımları
+        Map<String, String> validTitles = new HashMap<>();
+        validTitles.put("prof", "Prof");
+        validTitles.put("prof.", "Prof");
+        validTitles.put("profesör", "Prof");
+        validTitles.put("professor", "Prof");
+        validTitles.put("doç", "Doç");
+        validTitles.put("doç.", "Doç");
+        validTitles.put("doçent", "Doç");
+        validTitles.put("uzm", "Uzm");
+        validTitles.put("uzm.", "Uzm");
+        validTitles.put("uzman", "Uzm");
+        validTitles.put("op", "Op");
+        validTitles.put("op.", "Op");
+        validTitles.put("operatör", "Op");
+        validTitles.put("dr", "Dr");
+        validTitles.put("dr.", "Dr");
+
+        // Hatalı yazımları kontrol et
+        if (lowerTitle.equals("porf") || lowerTitle.equals("porf.")) {
+            throw new IllegalArgumentException("❌ Geçersiz ünvan: 'porf' doğru yazımı 'Prof' olmalıdır.");
+        }
+        if (lowerTitle.equals("doc") || lowerTitle.equals("doc.")) {
+            throw new IllegalArgumentException("❌ Geçersiz ünvan: 'doc' doğru yazımı 'Doç' olmalıdır.");
+        }
+
+        for (Map.Entry<String, String> entry : validTitles.entrySet()) {
+            if (lowerTitle.equals(entry.getKey()) || lowerTitle.startsWith(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+
+        throw new IllegalArgumentException("❌ Geçersiz ünvan! Geçerli ünvanlar: Prof, Doç, Uzm, Op, Dr");
     }
 
     // ==================== LİSTELEME METODLARI ====================
@@ -150,13 +185,17 @@ public class DoctorService {
             String specialization,
             Long clinicId) {
 
-        // 1. Geçici bilgiler oluştur
+        //  Ünvan doğrulama
+        String validatedSpecialization = null;
+        if (specialization != null && !specialization.isEmpty()) {
+            validatedSpecialization = validateAndFixTitle(specialization);
+        }
+
         String username = generateUsername(firstName, lastName);
         String plainPassword = generateRandomPassword();
         String tempEmail = generateTempEmail(firstName, lastName);
         String tempTckn = generateRandomTckn();
 
-        // 2. User oluştur
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(plainPassword));
@@ -170,22 +209,17 @@ public class DoctorService {
 
         User savedUser = userRepository.save(user);
 
-        // 3. Clinic bul
         var clinic = clinicRepository.findById(clinicId)
                 .orElseThrow(() -> new RuntimeException("Klinik bulunamadı: " + clinicId));
 
-        // 4. Doctor oluştur
         Doctor doctor = new Doctor();
         doctor.setUser(savedUser);
-        doctor.setSpecialization(specialization != null ? specialization : "Uzmanlık Belirtilmemiş");
+        doctor.setSpecialization(validatedSpecialization != null ? validatedSpecialization : "Uzmanlık Belirtilmemiş");
         doctor.setClinic(clinic);
 
         Doctor savedDoctor = doctorRepository.save(doctor);
-
-        // 5. Normalize et
         Doctor normalizedDoctor = normalizeDoctor(savedDoctor);
 
-        // 6. Response hazırla
         Map<String, Object> response = new HashMap<>();
         response.put("id", normalizedDoctor.getId());
         response.put("firstName", normalizedDoctor.getUser().getFirstName());
@@ -200,7 +234,6 @@ public class DoctorService {
 
         return response;
     }
-
     // ==================== GÜNCELLEME METODLARI ====================
 
     @Transactional
@@ -297,7 +330,7 @@ public class DoctorService {
     }
 
     private String generateRandomPassword() {
-    
+
         String chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
         StringBuilder password = new StringBuilder();
         Random random = new Random();

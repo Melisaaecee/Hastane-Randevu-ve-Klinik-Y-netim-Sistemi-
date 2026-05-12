@@ -728,33 +728,29 @@
             if (!tbody) return;
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">📋 Doktor bulunamadı</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">📋 Doktor bulunamadı</span><tr>';
                 return;
             }
 
             tbody.innerHTML = filtered.map(d => {
-                // ✅ DÜZELTİLDİ: firstName ve lastName'i doğru şekilde al
                 let firstName = d.user?.firstName || '';
                 let lastName = d.user?.lastName || '';
-
-                // İsim içindeki Dr. ifadesini temizle (varsa)
-                firstName = firstName.replace(/^Dr\.?\s*/i, '');
-
-                // Ad Soyad birleştir
-                const fullName = `${firstName} ${lastName}`.trim();
-
-                // Uzmanlık (title) bilgisi
                 let specialty = d.specialization || '';
-                let displayTitle = '-';
 
+                // Tekrarlanan ünvanları temizle
+                let cleanFirstName = firstName;
+                cleanFirstName = cleanFirstName.replace(/(Prof\.\s*Dr\.)\s*\1/gi, '$1');
+                cleanFirstName = cleanFirstName.replace(/(Uzm\.\s*Dr\.)\s*\1/gi, '$1');
+                cleanFirstName = cleanFirstName.replace(/(Doç\.\s*Dr\.)\s*\1/gi, '$1');
+                cleanFirstName = cleanFirstName.replace(/(Op\.\s*Dr\.)\s*\1/gi, '$1');
+                cleanFirstName = cleanFirstName.replace(/Uzm\.Dr\.\s*Dr\./gi, 'Uzm. Dr.');
+                cleanFirstName = cleanFirstName.replace(/Prof\.Dr\.\s*Dr\./gi, 'Prof. Dr.');
+
+                const fullName = `${cleanFirstName} ${lastName}`.trim().replace(/\s+/g, ' ');
+
+                let displayTitle = '-';
                 if (specialty && specialty !== '' && specialty !== 'Uzmanlık Belirtilmemiş') {
                     displayTitle = specialty;
-                }
-
-                // Ünvan varsa başına ekle (örn: "Prof. Dr." ise zaten fullName içinde olabilir)
-                // Eğer fullName "Prof." ile başlamıyorsa ve specialty varsa, specialty'yi ünvan olarak kullan
-                if (displayTitle !== '-' && !fullName.startsWith(displayTitle)) {
-                    // displayTitle zaten "Prof", "Uzm" gibi geliyor, "Dr." eklemeye gerek yok
                 }
 
                 const hospitalName = d.clinic?.hospital?.name || d.clinic?.name || '-';
@@ -762,15 +758,15 @@
 
                 return `
             <tr>
-                <td>${d.id}</td>
-                <td>${escapeHtml(fullName || '-')}</td>
-                <td>${escapeHtml(displayTitle)}</td>
-                <td>${escapeHtml(hospitalName)}</td>
-                <td>${escapeHtml(clinicName)}</td>
+                <td>${d.id}</span>
+                <td>${escapeHtml(fullName || '-')}</span>
+                <td>${escapeHtml(displayTitle)}</span>
+                <td>${escapeHtml(hospitalName)}</span>
+                <td>${escapeHtml(clinicName)}</span>
                 <td class="action-buttons">
                     <button class="btn-delete" onclick="deleteDoctor(${d.id})">Sil</button>
-                </td>
-            </tr>
+                </span>
+            </span>
         `;
             }).join('');
         }
