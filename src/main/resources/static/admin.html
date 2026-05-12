@@ -812,26 +812,118 @@
         `).join("");
             }
         };
+        
         window.deleteUser = async function (id) {
             if (!confirm("Sil?")) return;
             const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/users/${id}`, { method: "DELETE" });
             if (res?.ok) { alert("Silindi"); loadUsers(); }
         };
+
         window.loadAppointments = async function () {
             const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/appointments`);
             if (res) {
                 const data = await res.json();
-                document.getElementById("appointmentTableBody").innerHTML = data.map(a => `
-            <tr>
-                <td>${a.id}</span>
-                <td>${a.patient?.user?.firstName || '-'}</span>
-                <td>${a.slot?.doctor?.user?.firstName || '-'}</span>
-                <td>${a.status || '-'}</span>
-                <td><button class="btn-delete" onclick="cancelAppointment(${a.id})">İptal</button></span>
-            </span>
-        `).join("");
+                console.log("Randevu verileri:", data);
+
+                document.getElementById("appointmentTableBody").innerHTML = data.map(a => {
+                    // DOKTOR BİLGİLERİNİ AL
+                    let title = "";      
+                    let firstName = "";
+                    let lastName = "";
+
+                    // Farklı veri yapılarını kontrol et
+                    if (a.doctor) {
+                        if (a.doctor.user) {
+                            firstName = a.doctor.user.firstName || '';
+                            lastName = a.doctor.user.lastName || '';
+                            title = a.doctor.specialization || '';
+                        } else if (a.doctor.firstName) {
+                            firstName = a.doctor.firstName || '';
+                            lastName = a.doctor.lastName || '';
+                            title = a.doctor.specialization || '';
+                        }
+                    }
+
+                    // Slot üzerinden doktor bilgisi
+                    if (a.slot?.doctor) {
+                        if (a.slot.doctor.user) {
+                            firstName = a.slot.doctor.user.firstName || '';
+                            lastName = a.slot.doctor.user.lastName || '';
+                            title = a.slot.doctor.specialization || '';
+                        } else if (a.slot.doctor.firstName) {
+                            firstName = a.slot.doctor.firstName || '';
+                            lastName = a.slot.doctor.lastName || '';
+                            title = a.slot.doctor.specialization || '';
+                        }
+                    }
+
+                    // DOKTOR İSMİNİ OLUŞTUR: "Prof. Dr. Ahmet Yılmaz" formatında
+                    let doctorName = "Doktor Atanmamış";
+
+                    if (title && (firstName || lastName)) {
+                        // Ünvan + Dr. + Ad Soyad (sistem Dr. kısmını otomatik ekliyor)
+                        doctorName = `${title} Dr. ${firstName} ${lastName}`.trim();
+                    } else if (title) {
+                        // Sadece ünvan varsa
+                        doctorName = `${title} Dr.`;
+                    } else if (firstName || lastName) {
+                        // Sadece isim varsa
+                        doctorName = `Dr. ${firstName} ${lastName}`.trim();
+                    }
+
+                    // Fazla boşlukları temizle
+                    doctorName = doctorName.replace(/\s+/g, ' ').trim();
+
+                    // HASTA BİLGİSİ
+                    let patientName = "Hasta Bilgisi Yok";
+                    if (a.patient) {
+                        if (a.patient.user) {
+                            patientName = `${a.patient.user.firstName || ''} ${a.patient.user.lastName || ''}`.trim();
+                        } else if (a.patient.firstName) {
+                            patientName = `${a.patient.firstName || ''} ${a.patient.lastName || ''}`.trim();
+                        }
+                    }
+
+                    // TARİH BİLGİSİ
+                    let appointmentDate = "-";
+                    if (a.slot?.startTime) {
+                        const date = new Date(a.slot.startTime);
+                        appointmentDate = date.toLocaleString('tr-TR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                    }
+
+                    // Durum badge'i için renk sınıfı
+                    let statusClass = '';
+                    let statusText = a.status || 'UNKNOWN';
+                    switch (statusText) {
+                        case 'APPROVED': statusClass = 'status-approved'; statusText = 'ONAYLANDI'; break;
+                        case 'PENDING': statusClass = 'status-pending'; statusText = 'BEKLİYOR'; break;
+                        case 'CANCELLED': statusClass = 'status-cancelled'; statusText = 'İPTAL'; break;
+                        case 'COMPLETED': statusClass = 'status-completed'; statusText = 'TAMAMLANDI'; break;
+                        default: statusClass = 'status-unknown';
+                    }
+
+                    return `
+        <tr>
+            <td>${a.id || '-'}</span>
+            <td>${escapeHtml(patientName)}</span>
+            <td>${escapeHtml(doctorName)}</span>
+            <td>${appointmentDate}</span>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></span>
+            <td class="action-buttons">
+                <button class="btn-delete" onclick="cancelAppointment(${a.id})">İptal</button>
+            </td>
+        </span>
+        `;
+                }).join('');
             }
         };
+
         window.cancelAppointment = async function (id) {
             await fetchWithAuth(`https://medsoft.up.railway.app/api/appointments/${id}/cancel`, { method: "PUT" });
             loadAppointments();
