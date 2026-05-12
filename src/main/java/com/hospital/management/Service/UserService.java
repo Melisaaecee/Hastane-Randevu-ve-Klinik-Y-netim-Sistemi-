@@ -10,11 +10,14 @@ import com.hospital.management.Exception.BadRequestException;
 import com.hospital.management.Exception.EntityNotFoundException;
 import com.hospital.management.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +35,64 @@ public class UserService {
             throw new AccessDeniedException("Bu kullanıcı bilgilerine erişim yetkiniz yok.");
         }
         return mapToResponse(getUserById(id));
+    }
+    
+    @Transactional
+    public ResponseEntity<?> updateProfileFields(String tckn, Map<String, String> updates) {
+        try {
+            User user = getUserByTckn(tckn);
+
+            if (!SecurityUtil.isOwner(user.getId()) && !SecurityUtil.isAdmin()) {
+                throw new AccessDeniedException("Yetkiniz yok.");
+            }
+
+            // SADECE GELEN ALANLARI GÜNCELLE
+            if (updates.containsKey("username") && updates.get("username") != null) {
+                String newUsername = updates.get("username").trim();
+                if (!newUsername.isEmpty()) {
+                    if (newUsername.length() < 3) {
+                        throw new BadRequestException("Kullanıcı adı en az 3 karakter olmalıdır.");
+                    }
+                    if (userRepository.existsByUsername(newUsername) && !user.getUsername().equals(newUsername)) {
+                        throw new BadRequestException("Bu kullanıcı adı zaten kullanılıyor");
+                    }
+                    user.setUsername(newUsername);
+                }
+            }
+
+            if (updates.containsKey("email") && updates.get("email") != null) {
+                String newEmail = updates.get("email").trim();
+                if (!newEmail.isEmpty()) {
+                    if (userRepository.existsByEmail(newEmail) && !user.getEmail().equals(newEmail)) {
+                        throw new BadRequestException("Bu e-posta adresi zaten kullanılıyor");
+                    }
+                    user.setEmail(newEmail);
+                }
+            }
+
+            if (updates.containsKey("firstName") && updates.get("firstName") != null) {
+                String newFirstName = updates.get("firstName").trim();
+                if (!newFirstName.isEmpty()) {
+                    user.setFirstName(newFirstName);
+                }
+            }
+
+            if (updates.containsKey("lastName") && updates.get("lastName") != null) {
+                String newLastName = updates.get("lastName").trim();
+                if (!newLastName.isEmpty()) {
+                    user.setLastName(newLastName);
+                }
+            }
+
+            userRepository.save(user);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Profil başarıyla güncellendi",
+                    "user", mapToResponse(user)));
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @Transactional
@@ -81,7 +142,6 @@ public class UserService {
         return mapToResponse(userRepository.save(user));
     }
 
-   
     @Transactional
     public void updateDoctorProfile(String tckn, String email, String newTckn, String username) {
         User user = userRepository.findByTckn(tckn)

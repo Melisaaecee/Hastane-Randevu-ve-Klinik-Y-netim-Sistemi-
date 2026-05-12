@@ -5,11 +5,14 @@ import com.hospital.management.DTO.RegisterRequest;
 import com.hospital.management.DTO.UserResponse;
 import com.hospital.management.Service.UserService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -31,10 +34,10 @@ public class UserController {
     // Kullanıcılar kendi profillerini güncelleyebilir.
     @PutMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    public UserResponse updateMyProfile(
+    public ResponseEntity<?> updateMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody RegisterRequest request) {
-        return userService.updateByTckn(userDetails.getUsername(), request);
+            @RequestBody Map<String, String> updates) {
+        return userService.updateProfileFields(userDetails.getUsername(), updates);
     }
 
     // Kullanıcılar kendi hesaplarını silebilir.
