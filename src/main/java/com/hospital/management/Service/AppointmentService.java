@@ -55,22 +55,23 @@ public class AppointmentService {
                     "Bu randevu saati az önce başka bir hasta tarafından alındı. Lütfen sayfayı yenileyip başka bir saat seçiniz.");
         }
 
-      // --- KONTROL: AYNI TARİH VE SAATTE ÇAKIŞMA ---
-appointmentRepository.findConflictDetail(patient.getId(), slot.getStartTime()).ifPresent(conflict -> {
-    // Çakışan randevunun detaylarını alıyoruz
-    String hName = conflict.getSlot().getDoctor().getClinic().getHospital().getName();
-    String cName = conflict.getSlot().getDoctor().getClinic().getName();
-    String dName = conflict.getSlot().getDoctor().getUser().getFirstName() + " " + conflict.getSlot().getDoctor().getUser().getLastName();
-    
-    // Saat bilgisini kullanıcı dostu formata getiriyoruz (Örn: 14:30)
-    String timeStr = conflict.getSlot().getStartTime().toLocalTime().toString();
+        // --- KONTROL: AYNI TARİH VE SAATTE ÇAKIŞMA ---
+        appointmentRepository.findConflictDetail(patient.getId(), slot.getStartTime()).ifPresent(conflict -> {
+            // Çakışan randevunun detaylarını alıyoruz
+            String hName = conflict.getSlot().getDoctor().getClinic().getHospital().getName();
+            String cName = conflict.getSlot().getDoctor().getClinic().getName();
+            String dName = conflict.getSlot().getDoctor().getUser().getFirstName() + " "
+                    + conflict.getSlot().getDoctor().getUser().getLastName();
 
-    // İstediğin o özel ve engelleyici hata mesajı:
-    throw new BadRequestException(
-        "Aynı tarih ve saatte (" + timeStr + ") zaten " + hName + " (" + cName + ") bölümünde " + 
-        dName + " ile randevunuz bulunuyor. Bu randevuyu iptal etmeden aynı saate yeni randevu alamazsınız."
-    );
-});
+            // Saat bilgisini kullanıcı dostu formata getiriyoruz (Örn: 14:30)
+            String timeStr = conflict.getSlot().getStartTime().toLocalTime().toString();
+
+            // İstediğin o özel ve engelleyici hata mesajı:
+            throw new BadRequestException(
+                    "Aynı tarih ve saatte (" + timeStr + ") zaten " + hName + " (" + cName + ") bölümünde " +
+                            dName
+                            + " ile randevunuz bulunuyor. Bu randevuyu iptal etmeden aynı saate yeni randevu alamazsınız.");
+        });
         // --- KONTROL 2: AYNI GÜN İÇİNDE BAŞKA RANDEVU ---
         if (appointmentRepository.hasAnyAppointmentOnDate(patient.getId(), slot.getStartTime())) {
             throw new BadRequestException(
@@ -98,24 +99,30 @@ appointmentRepository.findConflictDetail(patient.getId(), slot.getStartTime()).i
         slot.setStatus(SlotStatus.BOOKED);
         slotRepository.save(slot);
 
-// Mail gönderimi
-    /*try {
-        // Mail gönderme işlemini çağırıyoruz
-        mailService.sendAppointmentConfirmationMail(
-                patient.getUser().getEmail(),
-                patient.getUser().getFirstName() + " " + patient.getUser().getLastName(),
-                slot.getDoctor().getUser().getFirstName() + " " + slot.getDoctor().getUser().getLastName(),
-                slot.getDoctor().getClinic().getName(),
-                slot.getStartTime().toString());
-    } catch (Exception e) {
-        // Hata oluştuğunda sadece konsola yazdırıyoruz.
-        // Burayı boş bırakmak veya sadece loglamak, işlemin devam etmesini sağlar.
-        System.err.println("Kritik: Mail sunucusuna bağlanılamadı (Timeout). Randevu kaydı devam ediyor... Hata: " + e.getMessage());
-    }*/
+        // Mail gönderimi
+        /*
+         * try {
+         * // Mail gönderme işlemini çağırıyoruz
+         * mailService.sendAppointmentConfirmationMail(
+         * patient.getUser().getEmail(),
+         * patient.getUser().getFirstName() + " " + patient.getUser().getLastName(),
+         * slot.getDoctor().getUser().getFirstName() + " " +
+         * slot.getDoctor().getUser().getLastName(),
+         * slot.getDoctor().getClinic().getName(),
+         * slot.getStartTime().toString());
+         * } catch (Exception e) {
+         * // Hata oluştuğunda sadece konsola yazdırıyoruz.
+         * // Burayı boş bırakmak veya sadece loglamak, işlemin devam etmesini sağlar.
+         * System.err.
+         * println("Kritik: Mail sunucusuna bağlanılamadı (Timeout). Randevu kaydı devam ediyor... Hata: "
+         * + e.getMessage());
+         * }
+         */
 
-    // Mail gitse de gitmese de randevuyu kaydedip sonucu dönüyoruz.
-    return appointmentRepository.save(appointment);
-}
+        // Mail gitse de gitmese de randevuyu kaydedip sonucu dönüyoruz.
+        return appointmentRepository.save(appointment);
+    }
+
     // HASTA RANDEVULARI
     // 1. TÜM RANDEVULAR
     public List<AppointmentResponseDTO> getPatientAppointments(Long userId) {
@@ -278,13 +285,14 @@ appointmentRepository.findConflictDetail(patient.getId(), slot.getStartTime()).i
 
         penaltyService.createPenaltyFromAppointment(appointment);
 
-        // Hastaya ceza maili gönder
-        mailService.sendPenaltyMail(
-                appointment.getPatient().getUser().getEmail(),
-                appointment.getPatient().getUser().getFirstName() + " "
-                        + appointment.getPatient().getUser().getLastName(),
-                appointment.getSlot().getStartTime().toString());
-
+        /*
+         * // Hastaya ceza maili gönder
+         * mailService.sendPenaltyMail(
+         * appointment.getPatient().getUser().getEmail(),
+         * appointment.getPatient().getUser().getFirstName() + " "
+         * + appointment.getPatient().getUser().getLastName(),
+         * appointment.getSlot().getStartTime().toString());
+         */
         appointmentRepository.save(appointment);
     }
 
