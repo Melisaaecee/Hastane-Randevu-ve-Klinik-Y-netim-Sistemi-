@@ -3,11 +3,13 @@ package com.hospital.management.Service;
 import com.hospital.management.Config.SecurityUtil;
 import com.hospital.management.Entity.Appointment;
 import com.hospital.management.Entity.Penalty;
+import com.hospital.management.Event.PenaltyEvent;
 import com.hospital.management.Exception.AccessDeniedException;
 import com.hospital.management.Exception.BadRequestException;
 import com.hospital.management.Repository.PenaltyRepository;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,15 +22,16 @@ import java.util.List;
 public class PenaltyService {
 
     private final PenaltyRepository penaltyRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     // HASTANIN AKTİF CEZASI VAR MI?
     public boolean hasActivePenalty(Long patientId) {
-    // Sadece 'active' olması yetmez, bitiş tarihinin de şu andan ileride olması gerekir
-    return penaltyRepository.existsByPatientIdAndActiveTrueAndPenaltyEndDateAfter(
-            patientId, 
-            LocalDateTime.now()
-    );
-}
+        // Sadece 'active' olması yetmez, bitiş tarihinin de şu andan ileride olması
+        // gerekir
+        return penaltyRepository.existsByPatientIdAndActiveTrueAndPenaltyEndDateAfter(
+                patientId,
+                LocalDateTime.now());
+    }
 
     // HASTANIN TÜM CEZALARI
     public List<Penalty> getPatientPenalties(Long patientId) {
@@ -75,13 +78,19 @@ public class PenaltyService {
         penalty.setPenaltyStartDate(LocalDateTime.now());
         penalty.setPenaltyEndDate(LocalDateTime.now().plusDays(7));
         penalty.setActive(true);
+        penalty.setMailSent(false); // ✅ YENİ ALAN
 
-        return penaltyRepository.save(penalty);
+        Penalty savedPenalty = penaltyRepository.save(penalty);
+
+        // ✅ EVENT FIRLAT - MAIL ANINDA GİDER!
+        eventPublisher.publishEvent(new PenaltyEvent(this, savedPenalty));
+
+        return savedPenalty;
     }
 
     // SÜRESİ DOLMUŞ CEZALARI PASİFLEŞTİR
     @Transactional
-    @Scheduled(cron = "0 0 0 * * *") //  Her gece tam 00:00'da otomatik çalışır
+    @Scheduled(cron = "0 0 0 * * *") // Her gece tam 00:00'da otomatik çalışır
     public void deactivateExpiredPenalties() {
         List<Penalty> expiredPenalties = penaltyRepository.findByPenaltyEndDateBefore(LocalDateTime.now());
 

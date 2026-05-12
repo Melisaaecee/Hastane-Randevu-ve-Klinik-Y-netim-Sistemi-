@@ -36,4 +36,8 @@ public class Penalty {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    
+    @Column(nullable = false)
+    private boolean mailSent = false;
 }
