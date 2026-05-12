@@ -242,77 +242,77 @@
         };
 
 
-window.filterAppointments = async function (type) {
-    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
-    const activeBtn = document.getElementById('btn-' + type);
-    if (activeBtn) activeBtn.classList.add('active-filter');
+        window.filterAppointments = async function (type) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
+            const activeBtn = document.getElementById('btn-' + type);
+            if (activeBtn) activeBtn.classList.add('active-filter');
 
-    const authData = JSON.parse(localStorage.getItem('user'));
-    if (!authData || !authData.token) {
-        console.error("Kullanıcı oturum verisi bulunamadı!");
-        return;
-    }
-
-    const userId = authData.user.id;
-    const BASE_URL = 'https://medsoft.up.railway.app/api/appointments';
-    let url = '';
-
-    if (type === 'past') {
-        url = `${BASE_URL}/patient/${userId}/past`;
-    } else if (type === 'active') {
-        url = `${BASE_URL}/patient/${userId}`;
-    } else { // 'all'
-        url = `${BASE_URL}/patient/${userId}`;
-    }
-
-    try {
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + authData.token,
-                'Content-Type': 'application/json'
+            const authData = JSON.parse(localStorage.getItem('user'));
+            if (!authData || !authData.token) {
+                console.error("Kullanıcı oturum verisi bulunamadı!");
+                return;
             }
-        });
 
-        if (!response.ok) throw new Error(`Sunucu hatası: ${response.status}`);
+            const userId = authData.user.id;
+            const BASE_URL = 'https://medsoft.up.railway.app/api/appointments';
+            let url = '';
 
-        let data = await response.json();
+            if (type === 'past') {
+                url = `${BASE_URL}/patient/${userId}/past`;
+            } else if (type === 'active') {
+                url = `${BASE_URL}/patient/${userId}`;
+            } else { // 'all'
+                url = `${BASE_URL}/patient/${userId}`;
+            }
 
-        // DTO'daki canCancel alanını kullanarak filtrele
-        if (type === 'active') {
-            data = data.filter(app => app.canCancel === true);
-        } else if (type === 'past') {
-            data = data.filter(app => app.canCancel === false);
-        }
-        // 'all' için filtreleme yapma
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + authData.token,
+                        'Content-Type': 'application/json'
+                    }
+                });
 
-        renderTable(data);
+                if (!response.ok) throw new Error(`Sunucu hatası: ${response.status}`);
 
-    } catch (error) {
-        console.error("Filtreleme sırasında hata oluştu:", error);
-        renderTable([]);
-    }
-};
+                let data = await response.json();
 
-// renderTable fonksiyonunu bununla değiştir
-function renderTable(data) {
-    const tbody = document.getElementById('appointmentTableBody');
-    if (!tbody) return;
+                // DTO'daki canCancel alanını kullanarak filtrele
+                if (type === 'active') {
+                    data = data.filter(app => app.canCancel === true);
+                } else if (type === 'past') {
+                    data = data.filter(app => app.canCancel === false);
+                }
+                // 'all' için filtreleme yapma
 
-    if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Kayıt bulunamadı.</td></tr>';
-        return;
-    }
+                renderTable(data);
 
-    tbody.innerHTML = data.map(app => {
-        // ARTIK DTO'dan direkt alıyoruz!
-        const doctorName = app.doctorName || "Bilinmeyen Doktor";
-        const clinicName = app.clinicName || "Bilinmeyen Klinik";
-        const appointmentDate = app.appointmentDate || "Tarih Yok";
-        const status = app.status || "UNKNOWN";
-        const canCancel = app.canCancel === true; // DTO'dan gelen boolean
-        
-        return `
+            } catch (error) {
+                console.error("Filtreleme sırasında hata oluştu:", error);
+                renderTable([]);
+            }
+        };
+
+        // renderTable fonksiyonunu bununla değiştir
+        function renderTable(data) {
+            const tbody = document.getElementById('appointmentTableBody');
+            if (!tbody) return;
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Kayıt bulunamadı.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(app => {
+                // ARTIK DTO'dan direkt alıyoruz!
+                const doctorName = app.doctorName || "Bilinmeyen Doktor";
+                const clinicName = app.clinicName || "Bilinmeyen Klinik";
+                const appointmentDate = app.appointmentDate || "Tarih Yok";
+                const status = app.status || "UNKNOWN";
+                const canCancel = app.canCancel === true; // DTO'dan gelen boolean
+
+                return `
             <tr>
                 <td>${doctorName}</td>
                 <td>${clinicName}</td>
@@ -332,8 +332,8 @@ function renderTable(data) {
                 </td>
             </tr>
         `;
-    }).join('');
-}
+            }).join('');
+        }
 
         window.handlePasswordUpdate = async function () {
             const cpEl = document.getElementById('currentPassword');
@@ -424,31 +424,29 @@ function renderTable(data) {
 
         window.sendEmailVerification = async function () {
             const email = document.getElementById("newEmail")?.value;
-            const errorBox = document.getElementById("errorBox");
-            const sendBtn = document.getElementById("sendVerificationBtn");
-            const step1Div = document.getElementById("emailStep1");
-            const step2Div = document.getElementById("emailStep2");
-            const verifyCodeInput = document.getElementById("emailVerifyCode");
 
             if (!email) {
-                showError("Lütfen e-posta adresinizi giriniz!");
+                alert("Lütfen e-posta adresinizi giriniz!");
                 return;
             }
 
             if (!email.includes("@") || !email.includes(".")) {
-                showError("Geçerli bir e-posta adresi giriniz!");
+                alert("Geçerli bir e-posta adresi giriniz!");
                 return;
             }
 
-            if (sendBtn) {
-                sendBtn.disabled = true;
-                sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
-            }
+            const sendBtn = event.target;
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = 'Gönderiliyor...';
 
             try {
-                const token = localStorage.getItem("token");
-                const user = JSON.parse(localStorage.getItem("user"));
-                const tckn = user?.user?.tckn || user?.tckn;
+                const authData = JSON.parse(localStorage.getItem('user'));
+                const token = authData?.token;
+                const tckn = authData?.user?.tckn;
+
+                console.log("Token:", token);
+                console.log("TCKN:", tckn);
+                console.log("Email:", email);
 
                 const res = await fetch('https://medsoft.up.railway.app/api/auth/send-verification-code', {
                     method: 'POST',
@@ -460,54 +458,41 @@ function renderTable(data) {
                 });
 
                 const data = await res.json();
+                console.log("Response:", data);
 
                 if (res.ok) {
-                    if (step1Div) step1Div.style.display = 'none';
-                    if (step2Div) step2Div.style.display = 'block';
-                    if (verifyCodeInput) verifyCodeInput.value = "";
-                    showSuccess("✅ Doğrulama kodu e-posta adresinize gönderildi! 15 dakika içinde kullanınız.");
-
-                    setTimeout(() => {
-                        if (verifyCodeInput) {
-                            showError("⏰ Kodun süresi doldu! Lütfen yeni kod isteyin.");
-                            if (step1Div) step1Div.style.display = 'block';
-                            if (step2Div) step2Div.style.display = 'none';
-                        }
-                    }, 14 * 60 * 1000);
+                    document.getElementById("emailStep1").style.display = 'none';
+                    document.getElementById("emailStep2").style.display = 'block';
+                    alert("✅ Doğrulama kodu e-posta adresinize gönderildi!");
                 } else {
-                    showError(data.message || "❌ Kod gönderilemedi!");
+                    alert("❌ Hata: " + (data.message || "Kod gönderilemedi!"));
                 }
             } catch (e) {
                 console.error("Email doğrulama hatası:", e);
-                showError("❌ Bağlantı hatası! Lütfen tekrar deneyin.");
+                alert("❌ Bağlantı hatası! Lütfen tekrar deneyin.");
             } finally {
-                if (sendBtn) {
-                    sendBtn.disabled = false;
-                    sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Kod Gönder';
-                }
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = 'Kod Gönder';
             }
         };
 
         window.confirmEmailUpdate = async function () {
             const code = document.getElementById("emailVerifyCode")?.value;
             const email = document.getElementById("newEmail")?.value;
-            const errorBox = document.getElementById("errorBox");
-            const confirmBtn = document.getElementById("confirmEmailBtn");
+            const confirmBtn = event.target;
 
             if (!code || code.length !== 6) {
-                showError("Lütfen 6 haneli doğrulama kodunu giriniz!");
+                alert("Lütfen 6 haneli doğrulama kodunu giriniz!");
                 return;
             }
 
-            if (confirmBtn) {
-                confirmBtn.disabled = true;
-                confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Onaylanıyor...';
-            }
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = 'Onaylanıyor...';
 
             try {
-                const token = localStorage.getItem("token");
-                const user = JSON.parse(localStorage.getItem("user"));
-                const tckn = user?.user?.tckn || user?.tckn;
+                const authData = JSON.parse(localStorage.getItem('user'));
+                const token = authData?.token;
+                const tckn = authData?.user?.tckn;
 
                 const res = await fetch('https://medsoft.up.railway.app/api/auth/verify-email-update', {
                     method: 'POST',
@@ -515,7 +500,11 @@ function renderTable(data) {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ code: code, newEmail: email, tckn: tckn })
+                    body: JSON.stringify({
+                        code: code,
+                        newEmail: email,
+                        tckn: tckn
+                    })
                 });
 
                 const data = await res.json();
@@ -525,21 +514,18 @@ function renderTable(data) {
                     localStorage.clear();
                     window.location.href = "index.html";
                 } else {
-                    showError(data.message || data.error || "❌ Kod hatalı veya süresi dolmuş! Lütfen yeni kod isteyin.");
+                    alert("❌ " + (data.message || "Kod hatalı veya süresi dolmuş!"));
                     document.getElementById("emailStep1").style.display = 'block';
                     document.getElementById("emailStep2").style.display = 'none';
                 }
             } catch (e) {
                 console.error("Email onaylama hatası:", e);
-                showError("❌ Bağlantı hatası!");
+                alert("❌ Bağlantı hatası!");
             } finally {
-                if (confirmBtn) {
-                    confirmBtn.disabled = false;
-                    confirmBtn.innerHTML = '<i class="fas fa-check"></i> Onayla';
-                }
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = 'Onayla';
             }
         };
-
         window.cancelAppointment = async function (appointmentId) {
             if (!confirm("Bu randevuyu iptal etmek istediğinize emin misiniz? (24 saat kuralı geçerlidir)")) return;
 
