@@ -89,22 +89,24 @@ public class AppointmentService {
         slot.setStatus(SlotStatus.BOOKED);
         slotRepository.save(slot);
 
-        // Mail gönderimi
-        try {
-            mailService.sendAppointmentConfirmationMail(
-                    patient.getUser().getEmail(),
-                    patient.getUser().getFirstName() + " " + patient.getUser().getLastName(),
-                    slot.getDoctor().getUser().getFirstName() + " " + slot.getDoctor().getUser().getLastName(),
-                    slot.getDoctor().getClinic().getName(),
-                    slot.getStartTime().toString());
-        } catch (Exception e) {
-            // Loglama yaparak kullanıcının randevusunun oluşmasını engellemiyoruz
-            System.err.println("Randevu onay maili gönderilirken hata oluştu: " + e.getMessage());
-        }
-
-        return appointmentRepository.save(appointment);
+// Mail gönderimi
+    try {
+        // Mail gönderme işlemini çağırıyoruz
+        mailService.sendAppointmentConfirmationMail(
+                patient.getUser().getEmail(),
+                patient.getUser().getFirstName() + " " + patient.getUser().getLastName(),
+                slot.getDoctor().getUser().getFirstName() + " " + slot.getDoctor().getUser().getLastName(),
+                slot.getDoctor().getClinic().getName(),
+                slot.getStartTime().toString());
+    } catch (Exception e) {
+        // Hata oluştuğunda sadece konsola yazdırıyoruz.
+        // Burayı boş bırakmak veya sadece loglamak, işlemin devam etmesini sağlar.
+        System.err.println("Kritik: Mail sunucusuna bağlanılamadı (Timeout). Randevu kaydı devam ediyor... Hata: " + e.getMessage());
     }
 
+    // Mail gitse de gitmese de randevuyu kaydedip sonucu dönüyoruz.
+    return appointmentRepository.save(appointment);
+}
     // HASTA RANDEVULARI
     // 1. TÜM RANDEVULAR
     public List<AppointmentResponseDTO> getPatientAppointments(Long userId) {
