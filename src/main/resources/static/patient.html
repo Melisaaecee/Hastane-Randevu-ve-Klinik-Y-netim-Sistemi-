@@ -241,97 +241,99 @@
             }
         };
 
-        window.filterAppointments = async function (type) {
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
-            const activeBtn = document.getElementById('btn-' + type);
-            if (activeBtn) activeBtn.classList.add('active-filter');
 
-            const authData = JSON.parse(localStorage.getItem('user'));
-            if (!authData || !authData.token) {
-                console.error("Kullanıcı oturum verisi bulunamadı!");
-                return;
+window.filterAppointments = async function (type) {
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
+    const activeBtn = document.getElementById('btn-' + type);
+    if (activeBtn) activeBtn.classList.add('active-filter');
+
+    const authData = JSON.parse(localStorage.getItem('user'));
+    if (!authData || !authData.token) {
+        console.error("Kullanıcı oturum verisi bulunamadı!");
+        return;
+    }
+
+    const userId = authData.user.id;
+    const BASE_URL = 'https://medsoft.up.railway.app/api/appointments';
+    let url = '';
+
+    if (type === 'past') {
+        url = `${BASE_URL}/patient/${userId}/past`;
+    } else if (type === 'active') {
+        url = `${BASE_URL}/patient/${userId}`;
+    } else { // 'all'
+        url = `${BASE_URL}/patient/${userId}`;
+    }
+
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + authData.token,
+                'Content-Type': 'application/json'
             }
+        });
 
-            const userId = authData.user.id;
-            const BASE_URL = 'https://medsoft.up.railway.app/api/appointments';
-            let url = '';
+        if (!response.ok) throw new Error(`Sunucu hatası: ${response.status}`);
 
-            if (type === 'past') {
-                url = `${BASE_URL}/patient/${userId}/past`;
-            } else {
-                url = `${BASE_URL}/patient/${userId}`;
-            }
+        let data = await response.json();
 
-            try {
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': 'Bearer ' + authData.token,
-                        'Content-Type': 'application/json'
-                    }
-                });
+        // DTO'daki canCancel alanını kullanarak filtrele
+        if (type === 'active') {
+            data = data.filter(app => app.canCancel === true);
+        } else if (type === 'past') {
+            data = data.filter(app => app.canCancel === false);
+        }
+        // 'all' için filtreleme yapma
 
-                if (!response.ok) throw new Error(`Sunucu hatası: ${response.status}`);
+        renderTable(data);
 
-                let data = await response.json();
+    } catch (error) {
+        console.error("Filtreleme sırasında hata oluştu:", error);
+        renderTable([]);
+    }
+};
 
-                if (type === 'active') {
-                    data = data.filter(app => app.canCancel === true);
-                } else if (type === 'past' && !url.includes('/past')) {
-                    data = data.filter(app => app.canCancel === false);
-                }
+// renderTable fonksiyonunu bununla değiştir
+function renderTable(data) {
+    const tbody = document.getElementById('appointmentTableBody');
+    if (!tbody) return;
 
-                renderTable(data);
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Kayıt bulunamadı.</td></tr>';
+        return;
+    }
 
-            } catch (error) {
-                console.error("Filtreleme sırasında hata oluştu:", error);
-                renderTable([]);
-            }
-        };
-
-        function renderTable(data) {
-            const tbody = document.getElementById('appointmentTableBody');
-            if (!tbody) return;
-
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Kayıt bulunamadı.</span></tr>';
-                return;
-            }
-
-            tbody.innerHTML = data.map(app => {
-                const doctorName = app.slot?.doctor?.user
-                    ? `Dr. ${app.slot.doctor.user.firstName} ${app.slot.doctor.user.lastName}`
-                    : "Bilinmeyen Doktor";
-
-                const clinicName = app.slot?.doctor?.clinic?.name || "Bilinmeyen Klinik";
-                const startTime = app.slot?.startTime ? new Date(app.slot.startTime) : new Date();
-                const dateStr = startTime.toLocaleString('tr-TR');
-                const now = new Date();
-
-                const isCancelable = startTime > now && (app.status === 'PENDING' || app.status === 'CONFIRMED');
-
-                return `
+    tbody.innerHTML = data.map(app => {
+        // ARTIK DTO'dan direkt alıyoruz!
+        const doctorName = app.doctorName || "Bilinmeyen Doktor";
+        const clinicName = app.clinicName || "Bilinmeyen Klinik";
+        const appointmentDate = app.appointmentDate || "Tarih Yok";
+        const status = app.status || "UNKNOWN";
+        const canCancel = app.canCancel === true; // DTO'dan gelen boolean
+        
+        return `
             <tr>
-                <td>${doctorName}</span>
-                <td>${clinicName}</span>
-                <td>${dateStr}</span>
+                <td>${doctorName}</td>
+                <td>${clinicName}</td>
+                <td>${appointmentDate}</td>
                 <td>
-                    <span class="status-badge ${startTime >= now ? 'status-active' : 'status-past'}">
-                        ${app.status} 
+                    <span class="status-badge ${canCancel ? 'status-active' : 'status-past'}">
+                        ${status} 
                     </span>
-                </span>
+                </td>
                 <td>
-                    ${isCancelable ?
+                    ${canCancel ?
                         `<button onclick="cancelAppointment(${app.id})" class="btn-cancel-table">
                             <i class="fas fa-times"></i> İptal Et
                          </button>` :
                         `<span style="color: #cbd5e1; font-size: 0.8rem;">İşlem Yapılamaz</span>`
                     }
-                </span>
+                </td>
             </tr>
         `;
-            }).join('');
-        }
+    }).join('');
+}
 
         window.handlePasswordUpdate = async function () {
             const cpEl = document.getElementById('currentPassword');
