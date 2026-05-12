@@ -37,6 +37,9 @@ List<Appointment> findByPatient_User_IdAndSlot_StartTimeBefore(Long userId, Loca
     List<Appointment> findBySlotDoctorId(Long doctorId);
 
 
+    // BU SATIRI EKLE: Verilen slotId ile bir randevu var mı yok mu kontrol eder
+    boolean existsBySlotId(Long slotId);
+
 
     List<Appointment> findByPatient_User_Id(Long userId);
 

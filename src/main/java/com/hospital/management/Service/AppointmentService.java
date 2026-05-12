@@ -33,61 +33,73 @@ public class AppointmentService {
         return appointmentRepository.findAll();
     }
 
-    // CREATE
-  @Transactional
-    public Appointment createAppointment(Long patientId, Long slotId) {
+  // CREATE
+@Transactional
+public Appointment createAppointment(Long patientId, Long slotId) {
 
-        Patient patient = patientRepository.findByUserId(patientId) 
-                .orElseThrow(() -> new EntityNotFoundException("Bu kullanıcıya ait hasta kaydı bulunamadı"));
+    // 1. Hasta Kontrolü
+    Patient patient = patientRepository.findByUserId(patientId) 
+            .orElseThrow(() -> new EntityNotFoundException("Bu kullanıcıya ait hasta kaydı bulunamadı"));
 
-        assertOwnerOrAdmin(patient.getUser().getId());
+    assertOwnerOrAdmin(patient.getUser().getId());
 
-        Slot slot = slotRepository.findById(slotId)
-                .orElseThrow(() -> new EntityNotFoundException("Seçilen randevu saati bulunamadı."));
+    // 2. Slot Kontrolü (Veritabanında var mı?)
+    Slot slot = slotRepository.findById(slotId)
+            .orElseThrow(() -> new EntityNotFoundException("Seçilen randevu saati bulunamadı."));
 
-        // --- KONTROL 1: AYNI SAATTE ÇAKIŞMA (DETAYLI MESAJ) ---
-        appointmentRepository.findConflictDetail(patient.getId(), slot.getStartTime()).ifPresent(conflict -> {
-            String hName = conflict.getSlot().getDoctor().getClinic().getHospital().getName();
-            String cName = conflict.getSlot().getDoctor().getClinic().getName();
-            throw new BadRequestException("Bu saatte zaten " + hName + " (" + cName + ") randevunuz bulunuyor.");
-        });
-
-        // --- KONTROL 2: AYNI GÜN İÇİNDE BAŞKA RANDEVU (GÜNLÜK ENGEL) ---
-        if (appointmentRepository.hasAnyAppointmentOnDate(patient.getId(), slot.getStartTime())) {
-            throw new BadRequestException("Aynı gün içerisinde sadece bir randevu alabilirsiniz. Lütfen mevcut randevunuzu iptal ediniz.");
-        }
-
-        // --- KONTROL 3: SLOT DURUMU ---
-        if (slot.getStatus() != SlotStatus.AVAILABLE)
-            throw new BadRequestException("Bu randevu saati az önce başkası tarafından alındı.");
-
-        // --- KONTROL 4: CEZA DURUMU ---
-        if (penaltyService.hasActivePenalty(patient.getId())) // patientId yerine patient.getId() kullandık (ID eşleme için)
-            throw new BadRequestException("Sisteme gelmediğiniz randevular nedeniyle geçici süreyle randevu alamazsınız.");
-
-        // --- RANDEVU OLUŞTURMA ---
-        Appointment appointment = new Appointment();
-        appointment.setPatient(patient);
-        appointment.setSlot(slot);
-        appointment.setStatus(AppointmentStatus.APPROVED);
-
-        slot.setStatus(SlotStatus.BOOKED);
-        slotRepository.save(slot);
-
-        // Mail gönderimi (Senin mevcut kodun)
-        try {
-            mailService.sendAppointmentConfirmationMail(
-                    patient.getUser().getEmail(),
-                    patient.getUser().getFirstName() + " " + patient.getUser().getLastName(),
-                    slot.getDoctor().getUser().getFirstName() + " " + slot.getDoctor().getUser().getLastName(),
-                    slot.getDoctor().getClinic().getName(),
-                    slot.getStartTime().toString());
-        } catch (Exception e) {
-            System.err.println("Randevu onay maili gönderilirken hata oluştu: " + e.getMessage());
-        }
-
-        return appointmentRepository.save(appointment);
+    // --- KRİTİK EKLEME: DUPLICATE ENTRY ENGELLEME ---
+    // Slot halihazırda başka bir randevuya atanmış mı veritabanından kesin kontrol et
+    if (appointmentRepository.existsBySlotId(slotId)) {
+        throw new BadRequestException("Bu randevu saati az önce başka bir hasta tarafından alındı. Lütfen sayfayı yenileyip başka bir saat seçiniz.");
     }
+
+    // --- KONTROL 1: AYNI SAATTE ÇAKIŞMA ---
+    appointmentRepository.findConflictDetail(patient.getId(), slot.getStartTime()).ifPresent(conflict -> {
+        String hName = conflict.getSlot().getDoctor().getClinic().getHospital().getName();
+        String cName = conflict.getSlot().getDoctor().getClinic().getName();
+        throw new BadRequestException("Bu saatte zaten " + hName + " (" + cName + ") randevunuz bulunuyor.");
+    });
+
+    // --- KONTROL 2: AYNI GÜN İÇİNDE BAŞKA RANDEVU ---
+    if (appointmentRepository.hasAnyAppointmentOnDate(patient.getId(), slot.getStartTime())) {
+        throw new BadRequestException("Aynı gün içerisinde sadece bir randevu alabilirsiniz. Lütfen mevcut randevunuzu iptal ediniz.");
+    }
+
+    // --- KONTROL 3: SLOT DURUMU (Yarış durumunu engellemek için çift kontrol) ---
+    if (slot.getStatus() != SlotStatus.AVAILABLE) {
+        throw new BadRequestException("Bu randevu saati şu an müsait değil.");
+    }
+
+    // --- KONTROL 4: CEZA DURUMU ---
+    if (penaltyService.hasActivePenalty(patient.getId())) {
+        throw new BadRequestException("Sisteme gelmediğiniz randevular nedeniyle geçici süreyle randevu alamazsınız.");
+    }
+
+    // --- RANDEVU OLUŞTURMA ---
+    Appointment appointment = new Appointment();
+    appointment.setPatient(patient);
+    appointment.setSlot(slot);
+    appointment.setStatus(AppointmentStatus.APPROVED);
+
+    // Slotu rezerve et
+    slot.setStatus(SlotStatus.BOOKED);
+    slotRepository.save(slot);
+
+    // Mail gönderimi
+    try {
+        mailService.sendAppointmentConfirmationMail(
+                patient.getUser().getEmail(),
+                patient.getUser().getFirstName() + " " + patient.getUser().getLastName(),
+                slot.getDoctor().getUser().getFirstName() + " " + slot.getDoctor().getUser().getLastName(),
+                slot.getDoctor().getClinic().getName(),
+                slot.getStartTime().toString());
+    } catch (Exception e) {
+        // Loglama yaparak kullanıcının randevusunun oluşmasını engellemiyoruz
+        System.err.println("Randevu onay maili gönderilirken hata oluştu: " + e.getMessage());
+    }
+
+    return appointmentRepository.save(appointment);
+}
     // HASTA RANDEVULARI
 // 1. TÜM RANDEVULAR
 public List<AppointmentResponseDTO> getPatientAppointments(Long userId) {
