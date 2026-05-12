@@ -870,58 +870,90 @@
                     alert("Sunucu hatası!");
                 }
             },
-            setupEventListeners: function () {
-                const slotForm = document.getElementById('slot-form');
-                if (slotForm) {
-                    slotForm.addEventListener('submit', async (e) => {
-                        e.preventDefault();
+setupEventListeners: function () {
+    const slotForm = document.getElementById('slot-form');
+    if (slotForm) {
+        slotForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-                        if (!window.doctorApp.activeDoctor || !window.doctorApp.activeDoctor.id) {
-                            alert("❌ Doktor verileri henüz yüklenmedi. Lütfen sayfayı yenileyip biraz bekleyin.");
-                            return;
-                        }
+            // Doktor verisi kontrolü
+            if (!window.doctorApp.activeDoctor || !window.doctorApp.activeDoctor.id) {
+                alert("❌ Doktor verileri henüz yüklenmedi. Lütfen sayfayı yenileyip biraz bekleyin.");
+                return;
+            }
 
-                        const startTime = document.getElementById('startTime')?.value;
-                        const endTime = document.getElementById('endTime')?.value;
+            const startTime = document.getElementById('startTime')?.value;
+            const endTime = document.getElementById('endTime')?.value;
 
-                        const payload = {
-                            startTime: startTime,
-                            endTime: endTime,
-                            doctor: { id: parseInt(window.doctorApp.activeDoctor.id) },
-                            status: "AVAILABLE"
-                        };
+            // --- 1. FRONTEND SÜRE KURALI KONTROLÜ (15-30 DK) ---
+            if (startTime && endTime) {
+                const start = new Date(`1970-01-01T${startTime}:00`);
+                const end = new Date(`1970-01-01T${endTime}:00`);
+                const diffInMinutes = (end - start) / (1000 * 60);
 
-
-                        try {
-                            const response = await fetch(`https://medsoft.up.railway.app/api/slots`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${this.token}`
-                                },
-                                body: JSON.stringify(payload)
-                            });
-
-
-
-                            if (response.ok) {
-                                const result = await response.json();
-
-                                alert("✅ Slot başarıyla oluşturuldu!");
-                                slotForm.reset();
-                                this.fetchSlots();
-                            } else {
-                                const error = await response.text();
-
-                                alert("❌ Slot oluşturulamadı! " + error);
-                            }
-                        } catch (error) {
-
-                            alert("Sunucu hatası! Lütfen tekrar deneyin.");
-                        }
-                    });
+                if (diffInMinutes < 0) {
+                    alert("❌ Bitiş saati başlangıç saatinden önce olamaz!");
+                    return;
                 }
-            },
+
+                if (diffInMinutes < 15 || diffInMinutes > 30) {
+                    alert(`❌ Slot süresi en az 15, en fazla 30 dakika olmalıdır. (Şu an: ${diffInMinutes} dk)`);
+                    return;
+                }
+            } else {
+                alert("❌ Lütfen başlangıç ve bitiş saatlerini seçin.");
+                return;
+            }
+
+            const payload = {
+                startTime: startTime,
+                endTime: endTime,
+                doctor: { id: parseInt(window.doctorApp.activeDoctor.id) },
+                status: "AVAILABLE"
+            };
+
+            try {
+                const response = await fetch(`https://medsoft.up.railway.app/api/slots`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert("✅ Slot başarıyla oluşturuldu!");
+                    slotForm.reset();
+                    this.fetchSlots();
+                } else {
+                    // --- 2. BACKEND'DEN GELEN ÖZEL HATA MESAJLARINI YAKALAMA ---
+                    let errorMsg = "";
+                    const contentType = response.headers.get("content-type");
+
+                    if (contentType && contentType.includes("application/json")) {
+                        try {
+                            const errorData = await response.json();
+                            // Spring Boot genelde hata mesajını 'message' alanında döner
+                            errorMsg = errorData.message || "Bilinmeyen bir hata oluştu.";
+                        } catch (e) {
+                            errorMsg = "Hata verisi okunamadı.";
+                        }
+                    } else {
+                        // Eğer backend direkt düz metin (text) dönüyorsa
+                        errorMsg = await response.text();
+                    }
+                    
+                    // Servis katmanında yazdığın "❌" içeren mesajlar burada görünür
+                    alert("❌ Slot oluşturulamadı! " + errorMsg);
+                }
+            } catch (error) {
+                console.error("Hata:", error);
+                alert("❌ Sunucu hatası! Lütfen internet bağlantınızı kontrol edip tekrar deneyin.");
+            }
+        });
+    }
+},
 
             showTab: function (tabId, element) {
                 document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));

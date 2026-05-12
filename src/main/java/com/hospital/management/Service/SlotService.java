@@ -64,29 +64,47 @@ public class SlotService {
 }
 
     @Transactional
-    public Slot createSlot(Slot slot) {
-        // 1. Veri kontrolü
-        if (slot.getDoctor() == null || slot.getDoctor().getId() == null) {
-            throw new BadRequestException("Doktor ID bilgisi eksik.");
-        }
+public Slot createSlot(Slot slot) {
+    // 1. Veri kontrolü
+    if (slot.getDoctor() == null || slot.getDoctor().getId() == null) {
+        throw new BadRequestException("Doktor ID bilgisi eksik.");
+    }
 
-        // 2. Veritabanından doktoru bul
-        Doctor doctor = doctorRepository.findById(slot.getDoctor().getId())
-                .orElseThrow(() -> new EntityNotFoundException("Doktor bulunamadı."));
+    // 2. Veritabanından doktoru bul
+    Doctor doctor = doctorRepository.findById(slot.getDoctor().getId())
+            .orElseThrow(() -> new EntityNotFoundException("Doktor bulunamadı."));
 
-        // 3. Eksik bilgileri tamamla
-        slot.setDoctor(doctor);
-        slot.setClinic(doctor.getClinic());
-        slot.setStatus(SlotStatus.AVAILABLE);
+    // 3. Eksik bilgileri tamamla
+    slot.setDoctor(doctor);
+    slot.setClinic(doctor.getClinic());
+    slot.setStatus(SlotStatus.AVAILABLE);
 
-        // 4. Güvenlik ve Tarih Kontrolleri
-        if (!SecurityUtil.isOwner(doctor.getUser().getId()) && !SecurityUtil.isAdmin()) {
-            throw new AccessDeniedException("Yetkisiz işlem!");
-        }
+    // 4. Güvenlik ve Mantıksal Kontroller
+    if (!SecurityUtil.isOwner(doctor.getUser().getId()) && !SecurityUtil.isAdmin()) {
+        throw new AccessDeniedException("Yetkisiz işlem!");
+    }
 
-        if (slot.getStartTime().isBefore(LocalDateTime.now())) {
-            throw new BadRequestException("Geçmiş tarihe slot eklenemez.");
-        }
+    // --- YENİ KONTROLLER BAŞLANGIÇ ---
+
+    // KURAL 1: Başlangıç ve Bitiş saati aynı olamaz
+    if (slot.getStartTime().isEqual(slot.getEndTime())) {
+        throw new BadRequestException("❌ Slotun başlangıç ve bitiş saati aynı olamaz.");
+    }
+
+    // KURAL 2: Bitiş saati başlangıçtan önce olamaz (Mantık hatası engelleme)
+    if (slot.getEndTime().isBefore(slot.getStartTime())) {
+        throw new BadRequestException("❌ Bitiş saati başlangıç saatinden önce olamaz.");
+    }
+
+    // KURAL 3: Slotun başlangıç ve bitişi aynı gün içerisinde olmalı
+    if (!slot.getStartTime().toLocalDate().isEqual(slot.getEndTime().toLocalDate())) {
+        throw new BadRequestException("❌ Bir slot sadece tek bir gün içinde tanımlanabilir. Gün aşırı slot oluşturulamaz.");
+    }
+
+    // KURAL 4: Geçmiş tarihe slot eklenemez
+    if (slot.getStartTime().isBefore(LocalDateTime.now())) {
+        throw new BadRequestException("❌ Geçmiş tarihe slot eklenemez.");
+    }
 
         // ÇAKIŞMA KONTROLÜ 
         checkSlotConflict(doctor.getId(), slot.getStartTime(), slot.getEndTime());

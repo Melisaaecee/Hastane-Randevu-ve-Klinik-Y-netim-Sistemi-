@@ -55,13 +55,22 @@ public class AppointmentService {
                     "Bu randevu saati az önce başka bir hasta tarafından alındı. Lütfen sayfayı yenileyip başka bir saat seçiniz.");
         }
 
-        // --- KONTROL 1: AYNI SAATTE ÇAKIŞMA ---
-        appointmentRepository.findConflictDetail(patient.getId(), slot.getStartTime()).ifPresent(conflict -> {
-            String hName = conflict.getSlot().getDoctor().getClinic().getHospital().getName();
-            String cName = conflict.getSlot().getDoctor().getClinic().getName();
-            throw new BadRequestException("Bu saatte zaten " + hName + " (" + cName + ") randevunuz bulunuyor.");
-        });
+      // --- KONTROL: AYNI TARİH VE SAATTE ÇAKIŞMA ---
+appointmentRepository.findConflictDetail(patient.getId(), slot.getStartTime()).ifPresent(conflict -> {
+    // Çakışan randevunun detaylarını alıyoruz
+    String hName = conflict.getSlot().getDoctor().getClinic().getHospital().getName();
+    String cName = conflict.getSlot().getDoctor().getClinic().getName();
+    String dName = conflict.getSlot().getDoctor().getUser().getFirstName() + " " + conflict.getSlot().getDoctor().getUser().getLastName();
+    
+    // Saat bilgisini kullanıcı dostu formata getiriyoruz (Örn: 14:30)
+    String timeStr = conflict.getSlot().getStartTime().toLocalTime().toString();
 
+    // İstediğin o özel ve engelleyici hata mesajı:
+    throw new BadRequestException(
+        "Aynı tarih ve saatte (" + timeStr + ") zaten " + hName + " (" + cName + ") bölümünde " + 
+        dName + " ile randevunuz bulunuyor. Bu randevuyu iptal etmeden aynı saate yeni randevu alamazsınız."
+    );
+});
         // --- KONTROL 2: AYNI GÜN İÇİNDE BAŞKA RANDEVU ---
         if (appointmentRepository.hasAnyAppointmentOnDate(patient.getId(), slot.getStartTime())) {
             throw new BadRequestException(
