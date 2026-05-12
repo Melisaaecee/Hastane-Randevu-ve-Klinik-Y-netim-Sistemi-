@@ -18,10 +18,19 @@ public class SlotController {
 
     private final SlotService slotService;
 
-    @GetMapping("/doctor/{doctorId}")
-    public ResponseEntity<List<Slot>> getAvailable(@PathVariable Long doctorId) {
-        return ResponseEntity.ok(slotService.getFutureAvailableSlots(doctorId));
+   @GetMapping("/doctor/{doctorId}")
+public ResponseEntity<List<Slot>> getAvailable(
+        @PathVariable Long doctorId,
+        @RequestParam(required = false) String date) { // 'date' parametresini opsiyonel yaptık
+
+    // Eğer URL'de ?date=2026-05-15 gibi bir tarih varsa
+    if (date != null && !date.isEmpty()) {
+        return ResponseEntity.ok(slotService.getSlotsByDoctorAndDate(doctorId, date));
     }
+    
+    // Eğer tarih seçilmemişse, mevcut sistemin gibi gelecekteki tüm müsait slotları döner
+    return ResponseEntity.ok(slotService.getFutureAvailableSlots(doctorId));
+}
 
     @GetMapping
     public ResponseEntity<List<Slot>> getAllSlots() {

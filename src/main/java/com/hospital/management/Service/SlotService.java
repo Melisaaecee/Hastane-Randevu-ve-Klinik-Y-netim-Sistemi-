@@ -13,7 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,6 +43,25 @@ public class SlotService {
     public List<Slot> getSlotsByDoctorId(Long doctorId) {
         return slotRepository.findByDoctorIdWithDetails(doctorId);
     }
+
+
+
+    public List<Slot> getSlotsByDoctorAndDate(Long doctorId, String dateStr) {
+    // 1. Frontend'den gelen "2026-05-15" gibi String'i LocalDate'e çeviriyoruz
+    LocalDate date = LocalDate.parse(dateStr);
+    
+    // 2. O günün başlangıcını (00:00:00) ve bitişini (23:59:59) belirliyoruz
+    LocalDateTime startOfDay = date.atStartOfDay(); 
+    LocalDateTime endOfDay = date.atTime(LocalTime.MAX); 
+
+    // 3. Repository'deki yeni metodunu kullanarak bu iki zaman arasındaki AVAILABLE slotları çekiyoruz
+    return slotRepository.findByDoctorIdAndStartTimeBetweenAndStatus(
+            doctorId, 
+            startOfDay, 
+            endOfDay, 
+            SlotStatus.AVAILABLE
+    );
+}
 
     @Transactional
     public Slot createSlot(Slot slot) {
