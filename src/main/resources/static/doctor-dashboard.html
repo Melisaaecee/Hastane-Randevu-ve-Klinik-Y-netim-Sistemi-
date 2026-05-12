@@ -903,7 +903,7 @@
                 }
             },
 
-          deleteSlot: async function (slotId) {
+     deleteSlot: async function (slotId) {
     if (!confirm("Bu slotu iptal etmek istediğinizden emin misiniz?")) return;
 
     try {
@@ -916,23 +916,6 @@
             }
         });
 
-<<<<<<< HEAD
-                    if (response.ok) {
-                        alert("✅ Slot iptal edildi!");
-                        this.fetchSlots();
-                    } else {
-                        alert("❌ Slot iptal edilemedi!");
-                    }
-                } catch (e) {
-                    alert("Sunucu hatası!");
-                }
-            },
-            setupEventListeners: function () {
-                const slotForm = document.getElementById('slot-form');
-                if (slotForm) {
-                    slotForm.addEventListener('submit', async (e) => {
-                        e.preventDefault();
-=======
         if (response.ok) {
             alert("✅ Slot başarıyla iptal edildi!");
             this.fetchSlots(); // Tabloyu yenile
@@ -952,12 +935,11 @@
         alert("❌ Sunucu hatası oluştu!");
     }
 },
-setupEventListeners: function () {
-    const slotForm = document.getElementById('slot-form');
-    if (slotForm) {
-        slotForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
->>>>>>> e09fd89 (doctor dashboard düzenlendi)
+            setupEventListeners: function () {
+                const slotForm = document.getElementById('slot-form');
+                if (slotForm) {
+                    slotForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
 
                         // Doktor verisi kontrolü
                         if (!window.doctorApp.activeDoctor || !window.doctorApp.activeDoctor.id) {
