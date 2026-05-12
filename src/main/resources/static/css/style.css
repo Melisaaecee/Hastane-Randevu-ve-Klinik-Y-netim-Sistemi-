@@ -1035,9 +1035,11 @@ select.form-control:disabled {
         padding: 20px;
     }
 }
+
 .toast-container {
     position: fixed;
-    top: -100px; /* Başlangıçta ekranın dışında */
+    top: -100px;
+    /* Başlangıçta ekranın dışında */
     left: 50%;
     transform: translateX(-50%);
     min-width: 300px;
@@ -1046,19 +1048,51 @@ select.form-control:disabled {
     color: white;
     font-weight: bold;
     z-index: 9999;
-    transition: top 0.5s ease-in-out; /* Kayma efekti */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: top 0.5s ease-in-out;
+    /* Kayma efekti */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
 }
 
 .toast-container.show {
-    top: 20px; /* Göründüğünde yukarıdan 20px aşağı inecek */
+    top: 20px;
+    /* Göründüğünde yukarıdan 20px aşağı inecek */
 }
 
 /* Başarı rengi */
-.toast-success { background-color: #2ecc71; }
-/* Hata rengi */
-.toast-error { background-color: #e74c3c; }
+.toast-success {
+    background-color: #2ecc71;
+}
 
-.toast-content i { margin-right: 10px; }
+/* Hata rengi */
+.toast-error {
+    background-color: #e74c3c;
+}
+
+.toast-content i {
+    margin-right: 10px;
+}
+
+/* style.css veya head içine ekleyin */
+.data-table {
+    width: 100%;
+    overflow-x: auto;
+    display: block;
+    white-space: nowrap;
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.data-table th {
+    background: #f8fafc;
+    font-weight: 600;
+    color: #475569;
+    position: sticky;
+    top: 0;
+}

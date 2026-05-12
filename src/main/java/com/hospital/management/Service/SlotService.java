@@ -23,9 +23,9 @@ import java.util.stream.Collectors;
 public class SlotService {
 
     private final SlotRepository slotRepository;
-    private final DoctorRepository doctorRepository; // Veritabanından çekmek için eklendi
+    private final DoctorRepository doctorRepository;
 
-    // GELECEK MÜSAİT SLOTLAR (Halka Açık Sorgu)
+    // GELECEK MÜSAİT SLOTLAR
     public List<Slot> getFutureAvailableSlots(Long doctorId) {
         return slotRepository
                 .findByDoctorIdAndStatusAndStartTimeAfter(
@@ -39,36 +39,68 @@ public class SlotService {
 
     // Doktorun slotlarını getir
     public List<Slot> getSlotsByDoctorId(Long doctorId) {
-        return slotRepository.findByDoctorIdWithDetails(doctorId); // ✅ Fetch join
+        return slotRepository.findByDoctorIdWithDetails(doctorId);
     }
 
-@Transactional
-public Slot createSlot(Slot slot) {
-    // 1. Veri kontrolü
-    if (slot.getDoctor() == null || slot.getDoctor().getId() == null) {
-        throw new BadRequestException("Doktor ID bilgisi eksik.");
+    @Transactional
+    public Slot createSlot(Slot slot) {
+        // 1. Veri kontrolü
+        if (slot.getDoctor() == null || slot.getDoctor().getId() == null) {
+            throw new BadRequestException("Doktor ID bilgisi eksik.");
+        }
+
+        // 2. Veritabanından doktoru bul
+        Doctor doctor = doctorRepository.findById(slot.getDoctor().getId())
+                .orElseThrow(() -> new EntityNotFoundException("Doktor bulunamadı."));
+
+        // 3. Eksik bilgileri tamamla
+        slot.setDoctor(doctor);
+        slot.setClinic(doctor.getClinic());
+        slot.setStatus(SlotStatus.AVAILABLE);
+
+        // 4. Güvenlik ve Tarih Kontrolleri
+        if (!SecurityUtil.isOwner(doctor.getUser().getId()) && !SecurityUtil.isAdmin()) {
+            throw new AccessDeniedException("Yetkisiz işlem!");
+        }
+
+        if (slot.getStartTime().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("Geçmiş tarihe slot eklenemez.");
+        }
+
+        // ÇAKIŞMA KONTROLÜ 
+        checkSlotConflict(doctor.getId(), slot.getStartTime(), slot.getEndTime());
+
+        return slotRepository.save(slot);
     }
 
-    // 2. Veritabanından doktoru bul (Kendi ID'si ile)
-    Doctor doctor = doctorRepository.findById(slot.getDoctor().getId())
-            .orElseThrow(() -> new EntityNotFoundException("Doktor bulunamadı."));
+    //  Slot çakışmasını kontrol et
+    private void checkSlotConflict(Long doctorId, LocalDateTime newStart, LocalDateTime newEnd) {
+        // Doktorun mevcut tüm slotlarını getir
+        List<Slot> existingSlots = slotRepository.findByDoctorIdWithDetails(doctorId);
 
-    // 3. Eksik bilgileri tamamla
-    slot.setDoctor(doctor);
-    slot.setClinic(doctor.getClinic()); 
-    slot.setStatus(SlotStatus.AVAILABLE);
+        for (Slot existing : existingSlots) {
+            LocalDateTime existingStart = existing.getStartTime();
+            LocalDateTime existingEnd = existing.getEndTime();
 
-    // 4. Güvenlik ve Tarih Kontrolleri (Senin mevcut kodun)
-    if (!SecurityUtil.isOwner(doctor.getUser().getId()) && !SecurityUtil.isAdmin()) {
-        throw new AccessDeniedException("Yetkisiz işlem!");
+
+            boolean isOverlap = (newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart));
+
+            if (isOverlap) {
+                throw new BadRequestException(
+                        String.format("❌ Slot çakışması! Bu saat aralığında zaten slot var.\n" +
+                                "Mevcut slot: %s - %s\n" +
+                                "Eklemek istediğiniz: %s - %s",
+                                formatTime(existingStart), formatTime(existingEnd),
+                                formatTime(newStart), formatTime(newEnd)));
+            }
+        }
     }
 
-    if (slot.getStartTime().isBefore(LocalDateTime.now())) {
-        throw new BadRequestException("Geçmiş tarihe slot eklenemez.");
+    // Yardımcı metod: Saat formatı
+    private String formatTime(LocalDateTime time) {
+        return time.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
     }
 
-    return slotRepository.save(slot);
-}
     // SLOT İPTAL (IDOR Korumalı)
     @Transactional
     public void cancelSlot(Long slotId) {

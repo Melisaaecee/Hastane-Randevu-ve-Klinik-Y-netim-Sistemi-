@@ -318,6 +318,8 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
+                                <th>Ad Soyad</th>
+                                <th>E-posta</th>
                                 <th>TCKN</th>
                                 <th>Rol</th>
                                 <th>İşlem</th>
@@ -334,12 +336,18 @@
             <div class="card">
                 <h2><i class="fas fa-calendar"></i> Randevular</h2>
                 <div class="table-container">
-                    <table>
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Hasta</th>
+                                <th>Hasta Ad Soyad</th>
+                                <th>Hasta TCKN</th>
                                 <th>Doktor</th>
+                                <th>Klinik</th>
+                                <th>Hastane</th>
+                                <th>Şehir</th>
+                                <th>İlçe</th>
+                                <th>Tarih & Saat</th>
                                 <th>Durum</th>
                                 <th>İşlem</th>
                             </tr>
@@ -720,30 +728,33 @@
             if (!tbody) return;
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">📋 Doktor bulunamadı</span></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">📋 Doktor bulunamadı</td></tr>';
                 return;
             }
 
             tbody.innerHTML = filtered.map(d => {
-                const firstName = d.user?.firstName || '';
-                const lastName = d.user?.lastName || '';
+                // ✅ DÜZELTİLDİ: firstName ve lastName'i doğru şekilde al
+                let firstName = d.user?.firstName || '';
+                let lastName = d.user?.lastName || '';
 
-                let cleanFirstName = firstName;
-                if (cleanFirstName.includes('Dr.')) {
-                    const parts = cleanFirstName.split('Dr.');
-                    if (parts.length > 1) {
-                        cleanFirstName = parts[1].trim();
-                    }
-                }
+                // İsim içindeki Dr. ifadesini temizle (varsa)
+                firstName = firstName.replace(/^Dr\.?\s*/i, '');
 
-                const fullName = `${cleanFirstName} ${lastName}`.trim();
+                // Ad Soyad birleştir
+                const fullName = `${firstName} ${lastName}`.trim();
 
+                // Uzmanlık (title) bilgisi
                 let specialty = d.specialization || '';
-                let displayTitle = '';
+                let displayTitle = '-';
+
                 if (specialty && specialty !== '' && specialty !== 'Uzmanlık Belirtilmemiş') {
                     displayTitle = specialty;
-                } else {
-                    displayTitle = '-';
+                }
+
+                // Ünvan varsa başına ekle (örn: "Prof. Dr." ise zaten fullName içinde olabilir)
+                // Eğer fullName "Prof." ile başlamıyorsa ve specialty varsa, specialty'yi ünvan olarak kullan
+                if (displayTitle !== '-' && !fullName.startsWith(displayTitle)) {
+                    // displayTitle zaten "Prof", "Uzm" gibi geliyor, "Dr." eklemeye gerek yok
                 }
 
                 const hospitalName = d.clinic?.hospital?.name || d.clinic?.name || '-';
@@ -751,15 +762,15 @@
 
                 return `
             <tr>
-                <td>${d.id}</span>
-                <td>${escapeHtml(fullName)}</span>
-                <td>${escapeHtml(displayTitle)}</span>
-                <td>${escapeHtml(hospitalName)}</span>
-                <td>${escapeHtml(clinicName)}</span>
+                <td>${d.id}</td>
+                <td>${escapeHtml(fullName || '-')}</td>
+                <td>${escapeHtml(displayTitle)}</td>
+                <td>${escapeHtml(hospitalName)}</td>
+                <td>${escapeHtml(clinicName)}</td>
                 <td class="action-buttons">
                     <button class="btn-delete" onclick="deleteDoctor(${d.id})">Sil</button>
-                </span>
-            </span>
+                </td>
+            </tr>
         `;
             }).join('');
         }
@@ -798,21 +809,26 @@
             }
         };
         // ================= USERS, APPOINTMENTS, SLOTS =================
+
         window.loadUsers = async function () {
             const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/users`);
             if (res) {
                 const data = await res.json();
                 document.getElementById("userTableBody").innerHTML = data.map(u => `
-            <tr>
-                <td>${u.id}</span>
-                <td>${u.tckn}</span>
-                <td>${u.role}</span>
-                <td><button class="btn-delete" onclick="deleteUser(${u.id})">Sil</button></span>
+        <tr>
+            <td>${u.id || '-'}</span>
+            <td>${u.firstName || ''} ${u.lastName || ''}</span>  <!-- Ad Soyad -->
+            <td>${u.email || '-'}</span>  <!-- Email -->
+            <td>${u.tckn || '-'}</span>
+            <td>${u.role ? u.role.replace("ROLE_", "") : '-'}</span>
+            <td class="action-buttons">
+                <button class="btn-delete" onclick="deleteUser(${u.id})">Sil</button>
             </span>
-        `).join("");
+        </span>
+    `).join("");
             }
         };
-        
+
         window.deleteUser = async function (id) {
             if (!confirm("Sil?")) return;
             const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/users/${id}`, { method: "DELETE" });
@@ -826,23 +842,26 @@
                 console.log("Randevu verileri:", data);
 
                 document.getElementById("appointmentTableBody").innerHTML = data.map(a => {
-                    // DOKTOR BİLGİLERİNİ AL
-                    let title = "";      
-                    let firstName = "";
-                    let lastName = "";
-
-                    // Farklı veri yapılarını kontrol et
-                    if (a.doctor) {
-                        if (a.doctor.user) {
-                            firstName = a.doctor.user.firstName || '';
-                            lastName = a.doctor.user.lastName || '';
-                            title = a.doctor.specialization || '';
-                        } else if (a.doctor.firstName) {
-                            firstName = a.doctor.firstName || '';
-                            lastName = a.doctor.lastName || '';
-                            title = a.doctor.specialization || '';
+                    // HASTA BİLGİLERİ
+                    let patientName = "Hasta Bilgisi Yok";
+                    let patientTckn = "-";
+                    if (a.patient) {
+                        if (a.patient.user) {
+                            patientName = `${a.patient.user.firstName || ''} ${a.patient.user.lastName || ''}`.trim();
+                            patientTckn = a.patient.user.tckn || '-';
+                        } else if (a.patient.firstName) {
+                            patientName = `${a.patient.firstName || ''} ${a.patient.lastName || ''}`.trim();
                         }
                     }
+
+                    // DOKTOR BİLGİLERİ
+                    let title = "";
+                    let firstName = "";
+                    let lastName = "";
+                    let clinicName = "Klinik Bilgisi Yok";
+                    let hospitalName = "Hastane Bilgisi Yok";
+                    let cityName = "Şehir Bilgisi Yok";
+                    let districtName = "İlçe Bilgisi Yok";
 
                     // Slot üzerinden doktor bilgisi
                     if (a.slot?.doctor) {
@@ -855,34 +874,32 @@
                             lastName = a.slot.doctor.lastName || '';
                             title = a.slot.doctor.specialization || '';
                         }
-                    }
 
-                    // DOKTOR İSMİNİ OLUŞTUR: "Prof. Dr. Ahmet Yılmaz" formatında
-                    let doctorName = "Doktor Atanmamış";
-
-                    if (title && (firstName || lastName)) {
-                        // Ünvan + Dr. + Ad Soyad (sistem Dr. kısmını otomatik ekliyor)
-                        doctorName = `${title} Dr. ${firstName} ${lastName}`.trim();
-                    } else if (title) {
-                        // Sadece ünvan varsa
-                        doctorName = `${title} Dr.`;
-                    } else if (firstName || lastName) {
-                        // Sadece isim varsa
-                        doctorName = `Dr. ${firstName} ${lastName}`.trim();
-                    }
-
-                    // Fazla boşlukları temizle
-                    doctorName = doctorName.replace(/\s+/g, ' ').trim();
-
-                    // HASTA BİLGİSİ
-                    let patientName = "Hasta Bilgisi Yok";
-                    if (a.patient) {
-                        if (a.patient.user) {
-                            patientName = `${a.patient.user.firstName || ''} ${a.patient.user.lastName || ''}`.trim();
-                        } else if (a.patient.firstName) {
-                            patientName = `${a.patient.firstName || ''} ${a.patient.lastName || ''}`.trim();
+                        // Klinik bilgisi
+                        if (a.slot.doctor.clinic) {
+                            clinicName = a.slot.doctor.clinic.name || 'Klinik Bilgisi Yok';
+                            if (a.slot.doctor.clinic.hospital) {
+                                hospitalName = a.slot.doctor.clinic.hospital.name || 'Hastane Bilgisi Yok';
+                                if (a.slot.doctor.clinic.hospital.district) {
+                                    districtName = a.slot.doctor.clinic.hospital.district.name || 'İlçe Bilgisi Yok';
+                                    if (a.slot.doctor.clinic.hospital.district.city) {
+                                        cityName = a.slot.doctor.clinic.hospital.district.city.name || 'Şehir Bilgisi Yok';
+                                    }
+                                }
+                            }
                         }
                     }
+
+                    // DOKTOR İSMİ OLUŞTUR
+                    let doctorName = "Doktor Atanmamış";
+                    if (title && (firstName || lastName)) {
+                        doctorName = `${title} Dr. ${firstName} ${lastName}`.trim();
+                    } else if (title) {
+                        doctorName = `${title} Dr.`;
+                    } else if (firstName || lastName) {
+                        doctorName = `Dr. ${firstName} ${lastName}`.trim();
+                    }
+                    doctorName = doctorName.replace(/\s+/g, ' ').trim();
 
                     // TARİH BİLGİSİ
                     let appointmentDate = "-";
@@ -897,7 +914,7 @@
                         });
                     }
 
-                    // Durum badge'i için renk sınıfı
+                    // DURUM
                     let statusClass = '';
                     let statusText = a.status || 'UNKNOWN';
                     switch (statusText) {
@@ -912,12 +929,17 @@
         <tr>
             <td>${a.id || '-'}</span>
             <td>${escapeHtml(patientName)}</span>
+            <td>${escapeHtml(patientTckn)}</span>
             <td>${escapeHtml(doctorName)}</span>
+            <td>${escapeHtml(clinicName)}</span>
+            <td>${escapeHtml(hospitalName)}</span>
+            <td>${escapeHtml(cityName)}</span>
+            <td>${escapeHtml(districtName)}</span>
             <td>${appointmentDate}</span>
             <td><span class="status-badge ${statusClass}">${statusText}</span></span>
             <td class="action-buttons">
                 <button class="btn-delete" onclick="cancelAppointment(${a.id})">İptal</button>
-            </td>
+            </span>
         </span>
         `;
                 }).join('');

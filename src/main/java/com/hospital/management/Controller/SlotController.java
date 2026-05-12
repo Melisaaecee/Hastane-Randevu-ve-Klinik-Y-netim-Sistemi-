@@ -3,9 +3,8 @@ package com.hospital.management.Controller;
 import com.hospital.management.Entity.Slot;
 import com.hospital.management.Service.SlotService;
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.http.HttpStatus; // Eklendi
-import org.springframework.http.ResponseEntity; // Eklendi
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity; 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,8 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/slots")
 @RequiredArgsConstructor
-// @CrossOrigin(origins = "http://127.0.0.1:5500") // Eğer SecurityConfig'deki
-// çalışmazsa burayı açarsın
+
 public class SlotController {
 
     private final SlotService slotService;
@@ -41,6 +39,6 @@ public class SlotController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<Void> cancel(@PathVariable Long id) {
         slotService.cancelSlot(id);
-        return ResponseEntity.noContent().build(); // 204 No Content döner
+        return ResponseEntity.noContent().build();
     }
 }
