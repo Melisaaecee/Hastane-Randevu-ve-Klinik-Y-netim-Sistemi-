@@ -27,7 +27,7 @@ public class MailService {
 
         message.setSubject("Hastane Yönetim Sistemi | Şifre Sıfırlama Talebi");
 
-        String resetUrl = "http://localhost:8080/reset-password.html?token=" + token;
+        String resetUrl = "https://medsoft.up.railway.app/reset-password.html?token=" + token;
         String emailContent = "Sayın Kullanıcımız,\n\n" +
                 "Hesabınız için şifre sıfırlama talebinde bulundunuz. " +
                 "Aşağıdaki bağlantıya tıklayarak yeni şifrenizi belirleyebilirsiniz:\n\n" +
@@ -64,7 +64,7 @@ public class MailService {
     }
 
 
-    @Transactional
+    
     public void sendPenaltyMail(String to, String fullName, String appointmentDate) {
         SimpleMailMessage message = new SimpleMailMessage();
 
@@ -85,7 +85,7 @@ public class MailService {
     }
 
 
-    @Transactional
+    
 public void sendAppointmentConfirmationMail(String to, String fullName, String doctorName, String clinicName, String appointmentDate) {
     SimpleMailMessage message = new SimpleMailMessage();
     message.setFrom("akilli.kutuphane6@gmail.com");
