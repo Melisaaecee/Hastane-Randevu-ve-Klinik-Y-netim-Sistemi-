@@ -37,11 +37,27 @@ public class SecurityConfig {
                                 .cors(Customizer.withDefaults())
                                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .headers(headers -> headers
-                                                .frameOptions(frame -> frame.sameOrigin())
+                                                // Clickjacking koruması: Sayfanın başka sitede iframe içinde açılmasını
+                                                // engeller
+                                                .frameOptions(frame -> frame.deny())
+                                                // XSS Koruması: Tarayıcıdaki XSS filtresini aktif eder ve bloklar
                                                 .xssProtection(xss -> xss.headerValue(
                                                                 org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+                                                // CSP Politikası: Sadece güvenli kaynaklardan veri yüklenmesine izin
+                                                // verir
                                                 .contentSecurityPolicy(cps -> cps.policyDirectives(
-                                                                "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com")))
+                                                                "default-src 'self'; " +
+                                                                                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; "
+                                                                                +
+                                                                                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
+                                                                                +
+                                                                                "font-src 'self' https://fonts.gstatic.com; "
+                                                                                +
+                                                                                "img-src 'self' data: https:; " +
+                                                                                "connect-src 'self' https://medsoft.up.railway.app; "
+                                                                                +
+                                                                                "base-uri 'self'; " +
+                                                                                "form-action 'self'")))
                                 .authorizeHttpRequests(auth -> auth
                                                 // 1. STATİK DOSYALAR (Herkes erişebilmeli)
                                                 .requestMatchers(
@@ -70,8 +86,6 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/cities/**", "/api/districts/**").permitAll()
                                                 .requestMatchers("/api/doctors/**").permitAll()
                                                 .requestMatchers("/api/slots/**").permitAll()
-
-                                                // ÖNEMLİ: Railway sağlık kontrolleri (health checks) için gerekebilir
                                                 .requestMatchers("/actuator/**").permitAll()
 
                                                 // 3. ROL BAZLI ERİŞİM
@@ -84,8 +98,8 @@ public class SecurityConfig {
                                                 .authenticationEntryPoint((request, response, authException) -> {
                                                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                                                         response.setContentType("application/json");
-                                                        response.getWriter()
-                                                                        .write("{\"message\": \"Kimlik dogrulama basarisiz veya yetkiniz yok.\"}");
+                                                        response.getWriter().write(
+                                                                        "{\"message\": \"Kimlik dogrulama basarisiz veya yetkiniz yok.\"}");
                                                 }))
                                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -95,20 +109,15 @@ public class SecurityConfig {
         @Bean
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
-
-                // Railway ve Localhost için CORS ayarları
                 configuration.setAllowedOrigins(Arrays.asList(
                                 "http://localhost:8080",
-                                "http://127.0.0.1:5500", // Live Server için
-                                "https://medsoft.up.railway.app", // Kendi Railway adresin
-                                "https://medsoft.com" // Eklediğin özel domain
-                ));
-
+                                "http://127.0.0.1:5500",
+                                "https://medsoft.up.railway.app"));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
                 configuration.setAllowedHeaders(
                                 Arrays.asList("Authorization", "Content-Type", "Accept", "X-Requested-With"));
                 configuration.setAllowCredentials(true);
-                configuration.setMaxAge(3600L); // Tarayıcı önbelleği için
+                configuration.setMaxAge(3600L);
 
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                 source.registerCorsConfiguration("/**", configuration);
