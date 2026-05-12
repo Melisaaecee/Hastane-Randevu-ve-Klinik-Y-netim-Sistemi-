@@ -559,12 +559,12 @@
                     hospitalsData = await res.json();
                     renderHospitals();
                 } else {
-                    console.error("Hastaneler yüklenemedi");
+                    
                     hospitalsData = [];
                     renderHospitals();
                 }
             } catch (error) {
-                console.error("Hastane yükleme hatası:", error);
+              
                 hospitalsData = [];
                 renderHospitals();
             }
@@ -630,7 +630,7 @@
                     alert("Hata: " + (errorText || "Hastane eklenemedi"));
                 }
             } catch (error) {
-                console.error("Ekleme hatası:", error);
+               
                 alert("Hastane eklenirken bir hata oluştu");
             }
         };
@@ -706,12 +706,12 @@
                     doctorsData = await res.json();
                     renderDoctors();
                 } else {
-                    console.error("❌ Doktorlar yüklenemedi");
+                  
                     doctorsData = [];
                     renderDoctors();
                 }
             } catch (error) {
-                console.error("❌ Doktor yükleme hatası:", error);
+                
                 doctorsData = [];
                 renderDoctors();
             }
@@ -787,20 +787,19 @@
                     }
                 });
 
-                console.log("🔵 Response status:", response.status);
-
+          
                 if (response.ok) {
                     const result = await response.json();
-                    console.log("🔵 Response:", result);
+                   
                     alert("✅ Doktor başarıyla silindi!");
                     await loadDoctors();
                 } else {
                     const error = await response.text();
-                    console.error("🔴 Hata:", error);
+                   
                     alert("❌ Silinemedi! Status: " + response.status + "\n" + error);
                 }
             } catch (error) {
-                console.error("🔴 Silme hatası:", error);
+                
                 alert("❌ Hata: " + error.message);
             }
         };
@@ -1169,8 +1168,9 @@
                                     filtered.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
                             }
                         }
-                    } catch (error) {
-                        console.error("Klinik yükleme hatası:", error);
+                    } catch
+                    (error) {
+                        alert(" Klinikler yüklenirken hata oluştu!");
                     }
                 });
             }

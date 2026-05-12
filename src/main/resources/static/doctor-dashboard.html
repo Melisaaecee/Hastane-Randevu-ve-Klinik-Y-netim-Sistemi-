@@ -355,7 +355,7 @@
                         if (statusSpan) statusSpan.style.display = 'none';
                     }
                 } catch (error) {
-                    console.error("Güncelleme hatası:", error);
+
                     alert("Güncellenirken bir hata oluştu!");
                     if (statusSpan) statusSpan.style.display = 'none';
                 }
@@ -417,7 +417,7 @@
                         if (statusSpan) statusSpan.style.display = 'none';
                     }
                 } catch (error) {
-                    console.error("Güncelleme hatası:", error);
+
                     alert("Güncellenirken bir hata oluştu!");
                     if (statusSpan) statusSpan.style.display = 'none';
                 }
@@ -472,7 +472,7 @@
                         if (statusSpan) statusSpan.style.display = 'none';
                     }
                 } catch (e) {
-                    console.error("Email doğrulama hatası:", e);
+
                     alert("Hata!");
                     if (statusSpan) statusSpan.style.display = 'none';
                 }
@@ -525,7 +525,7 @@
                         if (statusSpan) statusSpan.style.display = 'none';
                     }
                 } catch (e) {
-                    console.error("Email onaylama hatası:", e);
+
                     alert("Hata!");
                     if (statusSpan) statusSpan.style.display = 'none';
                 }
@@ -589,7 +589,7 @@
                         if (statusSpan) statusSpan.style.display = 'none';
                     }
                 } catch (e) {
-                    console.error("Şifre değiştirme hatası:", e);
+
                     alert("Bağlantı hatası! Lütfen tekrar deneyin.");
                     if (statusSpan) statusSpan.style.display = 'none';
                 }
@@ -616,7 +616,7 @@
                         this.activeDoctor = { specialization: "Belirtilmemiş", clinic: { name: "-" } };
                     }
                 } catch (error) {
-                    console.error("Doktor verileri yüklenemedi:", error);
+
                     this.activeDoctor = { specialization: "Bağlantı Hatası", clinic: { name: "-" } };
                 }
             },
@@ -736,7 +736,7 @@
                     }).join('');
 
                 } catch (e) {
-                    console.error("Randevu hatası:", e);
+
                     tbody.innerHTML = '<tr><td colspan="5">❌ Randevular yüklenirken bir hata oluştu: ' + e.message + '<\/td><\/tr>';
                 }
             },
@@ -792,7 +792,6 @@
                         headers: { 'Authorization': `Bearer ${this.token}` }
                     });
 
-                    console.log("Slot API yanıt durumu:", response.status);
 
                     if (response.status === 401) {
                         tbody.innerHTML = '<tr><td colspan="4">Oturum süresi doldu! <button onclick="window.doctorApp.logout()">Tekrar Giriş Yap<\/button><\/td><\/tr>';
@@ -804,7 +803,7 @@
                     }
 
                     const slots = await response.json();
-                    console.log("Gelen slotlar:", slots);
+
 
                     if (!slots || slots.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="4">📅 Henüz slot oluşturulmamış.<\/td><\/tr>';
@@ -831,7 +830,7 @@
                     }).join('');
 
                 } catch (e) {
-                    console.error("Slot hatası:", e);
+
                     tbody.innerHTML = '<tr><td colspan="4">❌ Slotlar yüklenemedi. Lütfen sayfayı yenileyin.<\/td><\/tr>';
                 }
             },
@@ -876,7 +875,6 @@
                             status: "AVAILABLE"
                         };
 
-                        console.log("🔵 Gönderilen veri:", payload);
 
                         try {
                             const response = await fetch(`https://medsoft.up.railway.app/api/slots`, {
@@ -888,21 +886,21 @@
                                 body: JSON.stringify(payload)
                             });
 
-                            console.log("🔵 Slot oluşturma yanıtı:", response.status);
+
 
                             if (response.ok) {
                                 const result = await response.json();
-                                console.log("✅ Slot oluşturuldu:", result);
+
                                 alert("✅ Slot başarıyla oluşturuldu!");
                                 slotForm.reset();
                                 this.fetchSlots();
                             } else {
                                 const error = await response.text();
-                                console.error("❌ Slot hatası:", error);
+
                                 alert("❌ Slot oluşturulamadı! " + error);
                             }
                         } catch (error) {
-                            console.error("❌ Slot hatası:", error);
+
                             alert("Sunucu hatası! Lütfen tekrar deneyin.");
                         }
                     });
