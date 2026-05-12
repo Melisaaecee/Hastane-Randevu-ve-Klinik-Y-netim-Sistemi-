@@ -92,15 +92,23 @@ public void sendAppointmentConfirmationMail(String to, String fullName, String d
     message.setTo(to);
     message.setSubject("Randevunuz Onaylandı | " + clinicName);
 
+    // Railway üzerindeki canlı uygulama adresin
+    String appointmentUrl = "https://medsoft.up.railway.app/patient.html"; 
+
     String emailContent = "Sayın " + fullName + ",\n\n" +
             "Randevunuz başarıyla oluşturulmuştur. Bilgileriniz aşağıdadır:\n\n" +
             "Klinik: " + clinicName + "\n" +
             "Doktor: " + doctorName + "\n" +
             "Tarih ve Saat: " + appointmentDate + "\n\n" +
+            "Randevularınızı yönetmek ve detayları incelemek için aşağıdaki bağlantıyı kullanabilirsiniz:\n" +
+            appointmentUrl + "\n\n" +
             "Randevunuza gidemeyecek durumdaysanız, lütfen sistem üzerinden en geç 24 saat öncesine kadar iptal ediniz.\n\n" +
             "Sağlıklı günler dileriz,\nHastane Yönetim Sistemi Ekibi";
 
     message.setText(emailContent);
+    
+    // NOT: Bu satır Railway'de timeout aldığı için randevunun oluşmasını engelliyordu.
+    // AppointmentService içinde bunu try-catch ile sardığından emin ol!
     mailSender.send(message);
 }
 }
