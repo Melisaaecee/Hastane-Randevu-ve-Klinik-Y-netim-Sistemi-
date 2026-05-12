@@ -89,55 +89,6 @@ public class AppointmentService {
         slot.setStatus(SlotStatus.BOOKED);
         slotRepository.save(slot);
 
-        // Mail gönderimi
-        try {
-            mailService.sendAppointmentConfirmationMail(
-                    patient.getUser().getEmail(),
-                    patient.getUser().getFirstName() + " " + patient.getUser().getLastName(),
-                    slot.getDoctor().getUser().getFirstName() + " " + slot.getDoctor().getUser().getLastName(),
-                    slot.getDoctor().getClinic().getName(),
-                    slot.getStartTime().toString());
-        } catch (Exception e) {
-            // Loglama yaparak kullanıcının randevusunun oluşmasını engellemiyoruz
-            System.err.println("Randevu onay maili gönderilirken hata oluştu: " + e.getMessage());
-        }
-
-        return appointmentRepository.save(appointment);
-    }
-
-<<<<<<< HEAD
-    // --- KONTROL 1: AYNI SAATTE ÇAKIŞMA ---
-    appointmentRepository.findConflictDetail(patient.getId(), slot.getStartTime()).ifPresent(conflict -> {
-        String hName = conflict.getSlot().getDoctor().getClinic().getHospital().getName();
-        String cName = conflict.getSlot().getDoctor().getClinic().getName();
-        throw new BadRequestException("Bu saatte zaten " + hName + " (" + cName + ") randevunuz bulunuyor.");
-    });
-
-    // --- KONTROL 2: AYNI GÜN İÇİNDE BAŞKA RANDEVU ---
-    if (appointmentRepository.hasAnyAppointmentOnDate(patient.getId(), slot.getStartTime())) {
-        throw new BadRequestException("Aynı gün içerisinde sadece bir randevu alabilirsiniz. Lütfen mevcut randevunuzu iptal ediniz.");
-    }
-
-    // --- KONTROL 3: SLOT DURUMU (Yarış durumunu engellemek için çift kontrol) ---
-    if (slot.getStatus() != SlotStatus.AVAILABLE) {
-        throw new BadRequestException("Bu randevu saati şu an müsait değil.");
-    }
-
-    // --- KONTROL 4: CEZA DURUMU ---
-    if (penaltyService.hasActivePenalty(patient.getId())) {
-        throw new BadRequestException("Sisteme gelmediğiniz randevular nedeniyle geçici süreyle randevu alamazsınız.");
-    }
-
-    // --- RANDEVU OLUŞTURMA ---
-    Appointment appointment = new Appointment();
-    appointment.setPatient(patient);
-    appointment.setSlot(slot);
-    appointment.setStatus(AppointmentStatus.APPROVED);
-
-    // Slotu rezerve et
-    slot.setStatus(SlotStatus.BOOKED);
-    slotRepository.save(slot);
-
 // Mail gönderimi
     try {
         // Mail gönderme işlemini çağırıyoruz
@@ -156,8 +107,6 @@ public class AppointmentService {
     // Mail gitse de gitmese de randevuyu kaydedip sonucu dönüyoruz.
     return appointmentRepository.save(appointment);
 }
-=======
->>>>>>> e9583975759495fa3d858402e6b392b93350e4ad
     // HASTA RANDEVULARI
     // 1. TÜM RANDEVULAR
     public List<AppointmentResponseDTO> getPatientAppointments(Long userId) {
