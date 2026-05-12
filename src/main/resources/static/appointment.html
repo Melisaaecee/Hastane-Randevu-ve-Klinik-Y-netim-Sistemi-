@@ -217,14 +217,18 @@
     <script> 
 
    
-const BASE_URL = 'https://medsoft.up.railway.app/api';
-// appointment.js en üst kısım
-const authData = JSON.parse(localStorage.getItem('user'));
-const token = authData ? authData.token : null;
-const patientId = authData ? authData.user.id : null; 
+// appointment.js - TAMAMEN YENİ VERSİYON
 
-if (!token) {
-    console.error("Token bulunamadı!");
+const BASE_URL = 'https://medsoft.up.railway.app/api';
+
+// Her seferinde güncel token'ı al
+function getAuthData() {
+    const authData = JSON.parse(localStorage.getItem('user'));
+    if (!authData || !authData.token) {
+        console.error("❌ Oturum verisi bulunamadı!");
+        return null;
+    }
+    return authData;
 }
 
 // Element tanımlamaları
@@ -243,6 +247,14 @@ let selectedSlotId = null;
 
 // Sayfa yüklendiğinde Şehirleri getir
 document.addEventListener('DOMContentLoaded', () => {
+    const authData = getAuthData();
+    if (!authData) {
+        showToast("Lütfen tekrar giriş yapın!", "error");
+        setTimeout(() => {
+            window.parent.location.href = 'index.html';
+        }, 2000);
+        return;
+    }
     fetchData('/cities', (data) => fillSelect(selects.city, data, "Şehir Seçin"));
 });
 
@@ -286,28 +298,39 @@ selects.doctor.addEventListener('change', () => {
 // YARDIMCI FONKSİYONLAR
 
 async function fetchData(endpoint, callback) {
+    const authData = getAuthData();
+    if (!authData) return;
+    
     try {
         const response = await fetch(`${BASE_URL}${endpoint}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${authData.token}` }
         });
+        
+        if (response.status === 401) {
+            showToast("Oturum süreniz doldu! Lütfen tekrar giriş yapın.", "error");
+            setTimeout(() => {
+                localStorage.clear();
+                window.parent.location.href = 'index.html';
+            }, 2000);
+            return;
+        }
+        
         const data = await response.json();
         callback(data);
     } catch (error) {
         console.error("Veri çekme hatası:", error);
     }
 }
+
 function fillSelect(selectElement, data, placeholder) {
     selectElement.innerHTML = `<option value="">${placeholder}</option>`;
     
     data.forEach(item => {
         let name = "";
         
-        // Eğer bu bir Doktor objesi ise (user alanı varsa)
         if (item.user && item.user.firstName) {
             name = ` ${item.user.firstName} ${item.user.lastName} (${item.specialization || 'Uzm.'})`;
-        } 
-        // Eğer City/Hospital/Clinic gibi düz isim içeren bir objeyse
-        else {
+        } else {
             name = item.name || "İsimsiz Kayıt";
         }
 
@@ -329,17 +352,15 @@ function resetSelects(keys) {
 
 function renderSlots(slots) {
     slotGrid.innerHTML = '';
-    // appointment.js içindeki hata mesajını basan yeri bul ve şununla değiştir:
-if (slots.length === 0) {
-    slotGrid.innerHTML = `
-        <div class="no-slot-msg">
-            <i class="fas fa-exclamation-circle"></i>
-            Bu doktor için şu an uygun randevu saati bulunmamaktadır.
-        </div>
-    `;
-    confirmBtn.style.display = 'none'; // Butonu da gizlemiş olursun
-}
-     else {
+    if (slots.length === 0) {
+        slotGrid.innerHTML = `
+            <div class="no-slot-msg">
+                <i class="fas fa-exclamation-circle"></i>
+                Bu doktor için şu an uygun randevu saati bulunmamaktadır.
+            </div>
+        `;
+        confirmBtn.style.display = 'none';
+    } else {
         slots.forEach(slot => {
             const date = new Date(slot.startTime);
             const timeStr = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
@@ -359,9 +380,6 @@ if (slots.length === 0) {
     slotSection.style.display = 'block';
 }
 
-
-
-
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toastNotification');
     const msgSpan = document.getElementById('toastMessage');
@@ -371,36 +389,53 @@ function showToast(message, type = 'success') {
 
     msgSpan.innerText = message;
     
-    // Sınıfları temizle ve yeni tipi ekle
     toast.className = 'toast-container';
     toast.classList.add(type === 'success' ? 'toast-success' : 'toast-error');
-    
-    // İkonu ayarla
     icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
-
-    // Göster
     toast.classList.add('show');
 
-    // 3 saniye sonra gizle
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);
 }
 
 /**
- * RANDEVU ONAYI (POST)
+ * RANDEVU ONAYI (POST) - DÜZELTİLMİŞ VERSİYON
  */
 confirmBtn.addEventListener('click', async () => {
-    const currentPatientId = authData?.user?.id;
+    const authData = getAuthData();
     
-    // Basit bir kontrol: ID veya Slot seçimi yoksa durdur
-    if (!currentPatientId || !selectedSlotId) {
+    if (!authData) {
+        showToast("Oturum bilgileriniz bulunamadı. Lütfen tekrar giriş yapın.", "error");
+        setTimeout(() => {
+            window.parent.location.href = 'index.html';
+        }, 2000);
+        return;
+    }
+    
+    const currentUserId = authData.user.id;
+    const token = authData.token;
+    
+    console.log("🔍 Randevu oluşturma denemesi:");
+    console.log("   - Kullanıcı ID:", currentUserId);
+    console.log("   - Seçilen Slot ID:", selectedSlotId);
+    console.log("   - Token var mı:", !!token);
+    console.log("   - Kullanıcı rolü:", authData.user.role);
+    
+    if (!currentUserId || !selectedSlotId) {
         showToast("Lütfen önce bir randevu saati seçiniz!", "error");
+        return;
+    }
+    
+    // Rol kontrolü
+    if (authData.user.role !== 'PATIENT' && authData.user.role !== 'ADMIN') {
+        showToast("Randevu alma yetkiniz yok. Sadece hastalar randevu alabilir.", "error");
+        console.error("❌ Yetkisiz rol:", authData.user.role);
         return;
     }
 
     try {
-        const response = await fetch(`${BASE_URL}/appointments?userId=${currentPatientId}&slotId=${selectedSlotId}`, {
+        const response = await fetch(`${BASE_URL}/appointments?userId=${currentUserId}&slotId=${selectedSlotId}`, {
             method: 'POST',
             headers: { 
                 'Authorization': `Bearer ${token}`,
@@ -408,38 +443,47 @@ confirmBtn.addEventListener('click', async () => {
             }
         });
 
-        // Backend'den gelen cevabı JSON olarak al
-        const data = await response.json();
+        console.log("📡 Response status:", response.status);
+        
+        // Önce response text olarak al (daha iyi hata ayıklama için)
+        const responseText = await response.text();
+        console.log("📡 Response body:", responseText);
+        
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch(e) {
+            data = { message: responseText };
+        }
 
         if (response.ok) {
-            // BAŞARILI DURUM
             showToast("✅ Randevunuz başarıyla oluşturuldu!", "success");
-
-            // Kullanıcı bildirimi görsün diye 2 saniye bekleyip yönlendiriyoruz
+            
             setTimeout(() => {
                 if (window.parent && typeof window.parent.showSection === 'function') {
-                    // Ana sayfadaki Randevularım sekmesine geç
-                    window.parent.showSection('appointments'); 
-                    // Tabloyu güncelle
+                    window.parent.showSection('appointments');
                     if (typeof window.parent.filterAppointments === 'function') {
                         window.parent.filterAppointments('all');
                     }
                 } else {
-                    location.reload(); 
+                    location.reload();
                 }
             }, 2000);
-
+        } else if (response.status === 401) {
+            showToast("Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.", "error");
+            setTimeout(() => {
+                localStorage.clear();
+                window.parent.location.href = 'index.html';
+            }, 2000);
         } else {
-            // HATALI DURUM (Backend'den gelen mesaj: Ceza, Çakışma vb.)
             showToast(data.message || "Randevu oluşturulamadı.", "error");
         }
 
     } catch (error) {
-        console.error("Hata detayı:", error);
-        showToast("🚀 Sunucuyla bağlantı kurulamadı veya sistem hatası.", "error");
+        console.error("❌ Hata detayı:", error);
+        showToast("Sunucuyla bağlantı kurulamadı.", "error");
     }
 });
-
         </script>
 </body>
 
