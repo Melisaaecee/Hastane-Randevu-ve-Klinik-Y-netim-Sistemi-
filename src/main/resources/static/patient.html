@@ -166,7 +166,7 @@
                     <button class="btn-update" onclick="handlePasswordUpdate()">Şifreyi Değiştir</button>
                 </div>
 
-                <div class="settings-card">
+              <!--  <div class="settings-card">
                     <h3><i class="fas fa-envelope"></i> E-posta Güncelle</h3>
                     <div id="emailStep1">
                         <div class="input-field-group">
@@ -182,7 +182,8 @@
                         </div>
                         <button class="btn-update" onclick="confirmEmailUpdate()">Güncellemeyi Onayla</button>
                     </div>
-                </div>
+                </div>-->
+                
             </div>
         </section>
 
@@ -422,7 +423,7 @@
             window.location.href = 'index.html';
         };
 
-        window.sendEmailVerification = async function () {
+       /* window.sendEmailVerification = async function () {
             const email = document.getElementById("newEmail")?.value;
 
             if (!email) {
@@ -476,7 +477,7 @@
             }
         };
 
-        window.confirmEmailUpdate = async function () {
+       window.confirmEmailUpdate = async function () {
             const code = document.getElementById("emailVerifyCode")?.value;
             const email = document.getElementById("newEmail")?.value;
             const confirmBtn = event.target;
@@ -525,7 +526,7 @@
                 confirmBtn.disabled = false;
                 confirmBtn.innerHTML = 'Onayla';
             }
-        };
+        };*/
         window.cancelAppointment = async function (appointmentId) {
             if (!confirm("Bu randevuyu iptal etmek istediğinize emin misiniz? (24 saat kuralı geçerlidir)")) return;
 
