@@ -390,10 +390,12 @@ function showToast(message, type = 'success') {
 /**
  * RANDEVU ONAYI (POST)
  */
+/**
+ * RANDEVU ONAYI (POST)
+ */
 confirmBtn.addEventListener('click', async () => {
     const currentPatientId = authData?.user?.id;
     
-    // Basit bir kontrol: ID veya Slot seçimi yoksa durdur
     if (!currentPatientId || !selectedSlotId) {
         showToast("Lütfen önce bir randevu saati seçiniz!", "error");
         return;
@@ -408,19 +410,15 @@ confirmBtn.addEventListener('click', async () => {
             }
         });
 
-        // Backend'den gelen cevabı JSON olarak al
+        // Backend'den gelen cevabı al
         const data = await response.json();
 
         if (response.ok) {
-            // BAŞARILI DURUM
             showToast("✅ Randevunuz başarıyla oluşturuldu!", "success");
 
-            // Kullanıcı bildirimi görsün diye 2 saniye bekleyip yönlendiriyoruz
             setTimeout(() => {
                 if (window.parent && typeof window.parent.showSection === 'function') {
-                    // Ana sayfadaki Randevularım sekmesine geç
                     window.parent.showSection('appointments'); 
-                    // Tabloyu güncelle
                     if (typeof window.parent.filterAppointments === 'function') {
                         window.parent.filterAppointments('all');
                     }
@@ -430,16 +428,21 @@ confirmBtn.addEventListener('click', async () => {
             }, 2000);
 
         } else {
-            // HATALI DURUM (Backend'den gelen mesaj: Ceza, Çakışma vb.)
-            showToast(data.message || "Randevu oluşturulamadı.", "error");
+            // BACKEND HATASI (Örn: Duplicate entry veya Ceza durumu)
+            // Backend'den gelen spesifik mesajı kullanıcıya gösteriyoruz
+            showToast(data.message || "Bu randevu saati artık uygun değil.", "error");
+            
+            // Eğer slot doluysa (Duplicate hatası), listeyi yenileyerek o slotun gitmesini sağlayabiliriz
+            if (selects.doctor.value) {
+                fetchData(`/slots/doctor/${selects.doctor.value}`, renderSlots);
+            }
         }
 
     } catch (error) {
-        console.error("Hata detayı:", error);
-        showToast("🚀 Sunucuyla bağlantı kurulamadı veya sistem hatası.", "error");
+        // console.error satırını sildim, sadece kullanıcıya uyarı veriyoruz
+        showToast("Sistem hatası oluştu, lütfen tekrar deneyiniz.", "error");
     }
 });
-
         </script>
 </body>
 
