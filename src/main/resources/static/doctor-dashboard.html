@@ -423,114 +423,114 @@
                 }
             },
 
-            sendEmailVerification: async function () {
-                const email = document.getElementById("newEmail")?.value;
-                const statusSpan = document.getElementById("emailStatus");
-
-                if (!email) {
-                    alert("Lütfen e-posta adresinizi giriniz!");
-                    return;
-                }
-                if (!this.isValidEmail(email)) {
-                    alert("Geçerli bir e-posta adresi giriniz!");
-                    return;
-                }
-                if (email === this.currentUser.email) {
-                    alert("⚠️ E-posta adresi değişmemiştir!");
-                    return;
-                }
-
-                if (statusSpan) {
-                    statusSpan.style.display = 'inline-block';
-                    statusSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Kod gönderiliyor...';
-                    statusSpan.style.color = '#f59e0b';
-                }
-
-                try {
-                    const res = await fetch(`https://medsoft.up.railway.app/api/auth/send-verification-code`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${this.token}`
-                        },
-                        body: JSON.stringify({ email: email, tckn: this.currentUser?.tckn })
-                    });
-
-                    if (res.ok) {
-                        document.getElementById('emailStep1').style.display = 'none';
-                        document.getElementById('emailStep2').style.display = 'block';
-
-                        if (statusSpan) {
-                            statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> Kod gönderildi!';
-                            statusSpan.style.color = '#10b981';
-                            setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
-                        }
-
-                        alert("📧 Doğrulama kodu e-posta adresinize gönderildi!");
-                    } else {
-                        alert("❌ Kod gönderilemedi!");
-                        if (statusSpan) statusSpan.style.display = 'none';
-                    }
-                } catch (e) {
-
-                    alert("Hata!");
-                    if (statusSpan) statusSpan.style.display = 'none';
-                }
-            },
-
-            confirmEmailUpdate: async function () {
-                const code = document.getElementById("emailVerifyCode")?.value;
-                const email = document.getElementById("newEmail")?.value;
-                const statusSpan = document.getElementById("emailStatus");
-
-                if (!code || code.length !== 6) {
-                    alert("Lütfen 6 haneli doğrulama kodunu giriniz!");
-                    return;
-                }
-
-                if (statusSpan) {
-                    statusSpan.style.display = 'inline-block';
-                    statusSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Onaylanıyor...';
-                    statusSpan.style.color = '#f59e0b';
-                }
-
-                try {
-                    const res = await fetch(`https://medsoft.up.railway.app/api/auth/verify-email-update`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${this.token}`
-                        },
-                        body: JSON.stringify({ code: code, newEmail: email, tckn: this.currentUser?.tckn })
-                    });
-
-                    if (res.ok) {
-                        this.currentUser.email = email;
-                        this.renderUserDetails();
-
-                        if (statusSpan) {
-                            statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> E-posta güncellendi!';
-                            statusSpan.style.color = '#10b981';
-                            setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
-                        }
-
-                        alert("✅ E-posta başarıyla güncellendi!");
-                        this.checkAllInfoUpdated();
-
-                        document.getElementById('emailStep2').style.display = 'none';
-                        document.getElementById('emailStep1').style.display = 'block';
-                        document.getElementById("emailVerifyCode").value = "";
-                    } else {
-                        alert("❌ Kod hatalı veya süresi dolmuş!");
-                        if (statusSpan) statusSpan.style.display = 'none';
-                    }
-                } catch (e) {
-
-                    alert("Hata!");
-                    if (statusSpan) statusSpan.style.display = 'none';
-                }
-            },
-
+            /*  sendEmailVerification: async function () {
+                  const email = document.getElementById("newEmail")?.value;
+                  const statusSpan = document.getElementById("emailStatus");
+  
+                  if (!email) {
+                      alert("Lütfen e-posta adresinizi giriniz!");
+                      return;
+                  }
+                  if (!this.isValidEmail(email)) {
+                      alert("Geçerli bir e-posta adresi giriniz!");
+                      return;
+                  }
+                  if (email === this.currentUser.email) {
+                      alert("⚠️ E-posta adresi değişmemiştir!");
+                      return;
+                  }
+  
+                  if (statusSpan) {
+                      statusSpan.style.display = 'inline-block';
+                      statusSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Kod gönderiliyor...';
+                      statusSpan.style.color = '#f59e0b';
+                  }
+  
+                  try {
+                      const res = await fetch(`https://medsoft.up.railway.app/api/auth/send-verification-code`, {
+                          method: 'POST',
+                          headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${this.token}`
+                          },
+                          body: JSON.stringify({ email: email, tckn: this.currentUser?.tckn })
+                      });
+  
+                      if (res.ok) {
+                          document.getElementById('emailStep1').style.display = 'none';
+                          document.getElementById('emailStep2').style.display = 'block';
+  
+                          if (statusSpan) {
+                              statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> Kod gönderildi!';
+                              statusSpan.style.color = '#10b981';
+                              setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
+                          }
+  
+                          alert("📧 Doğrulama kodu e-posta adresinize gönderildi!");
+                      } else {
+                          alert("❌ Kod gönderilemedi!");
+                          if (statusSpan) statusSpan.style.display = 'none';
+                      }
+                  } catch (e) {
+  
+                      alert("Hata!");
+                      if (statusSpan) statusSpan.style.display = 'none';
+                  }
+              },
+  
+              confirmEmailUpdate: async function () {
+                  const code = document.getElementById("emailVerifyCode")?.value;
+                  const email = document.getElementById("newEmail")?.value;
+                  const statusSpan = document.getElementById("emailStatus");
+  
+                  if (!code || code.length !== 6) {
+                      alert("Lütfen 6 haneli doğrulama kodunu giriniz!");
+                      return;
+                  }
+  
+                  if (statusSpan) {
+                      statusSpan.style.display = 'inline-block';
+                      statusSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Onaylanıyor...';
+                      statusSpan.style.color = '#f59e0b';
+                  }
+  
+                  try {
+                      const res = await fetch(`https://medsoft.up.railway.app/api/auth/verify-email-update`, {
+                          method: 'POST',
+                          headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${this.token}`
+                          },
+                          body: JSON.stringify({ code: code, newEmail: email, tckn: this.currentUser?.tckn })
+                      });
+  
+                      if (res.ok) {
+                          this.currentUser.email = email;
+                          this.renderUserDetails();
+  
+                          if (statusSpan) {
+                              statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> E-posta güncellendi!';
+                              statusSpan.style.color = '#10b981';
+                              setTimeout(() => { statusSpan.style.display = 'none'; }, 3000);
+                          }
+  
+                          alert("✅ E-posta başarıyla güncellendi!");
+                          this.checkAllInfoUpdated();
+  
+                          document.getElementById('emailStep2').style.display = 'none';
+                          document.getElementById('emailStep1').style.display = 'block';
+                          document.getElementById("emailVerifyCode").value = "";
+                      } else {
+                          alert("❌ Kod hatalı veya süresi dolmuş!");
+                          if (statusSpan) statusSpan.style.display = 'none';
+                      }
+                  } catch (e) {
+  
+                      alert("Hata!");
+                      if (statusSpan) statusSpan.style.display = 'none';
+                  }
+              },
+  */
             handlePasswordUpdate: async function () {
                 const curPass = document.getElementById('currentPassword')?.value;
                 const newPass = document.getElementById('newPassword')?.value;
@@ -673,7 +673,6 @@
                 tbody.innerHTML = '<tr><td colspan="5">Yükleniyor...<\/td><\/tr>';
 
                 try {
-
                     const response = await fetch(`https://medsoft.up.railway.app/api/appointments/doctor/my`, {
                         method: 'GET',
                         headers: {
@@ -687,18 +686,8 @@
                         return;
                     }
 
-                    if (response.status === 403) {
-                        tbody.innerHTML = '<tr><td colspan="5">⚠️ Bu işlem için yetkiniz yok.<\/td><\/tr>';
-                        return;
-                    }
-
-                    if (response.status === 404) {
-                        tbody.innerHTML = '<td><td colspan="5">⚠️ Randevu servisi bulunamadı. Lütfen daha sonra tekrar deneyin.<\/td><\/tr>';
-                        return;
-                    }
-
                     if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        throw new Error(`HTTP ${response.status}`);
                     }
 
                     const appointments = await response.json();
@@ -709,14 +698,37 @@
                     }
 
                     tbody.innerHTML = appointments.map(app => {
-
                         const patientName = app.patient?.user?.firstName && app.patient?.user?.lastName
                             ? `${app.patient.user.firstName} ${app.patient.user.lastName}`
                             : app.patient?.user?.firstName || app.patient?.user?.lastName || 'Belirtilmemiş';
 
                         const patientTckn = app.patient?.user?.tckn || 'Belirtilmemiş';
-                        const appointmentDate = app.slot?.startTime ? this.formatDate(app.slot.startTime) : 'Belirtilmemiş';
-                        const status = app.status || 'SCHEDULED';
+
+                        // ✅ TARİH KARŞILAŞTIRMASI - DOĞRU FORMAT
+                        let appointmentDate = 'Tarih Yok';
+                        let isPast = false;
+
+                        if (app.slot?.startTime) {
+                            appointmentDate = this.formatDate(app.slot.startTime);
+                            const appointmentTime = new Date(app.slot.startTime);
+                            const now = new Date();
+                            isPast = appointmentTime < now; // Geçmiş mi?
+                        }
+
+                        const status = app.status || 'APPROVED';
+                        const isNotAttended = status === 'NOT_ATTENDED';
+                        const isCancelled = status === 'CANCELED';
+                        const isCompleted = status === 'COMPLETED';
+
+                        // ✅ Buton göster: ONAYLANDI + ZAMANI GEÇMİŞ + GELMEDİ İŞARETLENMEMİŞ + İPTAL EDİLMEMİŞ
+                        const showNotAttendedButton = status === 'APPROVED' && isPast && !isNotAttended && !isCancelled && !isCompleted;
+
+                        console.log("Randevu:", {
+                            status: status,
+                            appointmentDate: appointmentDate,
+                            isPast: isPast,
+                            showButton: showNotAttendedButton
+                        });
 
                         return `
                 <tr>
@@ -725,29 +737,33 @@
                     <td>${appointmentDate}</span>
                     <td><span class="status-badge status-${status.toLowerCase()}">${this.getStatusText(status)}</span></span>
                     <td>
-                        ${status === 'SCHEDULED' ?
+                        ${showNotAttendedButton ?
                                 `<button class="btn-not-attended" onclick="window.doctorApp.markAsNotAttended(${app.id})">
                                 <i class="fas fa-user-slash"></i> Gelmedi
                             </button>` :
-                                '<span style="color:gray;">İşlem Kapalı</span>'}
+                                (isNotAttended ? '<span style="color:#dc2626;">✅ Gelmedi İşaretlendi</span>' :
+                                    isCancelled ? '<span style="color:gray;">İptal Edildi</span>' :
+                                        isCompleted ? '<span style="color:#10b981;">Tamamlandı</span>' :
+                                            !isPast ? '<span style="color:#f59e0b;">⏳ Randevu Bekliyor</span>' :
+                                                '<span style="color:gray;">İşlem Kapalı</span>')}
                     </span>
                 </tr>
             `;
                     }).join('');
 
                 } catch (e) {
-
+                    console.error("Randevular yüklenirken hata:", e);
                     tbody.innerHTML = '<tr><td colspan="5">❌ Randevular yüklenirken bir hata oluştu: ' + e.message + '<\/td><\/tr>';
                 }
             },
-
             getStatusText: function (status) {
                 const statusMap = {
-                    'SCHEDULED': 'Planlandı',
                     'APPROVED': 'Onaylandı',
                     'COMPLETED': 'Tamamlandı',
                     'CANCELLED': 'İptal Edildi',
-                    'NOT_ATTENDED': 'Gelmedi'
+                    'NOT_ATTENDED': 'Gelmedi',
+                    'SCHEDULED': 'Planlandı',
+                    'PENDING': 'Bekliyor'
                 };
                 return statusMap[status] || status;
             },
@@ -918,7 +934,15 @@
             },
 
             formatDate: function (d) {
-                return d ? new Date(d).toLocaleString('tr-TR') : '-';
+                if (!d) return '-';
+                const date = new Date(d);
+                return date.toLocaleString('tr-TR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
             },
 
             logout: function () {
