@@ -91,21 +91,22 @@ public Slot createSlot(Slot slot) {
         throw new BadRequestException("❌ Slotun başlangıç ve bitiş saati aynı olamaz.");
     }
 
-    // KURAL 2: Bitiş saati başlangıçtan önce olamaz (Mantık hatası engelleme)
-    if (slot.getEndTime().isBefore(slot.getStartTime())) {
-        throw new BadRequestException("❌ Bitiş saati başlangıç saatinden önce olamaz.");
-    }
+ // --- YENİ KONTROLLER GÜNCELLENMİŞ ---
 
-    // KURAL 3: Slotun başlangıç ve bitişi aynı gün içerisinde olmalı
-    if (!slot.getStartTime().toLocalDate().isEqual(slot.getEndTime().toLocalDate())) {
-        throw new BadRequestException("❌ Bir slot sadece tek bir gün içinde tanımlanabilir. Gün aşırı slot oluşturulamaz.");
-    }
+// 1. Önce aynı gün kontrolü (LocalDate üzerinden)
+if (!slot.getStartTime().toLocalDate().isEqual(slot.getEndTime().toLocalDate())) {
+    throw new BadRequestException("❌ Bir slot sadece tek bir gün içinde tanımlanabilir. Gün aşırı slot oluşturulamaz.");
+}
 
-    // KURAL 4: Geçmiş tarihe slot eklenemez
-    if (slot.getStartTime().isBefore(LocalDateTime.now())) {
-        throw new BadRequestException("❌ Geçmiş tarihe slot eklenemez.");
-    }
+// 2. Aynı gün içindeyse, saatin ileri olup olmadığı kontrolü
+if (!slot.getEndTime().isAfter(slot.getStartTime())) {
+    throw new BadRequestException("❌ Bitiş saati başlangıç saatinden sonra olmalıdır.");
+}
 
+// 3. Geçmiş tarih kontrolü
+if (slot.getStartTime().isBefore(LocalDateTime.now())) {
+    throw new BadRequestException("❌ Geçmiş tarihe slot eklenemez.");
+}
         // ÇAKIŞMA KONTROLÜ 
         checkSlotConflict(doctor.getId(), slot.getStartTime(), slot.getEndTime());
 
