@@ -649,20 +649,49 @@
             renderProfile: function () {
                 const container = document.getElementById('doctor-details');
                 if (container && this.activeDoctor) {
+                    // Hastane, il ve ilçe bilgilerini al
+                    let hospitalName = 'Belirtilmemiş';
+                    let cityName = 'Belirtilmemiş';
+                    let districtName = 'Belirtilmemiş';
+
+                    if (this.activeDoctor.clinic) {
+                        if (this.activeDoctor.clinic.hospital) {
+                            hospitalName = this.activeDoctor.clinic.hospital.name || 'Belirtilmemiş';
+
+                            if (this.activeDoctor.clinic.hospital.district) {
+                                districtName = this.activeDoctor.clinic.hospital.district.name || 'Belirtilmemiş';
+
+                                if (this.activeDoctor.clinic.hospital.district.city) {
+                                    cityName = this.activeDoctor.clinic.hospital.district.city.name || 'Belirtilmemiş';
+                                }
+                            }
+                        }
+                    }
+
                     container.innerHTML = `
-                <div class="profile-grid">
-                    <div class="info-item">
-                        <i class="fas fa-stethoscope"></i>
-                        <strong>Uzmanlık Alanı</strong>
-                        <span>${this.activeDoctor.specialization || 'Belirtilmemiş'}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fas fa-hospital"></i>
-                        <strong>Görevli Klinik</strong>
-                        <span>${this.activeDoctor.clinic?.name || 'Belirtilmemiş'}</span>
-                    </div>
+            <div class="profile-grid">
+                <div class="info-item">
+                    <i class="fas fa-stethoscope"></i>
+                    <strong>Uzmanlık Alanı</strong>
+                    <span>${this.activeDoctor.specialization || 'Belirtilmemiş'}</span>
                 </div>
-            `;
+                <div class="info-item">
+                    <i class="fas fa-clinic-medical"></i>
+                    <strong>Görevli Klinik</strong>
+                    <span>${this.activeDoctor.clinic?.name || 'Belirtilmemiş'}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-hospital"></i>
+                    <strong>Hastane</strong>
+                    <span>${hospitalName}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-location-dot"></i>
+                    <strong>Konum (İl/İlçe)</strong>
+                    <span>${cityName} / ${districtName}</span>
+                </div>
+            </div>
+        `;
                 }
             },
 
@@ -779,22 +808,45 @@
             },
 
             markAsNotAttended: async function (appointmentId) {
-                if (!confirm("Hasta gelmedi olarak işaretlensin mi?")) return;
+                if (!confirm("Hasta gelmedi olarak işaretlensin mi? Bu işlem hastaya otomatik ceza kazandıracaktır.")) return;
+
+                // Butonu disable et ve yazısını değiştir
+                const button = event?.target?.closest?.('button');
+                const originalText = button?.innerHTML;
+                if (button) {
+                    button.disabled = true;
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> İşleniyor...';
+                }
 
                 try {
                     const response = await fetch(`https://medsoft.up.railway.app/api/appointments/${appointmentId}/not-attended`, {
                         method: 'PUT',
-                        headers: { 'Authorization': `Bearer ${this.token}` }
+                        headers: {
+                            'Authorization': `Bearer ${this.token}`,
+                            'Content-Type': 'application/json'
+                        }
                     });
 
+                    const result = await response.text();
+
                     if (response.ok) {
-                        alert("✅ İşaretlendi!");
-                        this.fetchAppointments();
+                        alert("✅ Hasta 'Gelmedi' olarak işaretlendi ve ceza uygulandı!");
+                        // ✅ TABLOY YENİLE - sayfayı yenilemeden tabloyu güncelle
+                        await this.fetchAppointments();
                     } else {
-                        alert("❌ Hata oluştu!");
+                        alert("❌ Hata oluştu: " + result);
+                        if (button) {
+                            button.disabled = false;
+                            button.innerHTML = originalText;
+                        }
                     }
-                } catch (e) {
-                    alert("Sunucu hatası!");
+                } catch (error) {
+                    console.error("Hata:", error);
+                    alert("Sunucu hatası! Lütfen tekrar deneyin.");
+                    if (button) {
+                        button.disabled = false;
+                        button.innerHTML = originalText;
+                    }
                 }
             },
             fetchSlots: async function () {
@@ -870,90 +922,90 @@
                     alert("Sunucu hatası!");
                 }
             },
-setupEventListeners: function () {
-    const slotForm = document.getElementById('slot-form');
-    if (slotForm) {
-        slotForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+            setupEventListeners: function () {
+                const slotForm = document.getElementById('slot-form');
+                if (slotForm) {
+                    slotForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
 
-            // Doktor verisi kontrolü
-            if (!window.doctorApp.activeDoctor || !window.doctorApp.activeDoctor.id) {
-                alert("❌ Doktor verileri henüz yüklenmedi. Lütfen sayfayı yenileyip biraz bekleyin.");
-                return;
-            }
-
-            const startTime = document.getElementById('startTime')?.value;
-            const endTime = document.getElementById('endTime')?.value;
-
-            // --- 1. FRONTEND SÜRE KURALI KONTROLÜ (15-30 DK) ---
-            if (startTime && endTime) {
-                const start = new Date(`1970-01-01T${startTime}:00`);
-                const end = new Date(`1970-01-01T${endTime}:00`);
-                const diffInMinutes = (end - start) / (1000 * 60);
-
-                if (diffInMinutes < 0) {
-                    alert("❌ Bitiş saati başlangıç saatinden önce olamaz!");
-                    return;
-                }
-
-                if (diffInMinutes < 15 || diffInMinutes > 30) {
-                    alert(`❌ Slot süresi en az 15, en fazla 30 dakika olmalıdır. (Şu an: ${diffInMinutes} dk)`);
-                    return;
-                }
-            } else {
-                alert("❌ Lütfen başlangıç ve bitiş saatlerini seçin.");
-                return;
-            }
-
-            const payload = {
-                startTime: startTime,
-                endTime: endTime,
-                doctor: { id: parseInt(window.doctorApp.activeDoctor.id) },
-                status: "AVAILABLE"
-            };
-
-            try {
-                const response = await fetch(`https://medsoft.up.railway.app/api/slots`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${this.token}`
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (response.ok) {
-                    alert("✅ Slot başarıyla oluşturuldu!");
-                    slotForm.reset();
-                    this.fetchSlots();
-                } else {
-                    // --- 2. BACKEND'DEN GELEN ÖZEL HATA MESAJLARINI YAKALAMA ---
-                    let errorMsg = "";
-                    const contentType = response.headers.get("content-type");
-
-                    if (contentType && contentType.includes("application/json")) {
-                        try {
-                            const errorData = await response.json();
-                            // Spring Boot genelde hata mesajını 'message' alanında döner
-                            errorMsg = errorData.message || "Bilinmeyen bir hata oluştu.";
-                        } catch (e) {
-                            errorMsg = "Hata verisi okunamadı.";
+                        // Doktor verisi kontrolü
+                        if (!window.doctorApp.activeDoctor || !window.doctorApp.activeDoctor.id) {
+                            alert("❌ Doktor verileri henüz yüklenmedi. Lütfen sayfayı yenileyip biraz bekleyin.");
+                            return;
                         }
-                    } else {
-                        // Eğer backend direkt düz metin (text) dönüyorsa
-                        errorMsg = await response.text();
-                    }
-                    
-                    // Servis katmanında yazdığın "❌" içeren mesajlar burada görünür
-                    alert("❌ Slot oluşturulamadı! " + errorMsg);
+
+                        const startTime = document.getElementById('startTime')?.value;
+                        const endTime = document.getElementById('endTime')?.value;
+
+                        // --- 1. FRONTEND SÜRE KURALI KONTROLÜ (15-30 DK) ---
+                        if (startTime && endTime) {
+                            const start = new Date(`1970-01-01T${startTime}:00`);
+                            const end = new Date(`1970-01-01T${endTime}:00`);
+                            const diffInMinutes = (end - start) / (1000 * 60);
+
+                            if (diffInMinutes < 0) {
+                                alert("❌ Bitiş saati başlangıç saatinden önce olamaz!");
+                                return;
+                            }
+
+                            if (diffInMinutes < 15 || diffInMinutes > 30) {
+                                alert(`❌ Slot süresi en az 15, en fazla 30 dakika olmalıdır. (Şu an: ${diffInMinutes} dk)`);
+                                return;
+                            }
+                        } else {
+                            alert("❌ Lütfen başlangıç ve bitiş saatlerini seçin.");
+                            return;
+                        }
+
+                        const payload = {
+                            startTime: startTime,
+                            endTime: endTime,
+                            doctor: { id: parseInt(window.doctorApp.activeDoctor.id) },
+                            status: "AVAILABLE"
+                        };
+
+                        try {
+                            const response = await fetch(`https://medsoft.up.railway.app/api/slots`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${this.token}`
+                                },
+                                body: JSON.stringify(payload)
+                            });
+
+                            if (response.ok) {
+                                alert("✅ Slot başarıyla oluşturuldu!");
+                                slotForm.reset();
+                                this.fetchSlots();
+                            } else {
+                                // --- 2. BACKEND'DEN GELEN ÖZEL HATA MESAJLARINI YAKALAMA ---
+                                let errorMsg = "";
+                                const contentType = response.headers.get("content-type");
+
+                                if (contentType && contentType.includes("application/json")) {
+                                    try {
+                                        const errorData = await response.json();
+                                        // Spring Boot genelde hata mesajını 'message' alanında döner
+                                        errorMsg = errorData.message || "Bilinmeyen bir hata oluştu.";
+                                    } catch (e) {
+                                        errorMsg = "Hata verisi okunamadı.";
+                                    }
+                                } else {
+                                    // Eğer backend direkt düz metin (text) dönüyorsa
+                                    errorMsg = await response.text();
+                                }
+
+                                // Servis katmanında yazdığın "❌" içeren mesajlar burada görünür
+                                alert("❌ Slot oluşturulamadı! " + errorMsg);
+                            }
+                        } catch (error) {
+                            console.error("Hata:", error);
+                            alert("❌ Sunucu hatası! Lütfen internet bağlantınızı kontrol edip tekrar deneyin.");
+                        }
+                    });
                 }
-            } catch (error) {
-                console.error("Hata:", error);
-                alert("❌ Sunucu hatası! Lütfen internet bağlantınızı kontrol edip tekrar deneyin.");
-            }
-        });
-    }
-},
+            },
 
             showTab: function (tabId, element) {
                 document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
