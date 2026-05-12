@@ -216,7 +216,8 @@
 
     <script> 
 
-    const BASE_URL = 'https://medsoft.up.railway.app/api';
+   
+const BASE_URL = 'https://medsoft.up.railway.app/api';
 // appointment.js en üst kısım
 const authData = JSON.parse(localStorage.getItem('user'));
 const token = authData ? authData.token : null;
@@ -438,6 +439,7 @@ confirmBtn.addEventListener('click', async () => {
         showToast("🚀 Sunucuyla bağlantı kurulamadı veya sistem hatası.", "error");
     }
 });
+
         </script>
 </body>
 
