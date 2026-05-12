@@ -36,15 +36,14 @@ public class SecurityConfig {
                                 .csrf(csrf -> csrf.disable())
                                 .cors(Customizer.withDefaults())
                                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                              
                                 .headers(headers -> headers
-                                                // Clickjacking koruması: Sayfanın başka sitede iframe içinde açılmasını
-                                                // engeller
-                                                .frameOptions(frame -> frame.deny())
-                                                // XSS Koruması: Tarayıcıdaki XSS filtresini aktif eder ve bloklar
+                                              
+                                                .frameOptions(frame -> frame.sameOrigin())
+
                                                 .xssProtection(xss -> xss.headerValue(
                                                                 org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
-                                                // CSP Politikası: Sadece güvenli kaynaklardan veri yüklenmesine izin
-                                                // verir
+
                                                 .contentSecurityPolicy(cps -> cps.policyDirectives(
                                                                 "default-src 'self'; " +
                                                                                 "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; "
@@ -54,10 +53,13 @@ public class SecurityConfig {
                                                                                 "font-src 'self' https://fonts.gstatic.com; "
                                                                                 +
                                                                                 "img-src 'self' data: https:; " +
+                                                                             
                                                                                 "connect-src 'self' https://medsoft.up.railway.app; "
                                                                                 +
+                                                                                
+                                                                                "frame-ancestors 'self'; " +
                                                                                 "base-uri 'self'; " +
-                                                                                "form-action 'self'")))
+                                                                                "form-action 'self';")))
                                 .authorizeHttpRequests(auth -> auth
                                                 // 1. STATİK DOSYALAR (Herkes erişebilmeli)
                                                 .requestMatchers(
