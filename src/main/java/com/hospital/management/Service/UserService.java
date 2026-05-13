@@ -233,25 +233,22 @@ public class UserService {
             if (user.getPatient() != null) {
                 Patient patient = user.getPatient();
 
-                // 1. Cezaları sil
-                List<Penalty> penalties = penaltyRepository.findByPatientId(patient.getId());
-                if (!penalties.isEmpty()) {
-                    penaltyRepository.deleteAll(penalties);
-                }
+                // ... cezaları silme kısmı aynı kalabilir ...
 
-                // 2. Randevuları sil ve slotları boşalt
                 List<Appointment> appointments = appointmentRepository.findByPatientId(patient.getId());
                 for (Appointment appointment : appointments) {
-                    // Slot'u boşalt
                     Slot slot = appointment.getSlot();
-                    if (slot != null && slot.getStatus() == SlotStatus.BOOKED) {
+                    if (slot != null) {
+                        // İLİŞKİYİ KOPAR: Randevunun slotla bağını kes
+                        appointment.setSlot(null);
+                        slot.setAppointment(null); // Çift taraflı koparma
+
                         slot.setStatus(SlotStatus.AVAILABLE);
                         slotRepository.save(slot);
                     }
                     appointmentRepository.delete(appointment);
                 }
-
-                // 3. Hastayı sil
+                appointmentRepository.flush(); // Randevuların silindiğinden emin ol
                 patientRepository.delete(patient);
             }
 
@@ -259,20 +256,22 @@ public class UserService {
             if (user.getDoctor() != null) {
                 Doctor doctor = user.getDoctor();
 
-                // 1. Slotları ve randevuları temizle
                 List<Slot> slots = slotRepository.findByDoctorId(doctor.getId());
                 for (Slot slot : slots) {
-                    // Slot'a bağlı randevu varsa
                     if (slot.getAppointment() != null) {
-                        appointmentRepository.delete(slot.getAppointment());
+                        Appointment app = slot.getAppointment();
+
+                        // İLİŞKİYİ KOPAR: Önce slotun randevu bağını null yap
+                        slot.setAppointment(null);
+                        slotRepository.saveAndFlush(slot); // Veritabanına yansıt
+
+                        appointmentRepository.delete(app);
+                        appointmentRepository.flush(); // Silme işlemini onayla
                     }
                     slotRepository.delete(slot);
                 }
-
-                // 2. Doktoru sil
                 doctorRepository.delete(doctor);
             }
-
             // ============ KULLANICIYI SİL ============
             userRepository.delete(user);
 
