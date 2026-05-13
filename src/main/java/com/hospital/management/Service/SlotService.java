@@ -183,7 +183,7 @@ if (slot.getStartTime().isBefore(LocalDateTime.now())) {
         dto.setDoctorId(slot.getDoctor().getId());
     }
     if (slot.getDoctor() != null && slot.getDoctor().getUser() != null) {
-        String name = "Dr. " + slot.getDoctor().getUser().getFirstName() + " " + 
+        String name = slot.getDoctor().getUser().getFirstName() + " " + 
                      slot.getDoctor().getUser().getLastName();
         // Varsa uzmanlık alanını da ekleyelim
         if (slot.getDoctor().getSpecialization() != null) {

@@ -1044,7 +1044,7 @@ window.loadDoctorsForSelect = async function(selectId) {
             select.innerHTML = '<option value="">Tüm Doktorlar</option>';
             doctors.forEach(doc => {
                 // Doktorun ismini senin DTO mantığına göre birleştiriyoruz
-                const name = `Dr. ${doc.user.firstName} ${doc.user.lastName}`;
+                const name = ` ${doc.user.firstName} ${doc.user.lastName}`;
                 select.innerHTML += `<option value="${doc.id}">${name}</option>`;
             });
         }
