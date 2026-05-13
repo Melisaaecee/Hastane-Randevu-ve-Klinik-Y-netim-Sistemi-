@@ -178,6 +178,10 @@ if (slot.getStartTime().isBefore(LocalDateTime.now())) {
     dto.setId(slot.getId());
     
     // Doktor ve Uzmanlık bilgisini birleştiriyoruz
+
+    if (slot.getDoctor() != null) {
+        dto.setDoctorId(slot.getDoctor().getId());
+    }
     if (slot.getDoctor() != null && slot.getDoctor().getUser() != null) {
         String name = "Dr. " + slot.getDoctor().getUser().getFirstName() + " " + 
                      slot.getDoctor().getUser().getLastName();

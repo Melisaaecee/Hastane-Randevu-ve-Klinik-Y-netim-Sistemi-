@@ -464,7 +464,7 @@
             if (tabId === 'appointments') loadAppointments();
             if (tabId === 'slots'){
                 loadSlots();
-                loadDoctorsForSelect('slotDoctorSelect');
+                await loadDoctorsForSelect('slotDoctorSelect');
 
             }
             if (tabId === 'profile') loadMyProfile();
@@ -942,33 +942,60 @@ function renderAppointmentTable(data) {
 
 // 1. Belirli bir doktor ve tarihe göre slotları getir
 window.loadSlots = async function() {
+    const doctorId = document.getElementById("slotDoctorSelect").value;
+    const selectedDate = document.getElementById("slotDateFilter").value; // Format: YYYY-MM-DD
+
     try {
         const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/slots`);
         if (res && res.ok) {
-            const slots = await res.json();
-            const tbody = document.getElementById("slotTableBody");
-            
-            tbody.innerHTML = slots.map(slot => `
-                <tr>
-                    <td>${slot.id}</td>
-                    <td>${slot.doctorName}</td>
-                    <td>${slot.startTime}</td> 
-                    <td>${slot.endTime}</td>
-                    <td>
-                        <span class="status-badge ${slot.full ? 'status-full' : 'status-empty'}">
-                            ${slot.status}
-                        </span>
-                    </td>
-                    <td>
-                        <button class="btn-delete" onclick="deleteSlot(${slot.id})">Sil</button>
-                    </td>
-                </tr>
-            `).join("");
+            let slots = await res.json();
+
+            // 1. Doktor Filtresi (Eğer seçildiyse)
+            if (doctorId) {
+                slots = slots.filter(s => s.doctorId == doctorId);
+            }
+
+            // 2. Tarih Filtresi (Eğer seçildiyse)
+            if (selectedDate) {
+                // Backend'den gelen "dd.MM.yyyy HH:mm:ss" formatını "YYYY-MM-DD" ile eşleştiriyoruz
+                const [year, month, day] = selectedDate.split('-');
+                const compareDate = `${day}.${month}.${year}`; // "13.05.2026" haline getirir
+                
+                slots = slots.filter(s => s.startTime.startsWith(compareDate));
+            }
+
+            renderSlotTable(slots);
         }
     } catch (error) {
-        console.error("Slotlar yüklenemedi:", error);
+        console.error("Slotlar yüklenirken hata oluştu:", error);
     }
 };
+
+// Tabloyu render eden yardımcı fonksiyon
+function renderSlotTable(slots) {
+    const tbody = document.getElementById("slotTableBody");
+    if (slots.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Aranan kriterlerde slot bulunamadı.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = slots.map(slot => `
+        <tr>
+            <td>${slot.id}</td>
+            <td>${slot.doctorName}</td>
+            <td>${slot.startTime}</td>
+            <td>${slot.endTime}</td>
+            <td>
+                <span class="status-badge ${slot.full ? 'status-full' : 'status-empty'}">
+                    ${slot.status}
+                </span>
+            </td>
+            <td>
+                <button class="btn-delete" onclick="deleteSlot(${slot.id})">Sil</button>
+            </td>
+        </tr>
+    `).join("");
+}
 
 // 2. Toplu Slot Oluşturma (Örn: 09:00 - 17:00 arası 30dk arayla)
 /*window.generateBulkSlots = async function() {
@@ -1001,6 +1028,28 @@ window.deleteSlot = async function(slotId) {
 
     if (res?.ok) {
         loadSlots();
+    }
+};
+
+
+window.loadDoctorsForSelect = async function(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    try {
+        const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/doctors`);
+        if (res && res.ok) {
+            const doctors = await res.json();
+            // Mevcut seçenekleri temizle ama "Tüm Doktorlar"ı bırak
+            select.innerHTML = '<option value="">Tüm Doktorlar</option>';
+            doctors.forEach(doc => {
+                // Doktorun ismini senin DTO mantığına göre birleştiriyoruz
+                const name = `Dr. ${doc.user.firstName} ${doc.user.lastName}`;
+                select.innerHTML += `<option value="${doc.id}">${name}</option>`;
+            });
+        }
+    } catch (error) {
+        console.error("Doktor listesi yüklenemedi:", error);
     }
 };
 

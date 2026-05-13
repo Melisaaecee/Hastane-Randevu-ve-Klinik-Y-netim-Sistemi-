@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SlotResponseDTO {
     private Long id;
+    private Long doctorId;
     private String doctorName;     // "Dr. Ad Soyad" şeklinde hazır veri
     private String startTime;      // "15.05.2026 10:30" formatında
     private String endTime;
