@@ -124,11 +124,12 @@ public class SlotService {
             throw new BadRequestException("❌ Geçmiş bir tarihe slot eklenemez. Seçilen tarih: " + slotStartDate);
         }
 
-        // KURAL 5: Geçmiş SAAT kontrolü (BUGÜN için)
-        if (slotStartDate.isEqual(today) && slotStartTime.isBefore(currentTime)) {
-            throw new BadRequestException("❌ Bugün için sadece şu andan sonraki saatlere slot eklenebilir. " +
-                    "Şu an: " + currentTime.format(DateTimeFormatter.ofPattern("HH:mm")) +
-                    ", Seçilen saat: " + slotStartTime.format(DateTimeFormatter.ofPattern("HH:mm")));
+        // KURAL 5: Geçmiş ZAMAN kontrolü (Tam zamanlı karşılaştırma)
+        // Sadece saati değil, LocalDateTime'ın tamamını şu an ile kıyaslıyoruz.
+        if (slot.getStartTime().isBefore(now)) {
+            throw new BadRequestException("❌ Slot başlangıç saati şu anki zamandan önce olamaz. " +
+                    "Şu an: " + now.format(DateTimeFormatter.ofPattern("HH:mm")) +
+                    ", Seçilen: " + slot.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm")));
         }
 
         // KURAL 6: Öğle molası kontrolü (12:00 - 13:00 arası)
@@ -240,31 +241,35 @@ public class SlotService {
      * 
      * return slotRepository.save(slot);
      * }
+     * 
+     * 
+     * // Slot çakışmasını kontrol et
+     * private void checkSlotConflict(Long doctorId, LocalDateTime newStart,
+     * LocalDateTime newEnd) {
+     * // Doktorun mevcut tüm slotlarını getir
+     * List<Slot> existingSlots =
+     * slotRepository.findByDoctorIdWithDetails(doctorId);
+     * 
+     * for (Slot existing : existingSlots) {
+     * LocalDateTime existingStart = existing.getStartTime();
+     * LocalDateTime existingEnd = existing.getEndTime();
+     * 
+     * boolean isOverlap = (newStart.isBefore(existingEnd) &&
+     * newEnd.isAfter(existingStart));
+     * 
+     * if (isOverlap) {
+     * throw new BadRequestException(
+     * String.format("❌ Slot çakışması! Bu saat aralığında zaten slot var.\n" +
+     * "Mevcut slot: %s - %s\n" +
+     * "Eklemek istediğiniz: %s - %s",
+     * formatTime(existingStart), formatTime(existingEnd),
+     * formatTime(newStart), formatTime(newEnd)));
+     * }
+     * }
+     * }
+     * 
+     * 
      */
-    // Slot çakışmasını kontrol et
-    private void checkSlotConflict(Long doctorId, LocalDateTime newStart, LocalDateTime newEnd) {
-        // Doktorun mevcut tüm slotlarını getir
-        List<Slot> existingSlots = slotRepository.findByDoctorIdWithDetails(doctorId);
-
-        for (Slot existing : existingSlots) {
-            LocalDateTime existingStart = existing.getStartTime();
-            LocalDateTime existingEnd = existing.getEndTime();
-
-            boolean isOverlap = (newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart));
-
-            if (isOverlap) {
-                throw new BadRequestException(
-                        String.format("❌ Slot çakışması! Bu saat aralığında zaten slot var.\n" +
-                                "Mevcut slot: %s - %s\n" +
-                                "Eklemek istediğiniz: %s - %s",
-                                formatTime(existingStart), formatTime(existingEnd),
-                                formatTime(newStart), formatTime(newEnd)));
-            }
-        }
-    }
-
-   
-
     // SLOT İPTAL (IDOR Korumalı)
     @Transactional
     public void cancelSlot(Long slotId) {

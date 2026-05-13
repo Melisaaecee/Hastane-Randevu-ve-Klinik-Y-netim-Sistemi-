@@ -369,11 +369,11 @@
         function renderSlots(slots) {
             slotGrid.innerHTML = '';
 
-            //  GEÇMİŞ ZAMANLI SLOTLARI FİLTRELE
-            const now = new Date();
+            const now = new Date(); // Şu anki tam zaman
             const futureSlots = slots.filter(slot => {
-                const slotTime = new Date(slot.startTime);
-                return slotTime > now; // Sadece gelecek zamanlı slotlar
+                // Backend'den gelen ISO string'i (veya formatlı tarihi) Date nesnesine çeviriyoruz
+                const slotStartTime = new Date(slot.startTime);
+                return slotStartTime > now; // Sadece şu andan sonra BAŞLAYAN slotları göster
             });
 
             if (futureSlots.length === 0) {
