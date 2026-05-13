@@ -40,11 +40,13 @@ public class AppointmentController {
         }
     }
 
-    @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Appointment>> getAll() {
-        return ResponseEntity.ok(appointmentService.getAllAppointments());
-    }
+  @GetMapping
+@PreAuthorize("hasRole('ADMIN')")
+public ResponseEntity<List<AppointmentResponseDTO>> getAll() {
+    // Ham liste yerine DTO listesi dönüyoruz
+    List<Appointment> appointments = appointmentService.getAllAppointments();
+    return ResponseEntity.ok(appointmentService.convertToDtoList(appointments));
+}
 
     // Login olan hastanın kendi randevularını listeler.
     @GetMapping("/my")
