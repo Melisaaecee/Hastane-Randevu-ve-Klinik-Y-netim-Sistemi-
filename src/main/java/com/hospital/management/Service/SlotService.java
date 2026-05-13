@@ -71,55 +71,176 @@ public class SlotService {
 
     @Transactional
     public Slot createSlot(Slot slot) {
-        // 1. Veri kontrolü
+        // ==================== 1. TEMEL KONTROLLER ====================
+
+        // Doktor ID kontrolü
         if (slot.getDoctor() == null || slot.getDoctor().getId() == null) {
             throw new BadRequestException("Doktor ID bilgisi eksik.");
         }
 
-        // 2. Veritabanından doktoru bul
+        // Doktoru veritabanından bul
         Doctor doctor = doctorRepository.findById(slot.getDoctor().getId())
                 .orElseThrow(() -> new EntityNotFoundException("Doktor bulunamadı."));
 
-        // 3. Eksik bilgileri tamamla
+        // Eksik bilgileri tamamla
         slot.setDoctor(doctor);
         slot.setClinic(doctor.getClinic());
         slot.setStatus(SlotStatus.AVAILABLE);
 
-        // 4. Güvenlik ve Mantıksal Kontroller
+        // Yetki kontrolü
         if (!SecurityUtil.isOwner(doctor.getUser().getId()) && !SecurityUtil.isAdmin()) {
             throw new AccessDeniedException("Yetkisiz işlem!");
         }
 
-        // --- YENİ KONTROLLER BAŞLANGIÇ ---
+        // ==================== 2. TARİH VE SAAT KONTROLLERİ ====================
 
-        // KURAL 1: Başlangıç ve Bitiş saati aynı olamaz
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate today = now.toLocalDate();
+        LocalTime currentTime = now.toLocalTime();
+
+        LocalDate slotStartDate = slot.getStartTime().toLocalDate();
+        LocalTime slotStartTime = slot.getStartTime().toLocalTime();
+        LocalDate slotEndDate = slot.getEndTime().toLocalDate();
+        LocalTime slotEndTime = slot.getEndTime().toLocalTime();
+
+        // KURAL 1: Başlangıç ve bitiş aynı olamaz
         if (slot.getStartTime().isEqual(slot.getEndTime())) {
             throw new BadRequestException("❌ Slotun başlangıç ve bitiş saati aynı olamaz.");
         }
 
-        // --- YENİ KONTROLLER GÜNCELLENMİŞ ---
-
-        // 1. Önce aynı gün kontrolü (LocalDate üzerinden)
-        if (!slot.getStartTime().toLocalDate().isEqual(slot.getEndTime().toLocalDate())) {
+        // KURAL 2: Aynı gün içinde olmalı
+        if (!slotStartDate.isEqual(slotEndDate)) {
             throw new BadRequestException(
-                    "❌ Bir slot sadece tek bir gün içinde tanımlanabilir. Gün aşırı slot oluşturulamaz.");
+                    "❌ Slot sadece tek bir gün içinde tanımlanabilir. Gün aşırı slot oluşturulamaz.");
         }
 
-        // 2. Aynı gün içindeyse, saatin ileri olup olmadığı kontrolü
+        // KURAL 3: Bitiş saati başlangıçtan sonra olmalı
         if (!slot.getEndTime().isAfter(slot.getStartTime())) {
             throw new BadRequestException("❌ Bitiş saati başlangıç saatinden sonra olmalıdır.");
         }
 
-        // 3. Geçmiş tarih kontrolü
-        if (slot.getStartTime().isBefore(LocalDateTime.now())) {
-            throw new BadRequestException("❌ Geçmiş tarihe slot eklenemez.");
+        // KURAL 4: Geçmiş TARİH kontrolü
+        if (slotStartDate.isBefore(today)) {
+            throw new BadRequestException("❌ Geçmiş bir tarihe slot eklenemez. Seçilen tarih: " + slotStartDate);
         }
-        // ÇAKIŞMA KONTROLÜ
-        checkSlotConflict(doctor.getId(), slot.getStartTime(), slot.getEndTime());
+
+        // KURAL 5: Geçmiş SAAT kontrolü (BUGÜN için)
+        if (slotStartDate.isEqual(today) && slotStartTime.isBefore(currentTime)) {
+            throw new BadRequestException("❌ Bugün için sadece şu andan sonraki saatlere slot eklenebilir. " +
+                    "Şu an: " + currentTime.format(DateTimeFormatter.ofPattern("HH:mm")) +
+                    ", Seçilen saat: " + slotStartTime.format(DateTimeFormatter.ofPattern("HH:mm")));
+        }
+
+        // KURAL 6: Öğle molası kontrolü (12:00 - 13:00 arası)
+        LocalTime lunchStart = LocalTime.of(12, 0);
+        LocalTime lunchEnd = LocalTime.of(13, 0);
+
+        boolean isLunchOverlap = (slotStartTime.isBefore(lunchEnd) && slotEndTime.isAfter(lunchStart));
+        if (isLunchOverlap) {
+            throw new BadRequestException(
+                    "❌ 12:00 - 13:00 arası öğle molasıdır. Bu saat aralığında slot oluşturulamaz.");
+        }
+
+        // KURAL 7: Slot süresi kontrolü (15-30 dakika arası)
+        long durationMinutes = java.time.Duration.between(slot.getStartTime(), slot.getEndTime()).toMinutes();
+        if (durationMinutes < 15 || durationMinutes > 30) {
+            throw new BadRequestException(
+                    "❌ Slot süresi en az 15, en fazla 30 dakika olmalıdır. (Şu an: " + durationMinutes + " dk)");
+        }
+
+        // ==================== 3. ÇAKIŞMA KONTROLÜ ====================
+
+        List<Slot> existingSlots = slotRepository.findByDoctorIdWithDetails(doctor.getId());
+
+        for (Slot existing : existingSlots) {
+            // İptal edilmiş slotları kontrol etme
+            if (existing.getStatus() == SlotStatus.CANCELLED) {
+                continue;
+            }
+
+            LocalDateTime existingStart = existing.getStartTime();
+            LocalDateTime existingEnd = existing.getEndTime();
+
+            boolean isOverlap = (slot.getStartTime().isBefore(existingEnd) && slot.getEndTime().isAfter(existingStart));
+
+            if (isOverlap) {
+                throw new BadRequestException(
+                        String.format("❌ Slot çakışması! Bu saat aralığında zaten slot var.\n" +
+                                "Mevcut slot: %s - %s\n" +
+                                "Eklemek istediğiniz: %s - %s",
+                                formatTime(existingStart), formatTime(existingEnd),
+                                formatTime(slot.getStartTime()), formatTime(slot.getEndTime())));
+            }
+        }
+
+        // ==================== 4. SLOTU KAYDET ====================
 
         return slotRepository.save(slot);
     }
 
+    // Yardımcı metod: Saat formatı
+    private String formatTime(LocalDateTime time) {
+        return time.format(DateTimeFormatter.ofPattern("HH:mm"));
+    }
+
+    /*
+     * @Transactional
+     * public Slot createSlot(Slot slot) {
+     * // 1. Veri kontrolü
+     * if (slot.getDoctor() == null || slot.getDoctor().getId() == null) {
+     * throw new BadRequestException("Doktor ID bilgisi eksik.");
+     * }
+     * 
+     * // 2. Veritabanından doktoru bul
+     * Doctor doctor = doctorRepository.findById(slot.getDoctor().getId())
+     * .orElseThrow(() -> new EntityNotFoundException("Doktor bulunamadı."));
+     * 
+     * // 3. Eksik bilgileri tamamla
+     * slot.setDoctor(doctor);
+     * slot.setClinic(doctor.getClinic());
+     * slot.setStatus(SlotStatus.AVAILABLE);
+     * 
+     * // 4. Güvenlik ve Mantıksal Kontroller
+     * if (!SecurityUtil.isOwner(doctor.getUser().getId()) &&
+     * !SecurityUtil.isAdmin()) {
+     * throw new AccessDeniedException("Yetkisiz işlem!");
+     * }
+     * 
+     * // --- YENİ KONTROLLER BAŞLANGIÇ ---
+     * 
+     * // KURAL 1: Başlangıç ve Bitiş saati aynı olamaz
+     * if (slot.getStartTime().isEqual(slot.getEndTime())) {
+     * throw new
+     * BadRequestException("❌ Slotun başlangıç ve bitiş saati aynı olamaz.");
+     * }
+     * 
+     * // --- YENİ KONTROLLER GÜNCELLENMİŞ ---
+     * 
+     * // 1. Önce aynı gün kontrolü (LocalDate üzerinden)
+     * if
+     * (!slot.getStartTime().toLocalDate().isEqual(slot.getEndTime().toLocalDate()))
+     * {
+     * throw new BadRequestException(
+     * "❌ Bir slot sadece tek bir gün içinde tanımlanabilir. Gün aşırı slot oluşturulamaz."
+     * );
+     * }
+     * 
+     * // 2. Aynı gün içindeyse, saatin ileri olup olmadığı kontrolü
+     * if (!slot.getEndTime().isAfter(slot.getStartTime())) {
+     * throw new
+     * BadRequestException("❌ Bitiş saati başlangıç saatinden sonra olmalıdır.");
+     * }
+     * 
+     * // 3. Geçmiş tarih kontrolü
+     * if (slot.getStartTime().isBefore(LocalDateTime.now())) {
+     * throw new BadRequestException("❌ Geçmiş tarihe slot eklenemez.");
+     * }
+     * // ÇAKIŞMA KONTROLÜ
+     * checkSlotConflict(doctor.getId(), slot.getStartTime(), slot.getEndTime());
+     * 
+     * return slotRepository.save(slot);
+     * }
+     */
     // Slot çakışmasını kontrol et
     private void checkSlotConflict(Long doctorId, LocalDateTime newStart, LocalDateTime newEnd) {
         // Doktorun mevcut tüm slotlarını getir
@@ -142,10 +263,7 @@ public class SlotService {
         }
     }
 
-    // Yardımcı metod: Saat formatı
-    private String formatTime(LocalDateTime time) {
-        return time.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
-    }
+   
 
     // SLOT İPTAL (IDOR Korumalı)
     @Transactional
