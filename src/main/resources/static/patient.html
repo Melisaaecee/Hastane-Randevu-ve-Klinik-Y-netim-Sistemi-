@@ -106,14 +106,16 @@
                 <div class="table-container">
                     <table>
                         <thead>
-                            <tr>
-                                <th>Doktor</th>
-                                <th>Klinik</th>
-                                <th>Tarih & Saat</th>
-                                <th>Durum</th>
-                                <th>İşlem</th>
-                            </tr>
-                        </thead>
+    <tr>
+        <th>Doktor</th>
+        <th>Klinik</th>
+        <th>Hastane</th> <!-- Yeni Eklendi -->
+        <th>Şehir / İlçe</th> <!-- Yeni Eklendi -->
+        <th>Tarih & Saat</th>
+        <th>Durum</th>
+        <th>İşlem</th>
+    </tr>
+</thead>
                         <tbody id="appointmentTableBody">
                         </tbody>
                     </table>
@@ -399,44 +401,33 @@
             return `${diffDays} gün kaldı`;
         }
         function renderTable(data) {
-            const tbody = document.getElementById('appointmentTableBody');
-            if (!tbody) return;
+    const tbody = document.getElementById("appointmentTableBody");
+    tbody.innerHTML = ""; // Önce tabloyu temizle
 
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Kayıt bulunamadı.</td></tr>';
-                return;
-            }
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Randevu bulunamadı.</td></tr>';
+        return;
+    }
 
-            tbody.innerHTML = data.map(app => {
-                // ARTIK DTO'dan direkt alıyoruz!
-                const doctorName = app.doctorName || "Bilinmeyen Doktor";
-                const clinicName = app.clinicName || "Bilinmeyen Klinik";
-                const appointmentDate = app.appointmentDate || "Tarih Yok";
-                const status = app.status || "UNKNOWN";
-                const canCancel = app.canCancel === true; // DTO'dan gelen boolean
+    data.forEach(app => {
+        const row = document.createElement("tr");
 
-                return `
-            <tr>
-                <td>${doctorName}</td>
-                <td>${clinicName}</td>
-                <td>${appointmentDate}</td>
-                <td>
-                    <span class="status-badge ${canCancel ? 'status-active' : 'status-past'}">
-                        ${status} 
-                    </span>
-                </td>
-                <td>
-                    ${canCancel ?
-                        `<button onclick="cancelAppointment(${app.id})" class="btn-cancel-table">
-                            <i class="fas fa-times"></i> İptal Et
-                         </button>` :
-                        `<span style="color: #cbd5e1; font-size: 0.8rem;">İşlem Yapılamaz</span>`
-                    }
-                </td>
-            </tr>
+        row.innerHTML = `
+            <td>${app.doctorName || '-'}</td>
+            <td>${app.clinicName || '-'}</td>
+            <td>${app.hospitalName || 'Hastane Bilgisi Yok'}</td> <!-- Yeni -->
+            <td>${app.cityName || '-'} / ${app.districtName || '-'}</td> <!-- Yeni -->
+            <td>${app.appointmentDate || '-'}</td>
+            <td><span class="status-badge">${app.status || '-'}</span></td>
+            <td>
+                ${app.canCancel 
+                    ? `<button class="btn-cancel" onclick="cancelAppointment(${app.id})">İptal Et</button>` 
+                    : '<span class="text-muted">İşlem Yapılamaz</span>'}
+            </td>
         `;
-            }).join('');
-        }
+        tbody.appendChild(row);
+    });
+}
 
         window.handlePasswordUpdate = async function () {
             const cpEl = document.getElementById('currentPassword');
