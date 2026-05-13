@@ -998,7 +998,7 @@ function renderSlotTable(slots) {
 }
 
 // 2. Toplu Slot Oluşturma (Örn: 09:00 - 17:00 arası 30dk arayla)
-/*window.generateBulkSlots = async function() {
+window.generateBulkSlots = async function() {
     const bulkData = {
         doctorId: document.getElementById("modalDoctorSelect").value,
         date: document.getElementById("modalDateInput").value,
@@ -1016,7 +1016,7 @@ function renderSlotTable(slots) {
         alert("Slotlar başarıyla oluşturuldu.");
         loadSlots(); // Tabloyu güncelle
     }
-};*/
+};
 
 // 3. Slot Silme
 window.deleteSlot = async function(slotId) {
