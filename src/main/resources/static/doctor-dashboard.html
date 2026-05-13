@@ -107,7 +107,7 @@
                     </div>
                 </div>
 
-                <!-- E-posta -->
+                <!-- E-posta 
                 <div class="settings-card">
                     <h3><i class="fas fa-envelope"></i> E-posta Adresi</h3>
                     <div id="emailStep1">
@@ -132,6 +132,7 @@
                     </div>
                     <span id="emailStatus" class="status-badge-small" style="display: none;"></span>
                 </div>
+                -->
 
                 <!-- Şifre -->
                 <div class="settings-card">
@@ -423,7 +424,7 @@
                 }
             },
 
-             sendEmailVerification: async function () {
+            /* sendEmailVerification: async function () {
                   const email = document.getElementById("newEmail")?.value;
                   const statusSpan = document.getElementById("emailStatus");
   
@@ -530,7 +531,7 @@
                       if (statusSpan) statusSpan.style.display = 'none';
                   }
               },
-  
+  */
             handlePasswordUpdate: async function () {
                 const curPass = document.getElementById('currentPassword')?.value;
                 const newPass = document.getElementById('newPassword')?.value;
@@ -903,38 +904,38 @@
                 }
             },
 
-     deleteSlot: async function (slotId) {
-    if (!confirm("Bu slotu iptal etmek istediğinizden emin misiniz?")) return;
+            deleteSlot: async function (slotId) {
+                if (!confirm("Bu slotu iptal etmek istediğinizden emin misiniz?")) return;
 
-    try {
-   
-        const response = await fetch(`https://medsoft.up.railway.app/api/slots/${slotId}/cancel`, {
-            method: 'PUT', // DELETE yerine PUT kullanıyoruz
-            headers: { 
-                'Authorization': `Bearer ${this.token}`,
-                'Content-Type': 'application/json' 
-            }
-        });
+                try {
 
-        if (response.ok) {
-            alert("✅ Slot başarıyla iptal edildi!");
-            this.fetchSlots(); // Tabloyu yenile
-        } else {
-            // Backend'den gelen (IDOR veya aktif randevu) hata mesajlarını yakalama
-            let errorMsg = "";
-            try {
-                const errorData = await response.json();
-                errorMsg = errorData.message || "Bilinmeyen bir hata oluştu.";
-            } catch (e) {
-                errorMsg = await response.text();
-            }
-            alert("❌ Hata: " + (errorMsg || "Slot iptal edilemedi!"));
-        }
-    } catch (e) {
-        console.error("İptal işlemi hatası:", e);
-        alert("❌ Sunucu hatası oluştu!");
-    }
-},
+                    const response = await fetch(`https://medsoft.up.railway.app/api/slots/${slotId}/cancel`, {
+                        method: 'PUT', // DELETE yerine PUT kullanıyoruz
+                        headers: {
+                            'Authorization': `Bearer ${this.token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        alert("✅ Slot başarıyla iptal edildi!");
+                        this.fetchSlots(); // Tabloyu yenile
+                    } else {
+                        // Backend'den gelen (IDOR veya aktif randevu) hata mesajlarını yakalama
+                        let errorMsg = "";
+                        try {
+                            const errorData = await response.json();
+                            errorMsg = errorData.message || "Bilinmeyen bir hata oluştu.";
+                        } catch (e) {
+                            errorMsg = await response.text();
+                        }
+                        alert("❌ Hata: " + (errorMsg || "Slot iptal edilemedi!"));
+                    }
+                } catch (e) {
+                    console.error("İptal işlemi hatası:", e);
+                    alert("❌ Sunucu hatası oluştu!");
+                }
+            },
             setupEventListeners: function () {
                 const slotForm = document.getElementById('slot-form');
                 if (slotForm) {
