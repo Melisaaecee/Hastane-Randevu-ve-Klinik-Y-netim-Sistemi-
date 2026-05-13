@@ -114,6 +114,7 @@ public class AuthService {
                 user.setAccountNonLocked(true);
                 user.setLockTime(null);
                 userRepository.save(user);
+                userRepository.flush();
 
                 String token = jwtUtil.generateToken(user.getId(), user.getTckn(), user.getRole().name());
                 return new AuthResponse(token, mapToUserResponse(user));
