@@ -118,25 +118,30 @@
     stroke: #e11d48;
 }
 
-.logo-container {
+.medsoft-logo {
     display: flex;
     align-items: center;
-    justify-content: center; /* Merkeze hizalamak istersen */
-    gap: 10px;               /* İkon ve yazı arasındaki boşluk */
-    padding: 20px;
-    background-color: #1e3a8a; /* Görseldeki lacivert tonu */
+    gap: 8px;
+}
+
+.heart-pulse-icon {
+    /* Görseldeki lacivert tonu: #1e293b */
+    color: #1e293b; 
+    width: 32px;
+    height: 32px;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+/* Üstüne gelince renk değiştirsin dersen (Daha önce konuştuğumuz gibi) */
+.medsoft-logo:hover .heart-pulse-icon {
+    color: #e11d48; /* MedSoft kırmızısı */
+    transform: scale(1.1);
 }
 
 .logo-text {
-    color: white;
     font-size: 24px;
     font-weight: bold;
-    font-family: sans-serif;
-}
-
-.logo-icon {
-    /* Kalp ikonunun rengi zaten inline verildi ama buradan da değiştirilebilir */
-    filter: drop-shadow(0 0 2px rgba(0,0,0,0.2));
+    color: #1e293b;
 }
     </style>
 </head>
@@ -144,8 +149,9 @@
 <body>
 
     <aside class="sidebar">
-        <div class="logo-container">
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#e11d48" stroke="#e11d48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="logo-icon">
+       <div class="medsoft-logo">
+    <!-- image_e64be5.png İkonu -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="heart-pulse-icon">
         <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
         <path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>
     </svg>
