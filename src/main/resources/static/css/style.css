@@ -1108,42 +1108,67 @@ select.form-control:disabled {
 
 
 
-/* Filtreleme Alanı Kapsayıcısı */
-.admin-filter-wrapper {
-    background-color: #f8f9fa;
-    padding: 15px 20px;
-    border-radius: 10px;
-    border-left: 5px solid #007bff; /* MedSoft temasına uygun mavi bir vurgu */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    margin-bottom: 20px;
+/* Filtreleme Barı Ana Kapsayıcı */
+.filter-bar {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     display: flex;
     align-items: center;
     gap: 15px;
+    margin-bottom: 25px;
+    border: 1px solid #eef2f7;
+    flex-wrap: wrap; /* Mobilde alt alta geçebilmesi için */
 }
 
-/* Etiket (Label) Stili */
-.admin-filter-wrapper label {
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 0; /* Hizalamayı bozmaması için */
-}
-
-/* Select (Seçim Kutusu) Stili */
-.admin-filter-select {
-    appearance: none; /* Varsayılan ok işaretini kaldırıp custom ekleyebiliriz */
-    background-color: #fff;
-    border: 1px solid #ced4da;
-    border-radius: 6px;
-    padding: 8px 12px;
+/* Seçim Kutusu (Select) ve Tarih Inputu Tasarımı */
+#slotDoctorSelect, 
+#slotDateFilter {
+    padding: 10px 15px;
+    border: 2px solid #edf2f7;
+    border-radius: 8px;
     font-size: 14px;
-    color: #495057;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    cursor: pointer;
+    color: #334155;
+    outline: none;
+    transition: all 0.3s ease;
+    min-width: 220px;
+    background-color: #f8fbff;
 }
 
-/* Select odaklandığında (tıklandığında) efekt */
-.admin-filter-select:focus {
-    border-color: #80bdff;
-    outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+/* Odaklanma (Tıklama) Efekti */
+#slotDoctorSelect:focus, 
+#slotDateFilter:focus {
+    border-color: #3b82f6;
+    background-color: #fff;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Filtrele Butonu Tasarımı */
+.btn-search {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+    min-width: 120px;
+}
+
+/* Buton Üzerine Gelince */
+.btn-search:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    filter: brightness(1.1);
+}
+
+/* Butona Basılınca */
+.btn-search:active {
+    transform: translateY(0);
 }
