@@ -25,81 +25,34 @@ public class DoctorService {
     private final UserRepository userRepository;
     private final ClinicRepository clinicRepository;
     private final PasswordEncoder passwordEncoder;
-
     // ==================== ORTAK NORMALİZASYON METODLARI ====================
 
     /**
-     * Doktor listesini normalize eder:
-     * - Ünvanları kısaltır (Uzman → Uzm, Profesör → Prof, vb.)
-     * - İsimleri "Uzm. Dr. Ahmet" formatına çevirir
-     * - İsme göre sıralar
+     * Doktor listesini normalize eder - SADECE SIRALAMA YAPAR, İSİM DEĞİŞTİRMEZ
      */
     private List<Doctor> normalizeDoctors(List<Doctor> doctors) {
         if (doctors == null || doctors.isEmpty()) {
             return doctors;
         }
 
+        // Sadece isme göre sırala, isimleri DEĞİŞTİRME
         return doctors.stream()
                 .sorted((d1, d2) -> {
                     String name1 = d1.getUser() != null ? d1.getUser().getFirstName() : "";
                     String name2 = d2.getUser() != null ? d2.getUser().getFirstName() : "";
                     return name1.compareTo(name2);
                 })
-                .peek(doctor -> {
-                    if (doctor.getUser() == null)
-                        return;
-
-                    String specialization = doctor.getSpecialization();
-                    String firstName = doctor.getUser().getFirstName();
-
-                    // Eğer firstName zaten ünvan içeriyorsa dokunma
-                    if (firstName != null && (firstName.contains("Dr.") || firstName.contains("Prof.")
-                            || firstName.contains("Doç.") || firstName.contains("Uzm.") || firstName.contains("Op."))) {
-                        return;
-                    }
-
-                    // Sadece ham isim geldiyse düzenle
-                    if (specialization != null && !specialization.isEmpty()
-                            && !specialization.equals("Uzmanlık Belirtilmemiş")) {
-
-                        String title = specialization.trim();
-                        String fullTitle = title;
-
-                        if (title.equalsIgnoreCase("Uzm") || title.equalsIgnoreCase("Uzm.")) {
-                            fullTitle = "Uzm.";
-                        } else if (title.equalsIgnoreCase("Prof") || title.equalsIgnoreCase("Prof.")) {
-                            fullTitle = "Prof.";
-                        } else if (title.equalsIgnoreCase("Doç") || title.equalsIgnoreCase("Doç.")) {
-                            fullTitle = "Doç.";
-                        } else if (title.equalsIgnoreCase("Op") || title.equalsIgnoreCase("Op.")) {
-                            fullTitle = "Op.";
-                        } else if (title.equalsIgnoreCase("Dr") || title.equalsIgnoreCase("Dr.")) {
-                            fullTitle = "Dr.";
-                        }
-
-                        if (firstName != null && !firstName.contains(" ")) {
-                            doctor.getUser().setFirstName(fullTitle + " Dr. " + firstName);
-                        }
-                    } else {
-                        if (firstName != null && !firstName.contains("Dr.") && !firstName.contains(" ")) {
-                            doctor.getUser().setFirstName("Dr. " + firstName);
-                        }
-                    }
-                })
                 .collect(Collectors.toList());
     }
 
     /**
-     * Tek bir doktoru normalize eder
+     * Tek bir doktoru normalize eder - DEĞİŞİKLİK YAPMAZ
      */
     private Doctor normalizeDoctor(Doctor doctor) {
-        if (doctor == null)
-            return null;
-        List<Doctor> normalized = normalizeDoctors(Arrays.asList(doctor));
-        return normalized.isEmpty() ? doctor : normalized.get(0);
+        return doctor; // Hiçbir değişiklik yapma
     }
 
-    // Ünvan doğrulama
+    // Ünvan doğrulama - SADECE DOĞRULAMA YAPAR, İSİM DEĞİŞTİRMEZ
     private String validateAndFixTitle(String title) {
         if (title == null || title.isEmpty()) {
             return null;
@@ -185,7 +138,7 @@ public class DoctorService {
             String specialization,
             Long clinicId) {
 
-        //  Ünvan doğrulama
+        // Ünvan doğrulama
         String validatedSpecialization = null;
         if (specialization != null && !specialization.isEmpty()) {
             validatedSpecialization = validateAndFixTitle(specialization);
@@ -218,13 +171,12 @@ public class DoctorService {
         doctor.setClinic(clinic);
 
         Doctor savedDoctor = doctorRepository.save(doctor);
-        Doctor normalizedDoctor = normalizeDoctor(savedDoctor);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("id", normalizedDoctor.getId());
-        response.put("firstName", normalizedDoctor.getUser().getFirstName());
-        response.put("lastName", normalizedDoctor.getUser().getLastName());
-        response.put("specialty", normalizedDoctor.getSpecialization());
+        response.put("id", savedDoctor.getId());
+        response.put("firstName", savedDoctor.getUser().getFirstName());
+        response.put("lastName", savedDoctor.getUser().getLastName());
+        response.put("specialty", savedDoctor.getSpecialization());
         response.put("clinicName", clinic.getName());
         response.put("username", username);
         response.put("temporaryPassword", plainPassword);
