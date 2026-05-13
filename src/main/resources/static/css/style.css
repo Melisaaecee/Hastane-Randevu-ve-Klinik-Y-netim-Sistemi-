@@ -1096,3 +1096,12 @@ select.form-control:disabled {
     position: sticky;
     top: 0;
 }
+/* Admin slotları için durum göstergeleri */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+.status-full { background-color: #ffebee; color: #c62828; } /* Kırmızı */
+.status-empty { background-color: #e8f5e9; color: #2e7d32; } /* Yeşil */

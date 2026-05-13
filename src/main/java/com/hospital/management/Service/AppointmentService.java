@@ -138,7 +138,7 @@ public class AppointmentService {
     }
 
     // --- YARDIMCI DÖNÜŞTÜRÜCÜ (Private Mapper) ---
-    private List<AppointmentResponseDTO> convertToDtoList(List<Appointment> appointments) {
+    public List<AppointmentResponseDTO> convertToDtoList(List<Appointment> appointments) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
         return appointments.stream().map(app -> {

@@ -19,6 +19,8 @@ import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.hospital.management.DTO.SlotResponseDTO; // 
+import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
@@ -166,4 +168,44 @@ if (slot.getStartTime().isBefore(LocalDateTime.now())) {
     public List<Slot> getAllSlots() {
         return slotRepository.findAll();
     }
+
+
+
+
+// Admin slotları görebilsin diye ekledik, DTO dönüşümü de burada yapılacak
+    public SlotResponseDTO convertToResponseDto(Slot slot) {
+    SlotResponseDTO dto = new SlotResponseDTO();
+    dto.setId(slot.getId());
+    
+    // Doktor ve Uzmanlık bilgisini birleştiriyoruz
+    if (slot.getDoctor() != null && slot.getDoctor().getUser() != null) {
+        String name = "Dr. " + slot.getDoctor().getUser().getFirstName() + " " + 
+                     slot.getDoctor().getUser().getLastName();
+        // Varsa uzmanlık alanını da ekleyelim
+        if (slot.getDoctor().getSpecialization() != null) {
+            name = slot.getDoctor().getSpecialization() + " " + name;
+        }
+        dto.setDoctorName(name);
+    } else {
+        dto.setDoctorName("-");
+    }
+
+    // Tarih formatlama
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+    dto.setStartTime(slot.getStartTime().format(formatter));
+    dto.setEndTime(slot.getEndTime().format(formatter));
+    
+    // Durum bilgileri
+    dto.setStatus(slot.getStatus().toString());
+    dto.setFull(slot.getStatus() == SlotStatus.BOOKED);
+    
+    return dto;
+}
+
+// Tüm slotları DTO olarak dönen liste metodu
+public List<SlotResponseDTO> getAllSlotsAsDto() {
+    return slotRepository.findAll().stream()
+            .map(this::convertToResponseDto)
+            .collect(Collectors.toList());
+}
 }

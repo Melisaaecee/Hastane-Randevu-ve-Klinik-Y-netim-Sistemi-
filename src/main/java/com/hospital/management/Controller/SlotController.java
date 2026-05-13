@@ -1,5 +1,6 @@
 package com.hospital.management.Controller;
 
+import com.hospital.management.DTO.SlotResponseDTO;
 import com.hospital.management.Entity.Slot;
 import com.hospital.management.Service.SlotService;
 import lombok.RequiredArgsConstructor;
@@ -32,9 +33,10 @@ public ResponseEntity<List<Slot>> getAvailable(
     return ResponseEntity.ok(slotService.getFutureAvailableSlots(doctorId));
 }
 
+  // Admin panelindeki tabloyu doldurmak için tüm slotları DTO olarak döner
     @GetMapping
-    public ResponseEntity<List<Slot>> getAllSlots() {
-        return ResponseEntity.ok(slotService.getAllSlots());
+    public ResponseEntity<List<SlotResponseDTO>> getAllSlots() {
+        return ResponseEntity.ok(slotService.getAllSlotsAsDto());
     }
 
     @PostMapping
