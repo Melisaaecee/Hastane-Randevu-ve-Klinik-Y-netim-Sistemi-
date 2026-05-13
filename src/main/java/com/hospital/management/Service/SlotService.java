@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,76 +47,80 @@ public class SlotService {
         return slotRepository.findByDoctorIdWithDetails(doctorId);
     }
 
-
-
     public List<Slot> getSlotsByDoctorAndDate(Long doctorId, String dateStr) {
-    // 1. Frontend'den gelen "2026-05-15" gibi String'i LocalDate'e çeviriyoruz
-    LocalDate date = LocalDate.parse(dateStr);
-    
-    // 2. O günün başlangıcını (00:00:00) ve bitişini (23:59:59) belirliyoruz
-    LocalDateTime startOfDay = date.atStartOfDay(); 
-    LocalDateTime endOfDay = date.atTime(LocalTime.MAX); 
+        LocalDate date = LocalDate.parse(dateStr);
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
+        LocalDateTime now = LocalDateTime.now();
 
-    // 3. Repository'deki yeni metodunu kullanarak bu iki zaman arasındaki AVAILABLE slotları çekiyoruz
-    return slotRepository.findByDoctorIdAndStartTimeBetweenAndStatus(
-            doctorId, 
-            startOfDay, 
-            endOfDay, 
-            SlotStatus.AVAILABLE
-    );
-}
+        // 1. Geçmiş tarih kontrolü
+        if (date.isBefore(now.toLocalDate())) {
+            return new ArrayList<>(); // Geçmiş tarih için boş liste
+        }
+
+        // 2. Bugün için başlangıç saati = şu an
+        LocalDateTime queryStart = startOfDay;
+        if (date.isEqual(now.toLocalDate())) {
+            queryStart = now; // Bugün için sadece şu andan sonraki slotlar
+        }
+
+        // 3. Sadece queryStart'ten sonraki slotları getir
+        return slotRepository.findByDoctorIdAndStartTimeBetweenAndStatus(
+                doctorId, queryStart, endOfDay, SlotStatus.AVAILABLE);
+    }
 
     @Transactional
-public Slot createSlot(Slot slot) {
-    // 1. Veri kontrolü
-    if (slot.getDoctor() == null || slot.getDoctor().getId() == null) {
-        throw new BadRequestException("Doktor ID bilgisi eksik.");
-    }
+    public Slot createSlot(Slot slot) {
+        // 1. Veri kontrolü
+        if (slot.getDoctor() == null || slot.getDoctor().getId() == null) {
+            throw new BadRequestException("Doktor ID bilgisi eksik.");
+        }
 
-    // 2. Veritabanından doktoru bul
-    Doctor doctor = doctorRepository.findById(slot.getDoctor().getId())
-            .orElseThrow(() -> new EntityNotFoundException("Doktor bulunamadı."));
+        // 2. Veritabanından doktoru bul
+        Doctor doctor = doctorRepository.findById(slot.getDoctor().getId())
+                .orElseThrow(() -> new EntityNotFoundException("Doktor bulunamadı."));
 
-    // 3. Eksik bilgileri tamamla
-    slot.setDoctor(doctor);
-    slot.setClinic(doctor.getClinic());
-    slot.setStatus(SlotStatus.AVAILABLE);
+        // 3. Eksik bilgileri tamamla
+        slot.setDoctor(doctor);
+        slot.setClinic(doctor.getClinic());
+        slot.setStatus(SlotStatus.AVAILABLE);
 
-    // 4. Güvenlik ve Mantıksal Kontroller
-    if (!SecurityUtil.isOwner(doctor.getUser().getId()) && !SecurityUtil.isAdmin()) {
-        throw new AccessDeniedException("Yetkisiz işlem!");
-    }
+        // 4. Güvenlik ve Mantıksal Kontroller
+        if (!SecurityUtil.isOwner(doctor.getUser().getId()) && !SecurityUtil.isAdmin()) {
+            throw new AccessDeniedException("Yetkisiz işlem!");
+        }
 
-    // --- YENİ KONTROLLER BAŞLANGIÇ ---
+        // --- YENİ KONTROLLER BAŞLANGIÇ ---
 
-    // KURAL 1: Başlangıç ve Bitiş saati aynı olamaz
-    if (slot.getStartTime().isEqual(slot.getEndTime())) {
-        throw new BadRequestException("❌ Slotun başlangıç ve bitiş saati aynı olamaz.");
-    }
+        // KURAL 1: Başlangıç ve Bitiş saati aynı olamaz
+        if (slot.getStartTime().isEqual(slot.getEndTime())) {
+            throw new BadRequestException("❌ Slotun başlangıç ve bitiş saati aynı olamaz.");
+        }
 
- // --- YENİ KONTROLLER GÜNCELLENMİŞ ---
+        // --- YENİ KONTROLLER GÜNCELLENMİŞ ---
 
-// 1. Önce aynı gün kontrolü (LocalDate üzerinden)
-if (!slot.getStartTime().toLocalDate().isEqual(slot.getEndTime().toLocalDate())) {
-    throw new BadRequestException("❌ Bir slot sadece tek bir gün içinde tanımlanabilir. Gün aşırı slot oluşturulamaz.");
-}
+        // 1. Önce aynı gün kontrolü (LocalDate üzerinden)
+        if (!slot.getStartTime().toLocalDate().isEqual(slot.getEndTime().toLocalDate())) {
+            throw new BadRequestException(
+                    "❌ Bir slot sadece tek bir gün içinde tanımlanabilir. Gün aşırı slot oluşturulamaz.");
+        }
 
-// 2. Aynı gün içindeyse, saatin ileri olup olmadığı kontrolü
-if (!slot.getEndTime().isAfter(slot.getStartTime())) {
-    throw new BadRequestException("❌ Bitiş saati başlangıç saatinden sonra olmalıdır.");
-}
+        // 2. Aynı gün içindeyse, saatin ileri olup olmadığı kontrolü
+        if (!slot.getEndTime().isAfter(slot.getStartTime())) {
+            throw new BadRequestException("❌ Bitiş saati başlangıç saatinden sonra olmalıdır.");
+        }
 
-// 3. Geçmiş tarih kontrolü
-if (slot.getStartTime().isBefore(LocalDateTime.now())) {
-    throw new BadRequestException("❌ Geçmiş tarihe slot eklenemez.");
-}
-        // ÇAKIŞMA KONTROLÜ 
+        // 3. Geçmiş tarih kontrolü
+        if (slot.getStartTime().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("❌ Geçmiş tarihe slot eklenemez.");
+        }
+        // ÇAKIŞMA KONTROLÜ
         checkSlotConflict(doctor.getId(), slot.getStartTime(), slot.getEndTime());
 
         return slotRepository.save(slot);
     }
 
-    //  Slot çakışmasını kontrol et
+    // Slot çakışmasını kontrol et
     private void checkSlotConflict(Long doctorId, LocalDateTime newStart, LocalDateTime newEnd) {
         // Doktorun mevcut tüm slotlarını getir
         List<Slot> existingSlots = slotRepository.findByDoctorIdWithDetails(doctorId);
@@ -123,7 +128,6 @@ if (slot.getStartTime().isBefore(LocalDateTime.now())) {
         for (Slot existing : existingSlots) {
             LocalDateTime existingStart = existing.getStartTime();
             LocalDateTime existingEnd = existing.getEndTime();
-
 
             boolean isOverlap = (newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart));
 
@@ -169,47 +173,44 @@ if (slot.getStartTime().isBefore(LocalDateTime.now())) {
         return slotRepository.findAll();
     }
 
-
-
-
-// Admin slotları görebilsin diye ekledik, DTO dönüşümü de burada yapılacak
+    // Admin slotları görebilsin diye ekledik, DTO dönüşümü de burada yapılacak
     public SlotResponseDTO convertToResponseDto(Slot slot) {
-    SlotResponseDTO dto = new SlotResponseDTO();
-    dto.setId(slot.getId());
-    
-    // Doktor ve Uzmanlık bilgisini birleştiriyoruz
+        SlotResponseDTO dto = new SlotResponseDTO();
+        dto.setId(slot.getId());
 
-    if (slot.getDoctor() != null) {
-        dto.setDoctorId(slot.getDoctor().getId());
-    }
-    if (slot.getDoctor() != null && slot.getDoctor().getUser() != null) {
-        String name = slot.getDoctor().getUser().getFirstName() + " " + 
-                     slot.getDoctor().getUser().getLastName();
-        // Varsa uzmanlık alanını da ekleyelim
-        if (slot.getDoctor().getSpecialization() != null) {
-            name = slot.getDoctor().getSpecialization() + " " + name;
+        // Doktor ve Uzmanlık bilgisini birleştiriyoruz
+
+        if (slot.getDoctor() != null) {
+            dto.setDoctorId(slot.getDoctor().getId());
         }
-        dto.setDoctorName(name);
-    } else {
-        dto.setDoctorName("-");
+        if (slot.getDoctor() != null && slot.getDoctor().getUser() != null) {
+            String name = slot.getDoctor().getUser().getFirstName() + " " +
+                    slot.getDoctor().getUser().getLastName();
+            // Varsa uzmanlık alanını da ekleyelim
+            if (slot.getDoctor().getSpecialization() != null) {
+                name = slot.getDoctor().getSpecialization() + " " + name;
+            }
+            dto.setDoctorName(name);
+        } else {
+            dto.setDoctorName("-");
+        }
+
+        // Tarih formatlama
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+        dto.setStartTime(slot.getStartTime().format(formatter));
+        dto.setEndTime(slot.getEndTime().format(formatter));
+
+        // Durum bilgileri
+        dto.setStatus(slot.getStatus().toString());
+        dto.setFull(slot.getStatus() == SlotStatus.BOOKED);
+
+        return dto;
     }
 
-    // Tarih formatlama
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
-    dto.setStartTime(slot.getStartTime().format(formatter));
-    dto.setEndTime(slot.getEndTime().format(formatter));
-    
-    // Durum bilgileri
-    dto.setStatus(slot.getStatus().toString());
-    dto.setFull(slot.getStatus() == SlotStatus.BOOKED);
-    
-    return dto;
-}
-
-// Tüm slotları DTO olarak dönen liste metodu
-public List<SlotResponseDTO> getAllSlotsAsDto() {
-    return slotRepository.findAll().stream()
-            .map(this::convertToResponseDto)
-            .collect(Collectors.toList());
-}
+    // Tüm slotları DTO olarak dönen liste metodu
+    public List<SlotResponseDTO> getAllSlotsAsDto() {
+        return slotRepository.findAll().stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+    }
 }
