@@ -187,7 +187,8 @@
         </div>
 
         <div class="auth-tabs">
-            <button type="button" class="tab-btn active" id="btnPatient" onclick="switchTab('PATIENT')">Hasta Girişi</button>
+            <button type="button" class="tab-btn active" id="btnPatient" onclick="switchTab('PATIENT')">Hasta
+                Girişi</button>
             <button type="button" class="tab-btn" id="btnStaff" onclick="switchTab('STAFF')">Personel Girişi</button>
         </div>
 
@@ -228,7 +229,9 @@
                 <input type="email" id="forgotEmail" placeholder="ornek@mail.com">
             </div>
 
-            <div id="forgotMessage" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem;"></div>
+            <div id="forgotMessage"
+                style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem;">
+            </div>
 
             <button type="button" class="btn-primary" id="btnReset" onclick="sendResetLink()">Link Gönder</button>
         </div>
@@ -339,7 +342,7 @@
             msg.textContent = "Gönderiliyor...";
 
             try {
-                const res = await fetch(`${BASE_URL}/auth/forgot-password`, {
+                const res = await fetch('http://localhost:8080/api/auth/forgot-password', {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email })

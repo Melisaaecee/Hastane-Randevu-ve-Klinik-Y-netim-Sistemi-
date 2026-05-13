@@ -100,24 +100,22 @@ public class AppointmentService {
         slotRepository.save(slot);
 
         // Mail gönderimi
-        /*
-         * try {
-         * // Mail gönderme işlemini çağırıyoruz
-         * mailService.sendAppointmentConfirmationMail(
-         * patient.getUser().getEmail(),
-         * patient.getUser().getFirstName() + " " + patient.getUser().getLastName(),
-         * slot.getDoctor().getUser().getFirstName() + " " +
-         * slot.getDoctor().getUser().getLastName(),
-         * slot.getDoctor().getClinic().getName(),
-         * slot.getStartTime().toString());
-         * } catch (Exception e) {
-         * // Hata oluştuğunda sadece konsola yazdırıyoruz.
-         * // Burayı boş bırakmak veya sadece loglamak, işlemin devam etmesini sağlar.
-         * System.err.
-         * println("Kritik: Mail sunucusuna bağlanılamadı (Timeout). Randevu kaydı devam ediyor... Hata: "
-         * + e.getMessage());
-         * }
-         */
+
+        try {
+            // Mail gönderme işlemini çağırıyoruz
+            mailService.sendAppointmentConfirmationMail(
+                    patient.getUser().getEmail(),
+                    patient.getUser().getFirstName() + " " + patient.getUser().getLastName(),
+                    slot.getDoctor().getUser().getFirstName() + " " +
+                            slot.getDoctor().getUser().getLastName(),
+                    slot.getDoctor().getClinic().getName(),
+                    slot.getStartTime().toString());
+        } catch (Exception e) {
+            // Hata oluştuğunda sadece konsola yazdırıyoruz.
+            // Burayı boş bırakmak veya sadece loglamak, işlemin devam etmesini sağlar.
+            System.err.println("Kritik: Mail sunucusuna bağlanılamadı (Timeout). Randevu kaydı devam ediyor... Hata: "
+                    + e.getMessage());
+        }
 
         // Mail gitse de gitmese de randevuyu kaydedip sonucu dönüyoruz.
         return appointmentRepository.save(appointment);
@@ -285,14 +283,13 @@ public class AppointmentService {
 
         penaltyService.createPenaltyFromAppointment(appointment);
 
-        /*
-         * // Hastaya ceza maili gönder
-         * mailService.sendPenaltyMail(
-         * appointment.getPatient().getUser().getEmail(),
-         * appointment.getPatient().getUser().getFirstName() + " "
-         * + appointment.getPatient().getUser().getLastName(),
-         * appointment.getSlot().getStartTime().toString());
-         */
+        // Hastaya ceza maili gönder
+        mailService.sendPenaltyMail(
+                appointment.getPatient().getUser().getEmail(),
+                appointment.getPatient().getUser().getFirstName() + " "
+                        + appointment.getPatient().getUser().getLastName(),
+                appointment.getSlot().getStartTime().toString());
+
         appointmentRepository.save(appointment);
     }
 

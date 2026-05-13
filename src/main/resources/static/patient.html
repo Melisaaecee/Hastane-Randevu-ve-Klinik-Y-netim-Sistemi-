@@ -548,11 +548,8 @@
                 const token = authData?.token;
                 const tckn = authData?.user?.tckn;
 
-                console.log("Token:", token);
-                console.log("TCKN:", tckn);
-                console.log("Email:", email);
 
-                const res = await fetch('https://medsoft.up.railway.app/api/auth/send-verification-code', {
+                const res = await fetch('http://localhost:8080/api/auth/send-verification-code', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -562,7 +559,7 @@
                 });
 
                 const data = await res.json();
-                console.log("Response:", data);
+               
 
                 if (res.ok) {
                     document.getElementById("emailStep1").style.display = 'none';
@@ -598,7 +595,7 @@
                 const token = authData?.token;
                 const tckn = authData?.user?.tckn;
 
-                const res = await fetch('https://medsoft.up.railway.app/api/auth/verify-email-update', {
+                const res = await fetch('http://localhost:8080/api/auth/verify-email-update', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

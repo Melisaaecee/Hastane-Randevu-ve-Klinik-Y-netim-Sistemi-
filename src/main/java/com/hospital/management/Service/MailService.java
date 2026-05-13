@@ -27,7 +27,7 @@ public class MailService {
 
         message.setSubject("Hastane Yönetim Sistemi | Şifre Sıfırlama Talebi");
 
-        String resetUrl = "https://medsoft.up.railway.app/reset-password.html?token=" + token;
+        String resetUrl = "http://localhost:8080/reset-password.html?token=" + token;
         String emailContent = "Sayın Kullanıcımız,\n\n" +
                 "Hesabınız için şifre sıfırlama talebinde bulundunuz. " +
                 "Aşağıdaki bağlantıya tıklayarak yeni şifrenizi belirleyebilirsiniz:\n\n" +
@@ -63,8 +63,6 @@ public class MailService {
         mailSender.send(message);
     }
 
-
-    
     public void sendPenaltyMail(String to, String fullName, String appointmentDate) {
         SimpleMailMessage message = new SimpleMailMessage();
 
@@ -84,31 +82,29 @@ public class MailService {
         mailSender.send(message);
     }
 
+    public void sendAppointmentConfirmationMail(String to, String fullName, String doctorName, String clinicName,
+            String appointmentDate) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("akilli.kutuphane6@gmail.com");
+        message.setTo(to);
+        message.setSubject("Randevunuz Onaylandı | " + clinicName);
 
-    
-public void sendAppointmentConfirmationMail(String to, String fullName, String doctorName, String clinicName, String appointmentDate) {
-    SimpleMailMessage message = new SimpleMailMessage();
-    message.setFrom("akilli.kutuphane6@gmail.com");
-    message.setTo(to);
-    message.setSubject("Randevunuz Onaylandı | " + clinicName);
 
-    // Railway üzerindeki canlı uygulama adresin
-    String appointmentUrl = "https://medsoft.up.railway.app/patient.html"; 
+        String appointmentUrl = "http://localhost:8080/patient.html";
 
-    String emailContent = "Sayın " + fullName + ",\n\n" +
-            "Randevunuz başarıyla oluşturulmuştur. Bilgileriniz aşağıdadır:\n\n" +
-            "Klinik: " + clinicName + "\n" +
-            "Doktor: " + doctorName + "\n" +
-            "Tarih ve Saat: " + appointmentDate + "\n\n" +
-            "Randevularınızı yönetmek ve detayları incelemek için aşağıdaki bağlantıyı kullanabilirsiniz:\n" +
-            appointmentUrl + "\n\n" +
-            "Randevunuza gidemeyecek durumdaysanız, lütfen sistem üzerinden en geç 24 saat öncesine kadar iptal ediniz.\n\n" +
-            "Sağlıklı günler dileriz,\nHastane Yönetim Sistemi Ekibi";
+        String emailContent = "Sayın " + fullName + ",\n\n" +
+                "Randevunuz başarıyla oluşturulmuştur. Bilgileriniz aşağıdadır:\n\n" +
+                "Klinik: " + clinicName + "\n" +
+                "Doktor: " + doctorName + "\n" +
+                "Tarih ve Saat: " + appointmentDate + "\n\n" +
+                "Randevularınızı yönetmek ve detayları incelemek için aşağıdaki bağlantıyı kullanabilirsiniz:\n" +
+                appointmentUrl + "\n\n" +
+                "Randevunuza gidemeyecek durumdaysanız, lütfen sistem üzerinden en geç 24 saat öncesine kadar iptal ediniz.\n\n"
+                +
+                "Sağlıklı günler dileriz,\nHastane Yönetim Sistemi Ekibi";
 
-    message.setText(emailContent);
-    
-    // NOT: Bu satır Railway'de timeout aldığı için randevunun oluşmasını engelliyordu.
-    // AppointmentService içinde bunu try-catch ile sardığından emin ol!
-    mailSender.send(message);
-}
+        message.setText(emailContent);
+
+        mailSender.send(message);
+    }
 }
