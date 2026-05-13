@@ -46,6 +46,23 @@
             color: var(--dark-blue);
             font-size: 1rem;
         }
+
+
+
+        .nav-icon {
+    font-size: 1.3rem; /* Boyutu buradan ayarlayabilirsin */
+    width: 28px;
+    display: inline-flex;
+    vertical-align: middle;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+}
+
+/* Hover durumunda ikonun rengini değiştirmek istersen */
+.nav-link:hover iconify-icon {
+    color: var(--primary-blue);
+    transform: scale(1.1);
+}
     </style>
 </head>
 
@@ -60,26 +77,26 @@
         </div>
 
         <nav>
-            <ul>
-                <li id="link-appointments" class="nav-link active" onclick="showSection('appointments', this)">
-                    <i class="fas fa-calendar-alt"></i> <span>Randevularım</span>
-                </li>
-                <li id="link-get-appointment" class="nav-link" onclick="showSection('get-appointment', this)">
-                    <i class="fas fa-plus-circle"></i> <span>Randevu Al</span>
-                </li>
-                <li id="link-my-info" class="nav-link" onclick="showSection('my-info', this)">
-                    <i class="fas fa-user-circle"></i> <span>Kişisel Bilgiler</span>
-                </li>
-                <li id="link-profile-settings" class="nav-link" onclick="showSection('profile-settings', this)">
-                    <i class="fas fa-shield-alt"></i> <span>Güvenlik Ayarları</span>
-                </li>
-                <li id="link-my-penalties" class="nav-link" onclick="showSection('my-penalties', this)">
-                    <i class="fas fa-ban"></i> <span>Cezalarım</span>
-                </li>
-                <li class="logout-item" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i> <span>Güvenli Çıkış</span>
-                </li>
-            </ul>
+<ul>
+        <li id="link-appointments" class="nav-link active" onclick="showSection('appointments', this)">
+            <iconify-icon icon="lucide:calendar-days" class="nav-icon"></iconify-icon> <span>Randevularım</span>
+        </li>
+        <li id="link-get-appointment" class="nav-link" onclick="showSection('get-appointment', this)">
+            <iconify-icon icon="lucide:plus-circle" class="nav-icon"></iconify-icon> <span>Randevu Al</span>
+        </li>
+        <li id="link-my-info" class="nav-link" onclick="showSection('my-info', this)">
+            <iconify-icon icon="lucide:user-circle" class="nav-icon"></iconify-icon> <span>Kişisel Bilgiler</span>
+        </li>
+        <li id="link-profile-settings" class="nav-link" onclick="showSection('profile-settings', this)">
+            <iconify-icon icon="lucide:shield-check" class="nav-icon"></iconify-icon> <span>Güvenlik Ayarları</span>
+        </li>
+        <li id="link-my-penalties" class="nav-link" onclick="showSection('my-penalties', this)">
+            <iconify-icon icon="lucide:ban" class="nav-icon"></iconify-icon> <span>Cezalarım</span>
+        </li>
+        <li class="logout-item" onclick="logout()">
+            <iconify-icon icon="lucide:log-out" class="nav-icon"></iconify-icon> <span>Güvenli Çıkış</span>
+        </li>
+    </ul>
         </nav>
     </aside>
 

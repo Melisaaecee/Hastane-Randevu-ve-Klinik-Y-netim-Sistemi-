@@ -7,6 +7,32 @@
     <title>MedSoft | Doktor Paneli</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" href="https://api.iconify.design/fa6-solid:heart-pulse.svg?color=%23e11d48" type="image/svg+xml">
+
+
+    <style>
+        /* İkonların genel stili */
+iconify-icon {
+    vertical-align: middle;
+    margin-right: 12px;
+    font-size: 1.25rem; /* İdeal ikon boyutu */
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Navigasyon linki içindeki özel ayar */
+li.nav-link, li[onclick] {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    transition: all 0.2s ease;
+}
+
+/* Hover olduğunda ikonun hafifçe büyümesi için */
+li:hover iconify-icon {
+    transform: scale(1.1);
+    color: #e11d48; /* MedSoft kırmızısı veya senin tema rengin */
+}
+    </style>
 </head>
 
 <body>
@@ -18,22 +44,28 @@
             <p id="doctorNameSidebar" style="color: white; font-weight: 600; margin: 10px 0 5px 0;"></p>
         </div>
         <nav>
-            <ul>
-                <li class="active" onclick="window.doctorApp.showTab('profile', this)"><i class="fas fa-user-md"></i>
-                    <span>Profil Bilgilerim</span>
-                </li>
-                <li onclick="window.doctorApp.showTab('slots', this)"><i class="fas fa-calendar-plus"></i> <span>Randevu
-                        Slotları</span></li>
-                <li onclick="window.doctorApp.showTab('appointments', this)"><i class="fas fa-calendar-check"></i>
-                    <span>Randevularım</span>
-                </li>
-                <li onclick="window.doctorApp.showTab('profile-settings', this)"><i class="fas fa-cog"></i>
-                    <span>Güvenlik Ayarları</span>
-                </li>
-                <li class="logout-item" onclick="window.doctorApp.logout()"><i class="fas fa-sign-out-alt"></i>
-                    <span>Çıkış Yap</span>
-                </li>
-            </ul>
+           <ul>
+    <li class="active" onclick="window.doctorApp.showTab('profile', this)">
+        <iconify-icon icon="lucide:user-cog" class="nav-icon"></iconify-icon>
+        <span>Profil Bilgilerim</span>
+    </li>
+    <li onclick="window.doctorApp.showTab('slots', this)">
+        <iconify-icon icon="lucide:calendar-range" class="nav-icon"></iconify-icon> 
+        <span>Randevu Slotları</span>
+    </li>
+    <li onclick="window.doctorApp.showTab('appointments', this)">
+        <iconify-icon icon="lucide:clipboard-list" class="nav-icon"></iconify-icon>
+        <span>Randevularım</span>
+    </li>
+    <li onclick="window.doctorApp.showTab('profile-settings', this)">
+        <iconify-icon icon="lucide:settings" class="nav-icon"></iconify-icon>
+        <span>Güvenlik Ayarları</span>
+    </li>
+    <li class="logout-item" onclick="window.doctorApp.logout()">
+        <iconify-icon icon="lucide:log-out" class="nav-icon"></iconify-icon>
+        <span>Çıkış Yap</span>
+    </li>
+</ul>
         </nav>
     </aside>
 

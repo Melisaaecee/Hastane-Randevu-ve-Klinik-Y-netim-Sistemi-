@@ -7,6 +7,26 @@
     <title>MedSoft | Admin Paneli</title>
     <link rel="icon" href="https://api.iconify.design/fa6-solid:heart-pulse.svg?color=%23e11d48" type="image/svg+xml">
     <link rel="stylesheet" href="/css/style.css">
+
+
+    <style>
+        /* Sidebar liste öğelerini esnek yapıda hizala */
+.sidebar ul li {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    cursor: pointer;
+    gap: 10px; /* İkon ve yazı arasındaki boşluk */
+}
+
+/* İkon boyutları */
+.nav-icon {
+    font-size: 1.4rem;
+    min-width: 24px;
+    display: flex;
+    justify-content: center;
+}
+    </style>
 </head>
 
 <body>
@@ -24,41 +44,52 @@
         </div>
 
         <nav>
-            <ul>
-                <li class="active" onclick="switchTab('dashboard', event)">
-                    <i class="fas fa-chart-line"></i> <span>Dashboard</span>
-                </li>
-                <li onclick="switchTab('profile', event)">
-                    <i class="fas fa-user-cog"></i> <span>Hesap Yönetimi</span>
-                </li>
-                <li onclick="switchTab('cities', event)">
-                    <i class="fas fa-map-marker-alt"></i> <span>Şehirler</span>
-                </li>
-                <li onclick="switchTab('districts', event)">
-                    <i class="fas fa-map"></i> <span>İlçeler</span>
-                </li>
-                <li onclick="switchTab('hospitals', event)">
-                    <i class="fas fa-hospital"></i> <span>Hastaneler</span>
-                </li>
-                <li onclick="switchTab('clinics', event)">
-                    <i class="fas fa-stethoscope"></i> <span>Klinikler</span>
-                </li>
-                <li onclick="switchTab('doctors', event)">
-                    <i class="fas fa-user-md"></i> <span>Doktorlar</span>
-                </li>
-                <li onclick="switchTab('users', event)">
-                    <i class="fas fa-users"></i> <span>Kullanıcılar</span>
-                </li>
-                <li onclick="switchTab('appointments', event)">
-                    <i class="fas fa-calendar"></i> <span>Randevular</span>
-                </li>
-                <li onclick="switchTab('slots', event)">
-                    <i class="fas fa-clock"></i> <span>Slotlar</span>
-                </li>
-                <li class="logout-item" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i> <span>Çıkış Yap</span>
-                </li>
-            </ul>
+ <ul>
+    <li class="active" onclick="switchTab('dashboard', event)">
+        <iconify-icon icon="lucide:layout-dashboard" class="nav-icon"></iconify-icon> 
+        <span>Dashboard</span>
+    </li>
+    <li onclick="switchTab('profile', event)">
+        <iconify-icon icon="lucide:user-cog" class="nav-icon"></iconify-icon> 
+        <span>Hesap Yönetimi</span>
+    </li>
+    <li onclick="switchTab('cities', event)">
+        <iconify-icon icon="lucide:map-pin" class="nav-icon"></iconify-icon> 
+        <span>Şehirler</span>
+    </li>
+    <li onclick="switchTab('districts', event)">
+        <iconify-icon icon="lucide:map" class="nav-icon"></iconify-icon> 
+        <span>İlçeler</span>
+    </li>
+    <li onclick="switchTab('hospitals', event)">
+        <iconify-icon icon="lucide:hospital" class="nav-icon"></iconify-icon> 
+        <span>Hastaneler</span>
+    </li>
+    <li onclick="switchTab('clinics', event)">
+        <iconify-icon icon="lucide:stethoscope" class="nav-icon"></iconify-icon> 
+        <span>Klinikler</span>
+    </li>
+    <li onclick="switchTab('doctors', event)">
+        <iconify-icon icon="lucide:contact-2" class="nav-icon"></iconify-icon> 
+        <span>Doktorlar</span>
+    </li>
+    <li onclick="switchTab('users', event)">
+        <iconify-icon icon="lucide:users" class="nav-icon"></iconify-icon> 
+        <span>Kullanıcılar</span>
+    </li>
+    <li onclick="switchTab('appointments', event)">
+        <iconify-icon icon="lucide:calendar-check" class="nav-icon"></iconify-icon> 
+        <span>Randevular</span>
+    </li>
+    <li onclick="switchTab('slots', event)">
+        <iconify-icon icon="lucide:timer" class="nav-icon"></iconify-icon> 
+        <span>Slotlar</span>
+    </li>
+    <li class="logout-item" onclick="logout()">
+        <iconify-icon icon="lucide:log-out" class="nav-icon"></iconify-icon> 
+        <span>Çıkış Yap</span>
+    </li>
+</ul>
         </nav>
     </aside>
 
