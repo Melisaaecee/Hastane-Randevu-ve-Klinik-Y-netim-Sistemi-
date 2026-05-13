@@ -371,10 +371,7 @@
         <!-- ID 'slots' olmalı ki switchTab fonksiyonun burayı bulabilsin -->
         <section id="slots" class="tab-content">
             <div class="content-section"> <!-- display:none kısmını tamamen kaldırdık -->
-                <div class="header-container">
-                    <h2>Randevu Slot Yönetimi</h2>
-                    <button class="btn-add" onclick="openSlotModal()">+ Toplu Slot Oluştur</button>
-                </div>
+                <h2><i class="fas fa-clock"></i> Slot Yönetimi</h2>
 
                 <div class="filter-bar">
                     <!-- Doktorları yüklemek için fonksiyon eklemelisin (aşağıda JS kısmında var) -->
@@ -985,26 +982,7 @@
     `).join("");
         }
 
-        // 2. Toplu Slot Oluşturma (Örn: 09:00 - 17:00 arası 30dk arayla)
-        window.generateBulkSlots = async function () {
-            const bulkData = {
-                doctorId: document.getElementById("modalDoctorSelect").value,
-                date: document.getElementById("modalDateInput").value,
-                startTime: "09:00",
-                endTime: "17:00",
-                duration: 30 // Dakika cinsinden
-            };
-
-            const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/slots/bulk-create`, {
-                method: "POST",
-                body: JSON.stringify(bulkData)
-            });
-
-            if (res?.ok) {
-                alert("Slotlar başarıyla oluşturuldu.");
-                loadSlots(); // Tabloyu güncelle
-            }
-        };
+ 
 
         // 3. Slot Silme
         window.deleteSlot = async function (slotId) {
