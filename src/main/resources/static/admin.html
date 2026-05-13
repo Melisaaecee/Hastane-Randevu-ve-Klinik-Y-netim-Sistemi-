@@ -403,7 +403,8 @@
             </div>
         </section>
     </main>
-    <script> // ================= TOKEN & FETCH =================
+    <script>
+        // ================= TOKEN & FETCH =================
         async function fetchWithAuth(url, options = {}) {
             const rawData = localStorage.getItem("user");
             const userData = rawData ? JSON.parse(rawData) : null;
@@ -801,7 +802,7 @@
         }
         window.filterDoctors = () => renderDoctors();
         window.deleteDoctor = async function (id) {
-            console.log("🔵 Silinecek ID:", id);
+
 
             if (!confirm(`ID: ${id} numaralı doktoru silmek istediğinizden emin misiniz?`)) return;
 
@@ -896,10 +897,10 @@
             await fetchWithAuth(`https://medsoft.up.railway.app/api/appointments/${id}/cancel`, { method: "PUT" });
             loadAppointments();
         };
-      
-        // ================= USERS =================
+
+
         window.loadUsers = async function () {
-            const res = await fetchWithAuth(`http://localhost:8080/api/users`);
+            const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/users`);
             if (res) {
                 const data = await res.json();
                 document.getElementById("userTableBody").innerHTML = data.map(u => `
@@ -914,6 +915,17 @@
                         </span>
                     </span>
                 `).join("");
+            }
+        };
+
+        window.deleteUser = async function (id) {
+            if (!confirm("Bu kullanıcıyı silmek istediğinizden emin misiniz?")) return;
+            const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/users/${id}`, { method: "DELETE" });
+            if (res?.ok) {
+                alert("✅ Kullanıcı silindi!");
+                loadUsers(); // Listeyi yenile
+            } else {
+                alert("❌ Silinemedi!");
             }
         };
         // 1. Belirli bir doktor ve tarihe göre slotları getir
