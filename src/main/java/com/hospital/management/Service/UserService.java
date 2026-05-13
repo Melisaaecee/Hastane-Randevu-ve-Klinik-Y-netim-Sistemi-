@@ -233,47 +233,59 @@ public class UserService {
             if (user.getPatient() != null) {
                 Patient patient = user.getPatient();
 
-                // ... cezaları silme kısmı aynı kalabilir ...
+                // 1. Önce cezaları temizle
+                List<Penalty> penalties = penaltyRepository.findByPatientId(patient.getId());
+                if (!penalties.isEmpty()) {
+                    penaltyRepository.deleteAllInBatch(penalties); // Daha hızlı ve kesin silme
+                }
 
+                // 2. Randevuları temizle
                 List<Appointment> appointments = appointmentRepository.findByPatientId(patient.getId());
                 for (Appointment appointment : appointments) {
                     Slot slot = appointment.getSlot();
                     if (slot != null) {
-                        // İLİŞKİYİ KOPAR: Randevunun slotla bağını kes
-                        appointment.setSlot(null);
-                        slot.setAppointment(null); // Çift taraflı koparma
-
+                        // İlişkiyi iki taraftan da kopar
+                        slot.setAppointment(null);
                         slot.setStatus(SlotStatus.AVAILABLE);
                         slotRepository.save(slot);
+
+                        appointment.setSlot(null); // Randevunun slot referansını temizle
                     }
                     appointmentRepository.delete(appointment);
                 }
-                appointmentRepository.flush(); // Randevuların silindiğinden emin ol
+                appointmentRepository.flush();
+
+                // Hastayı silmeden önce User ile bağını kopar
+                user.setPatient(null);
                 patientRepository.delete(patient);
+                patientRepository.flush();
             }
 
             // ============ DOKTOR İSE ============
             if (user.getDoctor() != null) {
                 Doctor doctor = user.getDoctor();
 
+                // 1. Slotları ve bağlı randevuları temizle
                 List<Slot> slots = slotRepository.findByDoctorId(doctor.getId());
                 for (Slot slot : slots) {
                     if (slot.getAppointment() != null) {
                         Appointment app = slot.getAppointment();
-
-                        // İLİŞKİYİ KOPAR: Önce slotun randevu bağını null yap
-                        slot.setAppointment(null);
-                        slotRepository.saveAndFlush(slot); // Veritabanına yansıt
-
+                        app.setSlot(null); // İlişkiyi kopar
                         appointmentRepository.delete(app);
-                        appointmentRepository.flush(); // Silme işlemini onayla
                     }
                     slotRepository.delete(slot);
                 }
+                slotRepository.flush();
+
+                // Doktoru silmeden önce User ile bağını kopar
+                user.setDoctor(null);
                 doctorRepository.delete(doctor);
+                doctorRepository.flush();
             }
+
             // ============ KULLANICIYI SİL ============
             userRepository.delete(user);
+            userRepository.flush();
 
         } catch (Exception e) {
             e.printStackTrace();
