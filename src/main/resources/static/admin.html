@@ -367,6 +367,7 @@
             </div>
         </section>
 
+<<<<<<< HEAD
         <!-- section id'si ile div id'si tutarlı olmalı -->
         <!-- ID 'slots' olmalı ki switchTab fonksiyonun burayı bulabilsin -->
         <section id="slots" class="tab-content">
@@ -375,6 +376,13 @@
                     <h2>Randevu Slot Yönetimi</h2>
                     <button class="btn-add" onclick="openSlotModal()">+ Toplu Slot Oluştur</button>
                 </div>
+=======
+<!-- section id'si ile div id'si tutarlı olmalı -->
+<!-- ID 'slots' olmalı ki switchTab fonksiyonun burayı bulabilsin -->
+<section id="slots" class="tab-content">
+    <div class="content-section"> <!-- display:none kısmını tamamen kaldırdık -->
+        <h2><i class="fas fa-clock"></i> Slot Yönetimi</h2>
+>>>>>>> dee1970 (toplu slot olurşturma kaldırıldı)
 
                 <div class="filter-bar">
                     <!-- Doktorları yüklemek için fonksiyon eklemelisin (aşağıda JS kısmında var) -->
@@ -971,6 +979,61 @@
             </td>
         </tr>
     `).join("");
+<<<<<<< HEAD
+=======
+}
+
+// 2. Toplu Slot Oluşturma (Örn: 09:00 - 17:00 arası 30dk arayla)
+/*window.generateBulkSlots = async function() {
+    const bulkData = {
+        doctorId: document.getElementById("modalDoctorSelect").value,
+        date: document.getElementById("modalDateInput").value,
+        startTime: "09:00",
+        endTime: "17:00",
+        duration: 30 // Dakika cinsinden
+    };
+
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/slots/bulk-create`, {
+        method: "POST",
+        body: JSON.stringify(bulkData)
+    });
+
+    if (res?.ok) {
+        alert("Slotlar başarıyla oluşturuldu.");
+        loadSlots(); // Tabloyu güncelle
+    }
+};*/
+
+// 3. Slot Silme
+window.deleteSlot = async function(slotId) {
+    if (!confirm("Bu slotu silmek istediğinize emin misiniz?")) return;
+
+    const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/slots/${slotId}`, {
+        method: "DELETE"
+    });
+
+    if (res?.ok) {
+        loadSlots();
+    }
+};
+
+
+window.loadDoctorsForSelect = async function(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    try {
+        const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/doctors`);
+        if (res && res.ok) {
+            const doctors = await res.json();
+            // Mevcut seçenekleri temizle ama "Tüm Doktorlar"ı bırak
+            select.innerHTML = '<option value="">Tüm Doktorlar</option>';
+            doctors.forEach(doc => {
+                // Doktorun ismini senin DTO mantığına göre birleştiriyoruz
+                const name = ` ${doc.user.firstName} ${doc.user.lastName}`;
+                select.innerHTML += `<option value="${doc.id}">${name}</option>`;
+            });
+>>>>>>> dee1970 (toplu slot olurşturma kaldırıldı)
         }
 
         // 2. Toplu Slot Oluşturma (Örn: 09:00 - 17:00 arası 30dk arayla)
