@@ -369,7 +369,7 @@
         function renderSlots(slots) {
             slotGrid.innerHTML = '';
 
-            // ✅ GEÇMİŞ ZAMANLI SLOTLARI FİLTRELE
+            //  GEÇMİŞ ZAMANLI SLOTLARI FİLTRELE
             const now = new Date();
             const futureSlots = slots.filter(slot => {
                 const slotTime = new Date(slot.startTime);
@@ -429,12 +429,7 @@
             }, 3000);
         }
 
-        /**
-         * RANDEVU ONAYI (POST)
-         */
-        /**
-         * RANDEVU ONAYI (POST)
-         */
+
         confirmBtn.addEventListener('click', async () => {
             const currentPatientId = authData?.user?.id;
 
