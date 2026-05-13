@@ -13,17 +13,17 @@ import java.util.Optional;
 
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
-
-    // --- MEVCUT METODLARIN ---
     
+    Optional<Appointment> findBySlotId(Long slotId);
+
     List<Appointment> findByPatientId(Long patientId);
 
     List<Appointment> findByPatientIdAndStatus(Long patientId, AppointmentStatus status);
 
     // Geçmiş (Bunu bu isimle ekle veya güncelle)
-List<Appointment> findByPatient_User_IdAndSlot_StartTimeBefore(Long userId, LocalDateTime now);
+    List<Appointment> findByPatient_User_IdAndSlot_StartTimeBefore(Long userId, LocalDateTime now);
 
-// Aktif (Bunu bu isimle ekle veya güncelle)
+    // Aktif (Bunu bu isimle ekle veya güncelle)
     List<Appointment> findByPatient_User_IdAndSlot_StartTimeAfter(Long userId, LocalDateTime now);
 
     List<Appointment> findBySlotDoctorIdAndSlotStartTimeBefore(Long doctorId, LocalDateTime now);
@@ -36,10 +36,8 @@ List<Appointment> findByPatient_User_IdAndSlot_StartTimeBefore(Long userId, Loca
 
     List<Appointment> findBySlotDoctorId(Long doctorId);
 
-
     // BU SATIRI EKLE: Verilen slotId ile bir randevu var mı yok mu kontrol eder
     boolean existsBySlotId(Long slotId);
-
 
     List<Appointment> findByPatient_User_Id(Long userId);
 
@@ -47,28 +45,29 @@ List<Appointment> findByPatient_User_IdAndSlot_StartTimeBefore(Long userId, Loca
 
     /**
      * 1. KURAL: Aynı gün başka randevu var mı?
-     * SQL'deki CAST(... AS date) ile zaman damgasının sadece tarih kısmını karşılaştırıyoruz.
+     * SQL'deki CAST(... AS date) ile zaman damgasının sadece tarih kısmını
+     * karşılaştırıyoruz.
      */
     @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.patient.id = :patientId " +
-           "AND CAST(a.slot.startTime AS date) = CAST(:date AS date) " +
-           "AND a.status = com.hospital.management.Entity.AppointmentStatus.APPROVED")
+            "AND CAST(a.slot.startTime AS date) = CAST(:date AS date) " +
+            "AND a.status = com.hospital.management.Entity.AppointmentStatus.APPROVED")
     boolean hasAnyAppointmentOnDate(@Param("patientId") Long patientId, @Param("date") LocalDateTime date);
 
-
-    
     /**
      * 2. KURAL: Aynı saatte çakışma detayını getir.
-     * Kullanıcıya "Şu hastanede randevunuz var" diyebilmek için tüm ilişkileri Fetch ediyoruz.
+     * Kullanıcıya "Şu hastanede randevunuz var" diyebilmek için tüm ilişkileri
+     * Fetch ediyoruz.
      */
     @Query("SELECT a FROM Appointment a " +
-           "JOIN FETCH a.slot s " +
-           "JOIN FETCH s.doctor d " +
-           "JOIN FETCH d.clinic c " +
-           "JOIN FETCH c.hospital h " +
-           "WHERE a.patient.id = :patientId " +
-           "AND s.startTime = :startTime " +
-           "AND a.status = com.hospital.management.Entity.AppointmentStatus.APPROVED")
-    Optional<Appointment> findConflictDetail(@Param("patientId") Long patientId, @Param("startTime") LocalDateTime startTime);
+            "JOIN FETCH a.slot s " +
+            "JOIN FETCH s.doctor d " +
+            "JOIN FETCH d.clinic c " +
+            "JOIN FETCH c.hospital h " +
+            "WHERE a.patient.id = :patientId " +
+            "AND s.startTime = :startTime " +
+            "AND a.status = com.hospital.management.Entity.AppointmentStatus.APPROVED")
+    Optional<Appointment> findConflictDetail(@Param("patientId") Long patientId,
+            @Param("startTime") LocalDateTime startTime);
 
     // --- FETCH JOIN SORGULARIN (DOKUNULMADI) ---
 

@@ -43,6 +43,8 @@ public interface PenaltyRepository extends JpaRepository<Penalty, Long> {
     // Admin için daha düzenli bir görünüm sağlar.
     List<Penalty> findByPatientUserTcknOrderByPenaltyStartDateDesc(String tckn);
 
+    // 8. Randevuya göre ceza sorgulama (Bu, randevu iptalinde ceza olup olmadığını kontrol etmek için kullanılabilir)
+    List<Penalty> findByAppointmentId(Long appointmentId);
 
     boolean existsByPatientIdAndActiveTrueAndPenaltyEndDateAfter(Long patientId, LocalDateTime now);
 }

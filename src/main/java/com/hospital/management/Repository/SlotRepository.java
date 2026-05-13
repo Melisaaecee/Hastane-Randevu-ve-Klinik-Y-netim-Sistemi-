@@ -23,15 +23,13 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
         // Doktorun günlük veya haftalık çalışma takvimini görüntülemesi için.
         List<Slot> findByDoctorIdAndStartTimeBetween(Long doctorId, LocalDateTime start, LocalDateTime end);
 
-
-
-        // Belirli bir doktorun, belirli bir gündeki (başlangıç ve bitiş saati arası) slotlarını getir
-List<Slot> findByDoctorIdAndStartTimeBetweenAndStatus(
-    Long doctorId, 
-    LocalDateTime start, 
-    LocalDateTime end, 
-    SlotStatus status
-);
+        // Belirli bir doktorun, belirli bir gündeki (başlangıç ve bitiş saati arası)
+        // slotlarını getir
+        List<Slot> findByDoctorIdAndStartTimeBetweenAndStatus(
+                        Long doctorId,
+                        LocalDateTime start,
+                        LocalDateTime end,
+                        SlotStatus status);
 
         // 3. Belirli bir doktorun, belirli bir durumdaki ve gelecekteki slotlarını
         // listeler
