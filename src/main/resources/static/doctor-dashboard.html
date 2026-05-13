@@ -781,8 +781,6 @@ li:hover iconify-icon {
                         const isNotAttended = status === 'NOT_ATTENDED';
                         const isCancelled = status === 'CANCELED';
                         const isCompleted = status === 'COMPLETED';
-
-                        // ✅ Buton göster: ONAYLANDI + ZAMANI GEÇMİŞ + GELMEDİ İŞARETLENMEMİŞ + İPTAL EDİLMEMİŞ
                         const showNotAttendedButton = status === 'APPROVED' && isPast && !isNotAttended && !isCancelled && !isCompleted;
 
                         console.log("Randevu:", {

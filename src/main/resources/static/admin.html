@@ -879,7 +879,6 @@
             if (res) {
                 // Backend'den artık düzeltilmiş DTO listesi geliyor
                 allAppointmentsData = await res.json();
-                console.log("Gelen DTO verileri:", allAppointmentsData);
 
                 // Tabloyu filtreye göre doldur (Varsayılan: ALL)
                 filterAdminAppointments();
