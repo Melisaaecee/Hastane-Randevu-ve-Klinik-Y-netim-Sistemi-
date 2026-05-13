@@ -312,9 +312,18 @@
         <!-- USERS -->
         <section id="users" class="tab-content">
             <div class="card">
-                <h2><i class="fas fa-users"></i> Kullanıcılar</h2>
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2><i class="fas fa-users"></i> Kullanıcılar</h2>
+                    <div class="filter-group">
+                        <button onclick="filterUsers('ALL')" id="userBtnAll"
+                            class="filter-btn active-filter">Tümü</button>
+                        <button onclick="filterUsers('ADMIN')" id="userBtnAdmin" class="filter-btn">Admin</button>
+                        <button onclick="filterUsers('DOCTOR')" id="userBtnDoctor" class="filter-btn">Doktor</button>
+                        <button onclick="filterUsers('PATIENT')" id="userBtnPatient" class="filter-btn">Hasta</button>
+                    </div>
+                </div>
                 <div class="table-container">
-                    <table>
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -895,36 +904,72 @@
             loadAppointments();
         };
 
+        // ================= USERS =================
+        let allUsersData = [];
 
         window.loadUsers = async function () {
             const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/users`);
             if (res) {
-                const data = await res.json();
-                document.getElementById("userTableBody").innerHTML = data.map(u => `
-                    <tr>
-                        <td>${u.id || '-'}</span>
-                        <td>${u.firstName || ''} ${u.lastName || ''}</span>
-                        <td>${u.email || '-'}</span>
-                        <td>${u.tckn || '-'}</span>
-                        <td>${u.role ? u.role.replace("ROLE_", "") : '-'}</span>
-                        <td class="action-buttons">
-                            <button class="btn-delete" onclick="deleteUser(${u.id})">Sil</button>
-                        </span>
-                    </span>
-                `).join("");
+                allUsersData = await res.json();
+                filterUsers('ALL');
             }
         };
+
+        window.filterUsers = function (role) {
+            // Buton aktiflik stillerini güncelle
+            document.querySelectorAll('#users .filter-btn').forEach(btn => btn.classList.remove('active-filter'));
+            if (role === 'ALL') document.getElementById('userBtnAll')?.classList.add('active-filter');
+            if (role === 'ADMIN') document.getElementById('userBtnAdmin')?.classList.add('active-filter');
+            if (role === 'DOCTOR') document.getElementById('userBtnDoctor')?.classList.add('active-filter');
+            if (role === 'PATIENT') document.getElementById('userBtnPatient')?.classList.add('active-filter');
+
+            let filteredData = [];
+            if (role === 'ALL') {
+                filteredData = allUsersData;
+            } else {
+                filteredData = allUsersData.filter(u => {
+                    const userRole = u.role ? u.role.replace("ROLE_", "") : "";
+                    return userRole === role;
+                });
+            }
+
+            renderUserTable(filteredData);
+        };
+
+        function renderUserTable(users) {
+            const tbody = document.getElementById("userTableBody");
+            if (!tbody) return;
+
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Bu rolde kullanıcı bulunamadı.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(u => `
+        <tr>
+            <td>${u.id || '-'}</td>
+            <td>${(u.firstName || '') + ' ' + (u.lastName || '')}</td>
+            <td>${u.email || '-'}</td>
+            <td>${u.tckn || '-'}</td>
+            <td>${u.role ? u.role.replace("ROLE_", "") : '-'}</td>
+            <td class="action-buttons">
+                <button class="btn-delete" onclick="deleteUser(${u.id})">Sil</button>
+            </td>
+        </tr>
+    `).join("");
+        }
 
         window.deleteUser = async function (id) {
             if (!confirm("Bu kullanıcıyı silmek istediğinizden emin misiniz?")) return;
             const res = await fetchWithAuth(`https://medsoft.up.railway.app/api/users/${id}`, { method: "DELETE" });
             if (res?.ok) {
                 alert("✅ Kullanıcı silindi!");
-                loadUsers(); // Listeyi yenile
+                loadUsers();
             } else {
                 alert("❌ Silinemedi!");
             }
         };
+        
         // 1. Belirli bir doktor ve tarihe göre slotları getir
         window.loadSlots = async function () {
             const doctorId = document.getElementById("slotDoctorSelect").value;
@@ -982,7 +1027,7 @@
     `).join("");
         }
 
- 
+
 
         // 3. Slot Silme
         window.deleteSlot = async function (slotId) {
