@@ -344,6 +344,15 @@
         <section id="appointments" class="tab-content">
             <div class="card">
                 <h2><i class="fas fa-calendar"></i> Randevular</h2>
+                <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <label for="adminAppointmentFilter">Randevuları Filtrele:</label>
+                    <select id="adminAppointmentFilter" onchange="filterAdminAppointments()" class="form-control"
+                        style="width: 200px;">
+                        <option value="ALL">Tümü</option>
+                        <option value="ACTIVE">Aktif (Gelecek)</option>
+                        <option value="PAST">Geçmiş</option>
+                    </select>
+                </div>
                 <div class="table-container">
                     <table class="data-table">
                         <thead>
@@ -363,15 +372,6 @@
                         </thead>
                         <tbody id="appointmentTableBody"></tbody>
                     </table>
-                </div>
-                <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-                    <label for="adminAppointmentFilter">Randevuları Filtrele:</label>
-                    <select id="adminAppointmentFilter" onchange="filterAdminAppointments()" class="form-control"
-                        style="width: 200px;">
-                        <option value="ALL">Tümü</option>
-                        <option value="ACTIVE">Aktif (Gelecek)</option>
-                        <option value="PAST">Geçmiş</option>
-                    </select>
                 </div>
             </div>
         </section>

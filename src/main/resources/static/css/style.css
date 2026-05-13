@@ -1105,3 +1105,45 @@ select.form-control:disabled {
 }
 .status-full { background-color: #ffebee; color: #c62828; } /* Kırmızı */
 .status-empty { background-color: #e8f5e9; color: #2e7d32; } /* Yeşil */
+
+
+
+/* Filtreleme Alanı Kapsayıcısı */
+.admin-filter-wrapper {
+    background-color: #f8f9fa;
+    padding: 15px 20px;
+    border-radius: 10px;
+    border-left: 5px solid #007bff; /* MedSoft temasına uygun mavi bir vurgu */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Etiket (Label) Stili */
+.admin-filter-wrapper label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0; /* Hizalamayı bozmaması için */
+}
+
+/* Select (Seçim Kutusu) Stili */
+.admin-filter-select {
+    appearance: none; /* Varsayılan ok işaretini kaldırıp custom ekleyebiliriz */
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #495057;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+/* Select odaklandığında (tıklandığında) efekt */
+.admin-filter-select:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
