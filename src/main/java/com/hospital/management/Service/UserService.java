@@ -3,12 +3,21 @@ package com.hospital.management.Service;
 import com.hospital.management.Config.SecurityUtil;
 import com.hospital.management.DTO.RegisterRequest;
 import com.hospital.management.DTO.UserResponse;
+import com.hospital.management.Entity.Appointment;
+import com.hospital.management.Entity.Penalty;
 import com.hospital.management.Entity.Role;
+import com.hospital.management.Entity.Slot;
+import com.hospital.management.Entity.SlotStatus;
 import com.hospital.management.Entity.User;
 import com.hospital.management.Exception.AccessDeniedException;
 import com.hospital.management.Exception.BadRequestException;
 import com.hospital.management.Exception.EntityNotFoundException;
+import com.hospital.management.Repository.DoctorRepository;
 import com.hospital.management.Repository.UserRepository;
+import com.hospital.management.Repository.PatientRepository;
+import com.hospital.management.Repository.SlotRepository;
+import com.hospital.management.Repository.AppointmentRepository;
+import com.hospital.management.Repository.PenaltyRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -25,6 +34,11 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DoctorRepository doctorRepository;
+    private final PatientRepository patientRepository;
+    private final SlotRepository slotRepository;
+    private final AppointmentRepository appointmentRepository;
+    private final PenaltyRepository penaltyRepository;  
 
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream().map(this::mapToResponse).toList();
@@ -36,7 +50,7 @@ public class UserService {
         }
         return mapToResponse(getUserById(id));
     }
-    
+
     @Transactional
     public ResponseEntity<?> updateProfileFields(String tckn, Map<String, String> updates) {
         try {
@@ -204,13 +218,57 @@ public class UserService {
 
     @Transactional
     public void deleteById(Long id) {
+        // Yetki kontrolü
         if (!SecurityUtil.isOwner(id) && !SecurityUtil.isAdmin()) {
             throw new AccessDeniedException("Bu hesabı silme yetkiniz yok.");
         }
-        if (!userRepository.existsById(id)) {
-            throw new EntityNotFoundException("Silinmek istenen kullanıcı bulunamadı (ID: " + id + ")");
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Kullanıcı bulunamadı (ID: " + id + ")"));
+
+        try {
+            // Önce user'dan bağımsız verileri temizle
+            if (user.getRole() == Role.DOCTOR && user.getDoctor() != null) {
+                // Doktorun slotlarını bul ve randevuları temizle
+                List<Slot> slots = slotRepository.findByDoctorIdWithDetails(user.getDoctor().getId());
+                for (Slot slot : slots) {
+                    if (slot.getAppointment() != null) {
+                        // Randevuya bağlı cezaları sil
+                        List<Penalty> penalties = penaltyRepository
+                                .findByPatientId(slot.getAppointment().getPatient().getId());
+                        penaltyRepository.deleteAll(penalties);
+                        appointmentRepository.delete(slot.getAppointment());
+                    }
+                    slotRepository.delete(slot);
+                }
+                doctorRepository.delete(user.getDoctor());
+            }
+
+            if (user.getRole() == Role.PATIENT && user.getPatient() != null) {
+                // Hastanın randevularını bul
+                List<Appointment> appointments = appointmentRepository.findByPatientId(user.getPatient().getId());
+                for (Appointment appointment : appointments) {
+                    // Cezaları sil
+                    List<Penalty> penalties = penaltyRepository.findByPatientId(user.getPatient().getId());
+                    penaltyRepository.deleteAll(penalties);
+
+                    // Slot'u boşalt
+                    Slot slot = appointment.getSlot();
+                    if (slot != null) {
+                        slot.setStatus(SlotStatus.AVAILABLE);
+                        slotRepository.save(slot);
+                    }
+                    appointmentRepository.delete(appointment);
+                }
+                patientRepository.delete(user.getPatient());
+            }
+
+            // Son olarak kullanıcıyı sil
+            userRepository.delete(user);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Kullanıcı silinirken hata oluştu: " + e.getMessage());
         }
-        userRepository.deleteById(id);
     }
 
     private User getUserById(Long id) {
