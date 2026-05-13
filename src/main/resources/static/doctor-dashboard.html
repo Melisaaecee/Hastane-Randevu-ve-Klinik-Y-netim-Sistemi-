@@ -32,6 +32,34 @@ li:hover iconify-icon {
     transform: scale(1.1);
     color: #e11d48; /* MedSoft kırmızısı veya senin tema rengin */
 }
+
+
+/* Sidebar içindeki tüm ikonlar için */
+.nav-icon, svg {
+    vertical-align: middle; /* Metnin tam ortasına hizalar */
+    margin-right: 10px;    /* Metinle ikon arasına boşluk bırakır */
+    flex-shrink: 0;        /* Ekran küçülünce ikonun ezilmesini engeller */
+}
+
+/* Sidebar liste öğelerini hizalamak için (Eğer daha önce yapmadıysan) */
+.sidebar ul li {
+    display: flex;         /* İkon ve yazıyı yan yana paketler */
+    align-items: center;   /* Dikeyde tam merkezler */
+    padding: 12px 15px;    /* Tıklama alanını genişletir */
+    transition: all 0.3s ease;
+}
+
+
+/* Menü öğesinin üzerine gelince hem yazı hem ikon rengini değiştir */
+.sidebar ul li:hover {
+    color: #e11d48; /* MedSoft kırmızısı */
+    background-color: #f8fafc; /* Hafif bir arka plan rengi */
+}
+
+/* Sadece aktif olan menünün ikonuna renk ver */
+.sidebar ul li.active svg {
+    stroke: #e11d48;
+}
     </style>
 </head>
 
@@ -44,25 +72,44 @@ li:hover iconify-icon {
             <p id="doctorNameSidebar" style="color: white; font-weight: 600; margin: 10px 0 5px 0;"></p>
         </div>
         <nav>
-           <ul>
+<ul>
+    <!-- Profil Bilgilerim -->
     <li class="active" onclick="window.doctorApp.showTab('profile', this)">
-        <iconify-icon icon="lucide:user-cog" class="nav-icon"></iconify-icon>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon" style="margin-right: 10px;">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
         <span>Profil Bilgilerim</span>
     </li>
+
+    <!-- Randevu Slotları -->
     <li onclick="window.doctorApp.showTab('slots', this)">
-        <iconify-icon icon="lucide:calendar-range" class="nav-icon"></iconify-icon> 
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon" style="margin-right: 10px;">
+            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/>
+        </svg>
         <span>Randevu Slotları</span>
     </li>
+
+    <!-- Randevularım -->
     <li onclick="window.doctorApp.showTab('appointments', this)">
-        <iconify-icon icon="lucide:clipboard-list" class="nav-icon"></iconify-icon>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon" style="margin-right: 10px;">
+            <rect width="16" height="20" x="4" y="2" rx="2"/><path d="M8 6h8"/><path d="M8 10h8"/><path d="M8 14h5"/>
+        </svg>
         <span>Randevularım</span>
     </li>
+
+    <!-- Güvenlik Ayarları -->
     <li onclick="window.doctorApp.showTab('profile-settings', this)">
-        <iconify-icon icon="lucide:settings" class="nav-icon"></iconify-icon>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon" style="margin-right: 10px;">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+        </svg>
         <span>Güvenlik Ayarları</span>
     </li>
+
+    <!-- Çıkış Yap -->
     <li class="logout-item" onclick="window.doctorApp.logout()">
-        <iconify-icon icon="lucide:log-out" class="nav-icon"></iconify-icon>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon" style="margin-right: 10px;">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>
+        </svg>
         <span>Çıkış Yap</span>
     </li>
 </ul>
