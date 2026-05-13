@@ -38,10 +38,10 @@ public class PenaltyEventListener {
                             "MedSoft Hastane Yönetim Sistemi");
 
             mailSender.send(message);
-            System.out.println("✅ Ceza maili gönderildi: " + patient.getEmail());
+
 
         } catch (Exception e) {
-            System.err.println("❌ Ceza maili gönderilemedi: " + e.getMessage());
+           
         }
     }
 }

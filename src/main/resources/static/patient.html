@@ -166,7 +166,7 @@
                     <button class="btn-update" onclick="handlePasswordUpdate()">Şifreyi Değiştir</button>
                 </div>
 
-                <!--  <div class="settings-card">
+                <div class="settings-card">
                     <h3><i class="fas fa-envelope"></i> E-posta Güncelle</h3>
                     <div id="emailStep1">
                         <div class="input-field-group">
@@ -182,7 +182,7 @@
                         </div>
                         <button class="btn-update" onclick="confirmEmailUpdate()">Güncellemeyi Onayla</button>
                     </div>
-                </div>-->
+                </div>
 
             </div>
         </section>
@@ -526,110 +526,110 @@
             window.location.href = 'index.html';
         };
 
-        /* window.sendEmailVerification = async function () {
-             const email = document.getElementById("newEmail")?.value;
- 
-             if (!email) {
-                 alert("Lütfen e-posta adresinizi giriniz!");
-                 return;
-             }
- 
-             if (!email.includes("@") || !email.includes(".")) {
-                 alert("Geçerli bir e-posta adresi giriniz!");
-                 return;
-             }
- 
-             const sendBtn = event.target;
-             sendBtn.disabled = true;
-             sendBtn.innerHTML = 'Gönderiliyor...';
- 
-             try {
-                 const authData = JSON.parse(localStorage.getItem('user'));
-                 const token = authData?.token;
-                 const tckn = authData?.user?.tckn;
- 
-                 console.log("Token:", token);
-                 console.log("TCKN:", tckn);
-                 console.log("Email:", email);
- 
-                 const res = await fetch('https://medsoft.up.railway.app/api/auth/send-verification-code', {
-                     method: 'POST',
-                     headers: {
-                         'Content-Type': 'application/json',
-                         'Authorization': `Bearer ${token}`
-                     },
-                     body: JSON.stringify({ email: email, tckn: tckn })
-                 });
- 
-                 const data = await res.json();
-                 console.log("Response:", data);
- 
-                 if (res.ok) {
-                     document.getElementById("emailStep1").style.display = 'none';
-                     document.getElementById("emailStep2").style.display = 'block';
-                     alert("✅ Doğrulama kodu e-posta adresinize gönderildi!");
-                 } else {
-                     alert("❌ Hata: " + (data.message || "Kod gönderilemedi!"));
-                 }
-             } catch (e) {
-                 console.error("Email doğrulama hatası:", e);
-                 alert("❌ Bağlantı hatası! Lütfen tekrar deneyin.");
-             } finally {
-                 sendBtn.disabled = false;
-                 sendBtn.innerHTML = 'Kod Gönder';
-             }
-         };
- 
+        window.sendEmailVerification = async function () {
+            const email = document.getElementById("newEmail")?.value;
+
+            if (!email) {
+                alert("Lütfen e-posta adresinizi giriniz!");
+                return;
+            }
+
+            if (!email.includes("@") || !email.includes(".")) {
+                alert("Geçerli bir e-posta adresi giriniz!");
+                return;
+            }
+
+            const sendBtn = event.target;
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = 'Gönderiliyor...';
+
+            try {
+                const authData = JSON.parse(localStorage.getItem('user'));
+                const token = authData?.token;
+                const tckn = authData?.user?.tckn;
+
+                console.log("Token:", token);
+                console.log("TCKN:", tckn);
+                console.log("Email:", email);
+
+                const res = await fetch('https://medsoft.up.railway.app/api/auth/send-verification-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ email: email, tckn: tckn })
+                });
+
+                const data = await res.json();
+                console.log("Response:", data);
+
+                if (res.ok) {
+                    document.getElementById("emailStep1").style.display = 'none';
+                    document.getElementById("emailStep2").style.display = 'block';
+                    alert("✅ Doğrulama kodu e-posta adresinize gönderildi!");
+                } else {
+                    alert("❌ Hata: " + (data.message || "Kod gönderilemedi!"));
+                }
+            } catch (e) {
+                console.error("Email doğrulama hatası:", e);
+                alert("❌ Bağlantı hatası! Lütfen tekrar deneyin.");
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = 'Kod Gönder';
+            }
+        };
+
         window.confirmEmailUpdate = async function () {
-             const code = document.getElementById("emailVerifyCode")?.value;
-             const email = document.getElementById("newEmail")?.value;
-             const confirmBtn = event.target;
- 
-             if (!code || code.length !== 6) {
-                 alert("Lütfen 6 haneli doğrulama kodunu giriniz!");
-                 return;
-             }
- 
-             confirmBtn.disabled = true;
-             confirmBtn.innerHTML = 'Onaylanıyor...';
- 
-             try {
-                 const authData = JSON.parse(localStorage.getItem('user'));
-                 const token = authData?.token;
-                 const tckn = authData?.user?.tckn;
- 
-                 const res = await fetch('https://medsoft.up.railway.app/api/auth/verify-email-update', {
-                     method: 'POST',
-                     headers: {
-                         'Content-Type': 'application/json',
-                         'Authorization': `Bearer ${token}`
-                     },
-                     body: JSON.stringify({
-                         code: code,
-                         newEmail: email,
-                         tckn: tckn
-                     })
-                 });
- 
-                 const data = await res.json();
- 
-                 if (res.ok) {
-                     alert("✅ E-posta başarıyla güncellendi! Lütfen tekrar giriş yapın.");
-                     localStorage.clear();
-                     window.location.href = "index.html";
-                 } else {
-                     alert("❌ " + (data.message || "Kod hatalı veya süresi dolmuş!"));
-                     document.getElementById("emailStep1").style.display = 'block';
-                     document.getElementById("emailStep2").style.display = 'none';
-                 }
-             } catch (e) {
-                 console.error("Email onaylama hatası:", e);
-                 alert("❌ Bağlantı hatası!");
-             } finally {
-                 confirmBtn.disabled = false;
-                 confirmBtn.innerHTML = 'Onayla';
-             }
-         };*/
+            const code = document.getElementById("emailVerifyCode")?.value;
+            const email = document.getElementById("newEmail")?.value;
+            const confirmBtn = event.target;
+
+            if (!code || code.length !== 6) {
+                alert("Lütfen 6 haneli doğrulama kodunu giriniz!");
+                return;
+            }
+
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = 'Onaylanıyor...';
+
+            try {
+                const authData = JSON.parse(localStorage.getItem('user'));
+                const token = authData?.token;
+                const tckn = authData?.user?.tckn;
+
+                const res = await fetch('https://medsoft.up.railway.app/api/auth/verify-email-update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        newEmail: email,
+                        tckn: tckn
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert("✅ E-posta başarıyla güncellendi! Lütfen tekrar giriş yapın.");
+                    localStorage.clear();
+                    window.location.href = "index.html";
+                } else {
+                    alert("❌ " + (data.message || "Kod hatalı veya süresi dolmuş!"));
+                    document.getElementById("emailStep1").style.display = 'block';
+                    document.getElementById("emailStep2").style.display = 'none';
+                }
+            } catch (e) {
+                console.error("Email onaylama hatası:", e);
+                alert("❌ Bağlantı hatası!");
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = 'Onayla';
+            }
+        };
         window.cancelAppointment = async function (appointmentId) {
             if (!confirm("Bu randevuyu iptal etmek istediğinize emin misiniz? (24 saat kuralı geçerlidir)")) return;
 
