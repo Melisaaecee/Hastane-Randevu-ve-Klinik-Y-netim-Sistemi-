@@ -1,12 +1,10 @@
 package com.hospital.management.Service;
 
 import com.hospital.management.Config.SecurityUtil;
-import com.hospital.management.DTO.DoctorProfileRequest;
 import com.hospital.management.Entity.Doctor;
 import com.hospital.management.Entity.Role;
 import com.hospital.management.Entity.User;
 import com.hospital.management.Exception.AccessDeniedException;
-import com.hospital.management.Exception.BadRequestException;
 import com.hospital.management.Exception.EntityNotFoundException;
 import com.hospital.management.Repository.ClinicRepository;
 import com.hospital.management.Repository.DoctorRepository;
@@ -196,51 +194,6 @@ public class DoctorService {
         }
         Doctor savedDoctor = doctorRepository.save(doctor);
         return normalizeDoctor(savedDoctor);
-    }
-
-    @Transactional
-    public void updateDoctorOwnProfile(String currentTckn, DoctorProfileRequest request) {
-        // 1. Doktoru ve bağlı User nesnesini bul
-        Doctor doctor = doctorRepository.findByUserTckn(currentTckn)
-                .orElseThrow(() -> new EntityNotFoundException("Doktor kaydı bulunamadı."));
-
-        User user = doctor.getUser();
-
-        // 2. TCKN Güncelleme Kontrolleri
-        if (request.getTckn() != null && !request.getTckn().isBlank()) {
-            String newTckn = request.getTckn().trim();
-            if (newTckn.length() != 11 || !newTckn.matches("\\d+")) {
-                throw new BadRequestException("TC Kimlik No 11 haneli ve rakamlardan oluşmalıdır.");
-            }
-            if (!user.getTckn().equals(newTckn) && userRepository.existsByTckn(newTckn)) {
-                throw new BadRequestException("Bu TC Kimlik Numarası zaten kullanımda.");
-            }
-            user.setTckn(newTckn);
-        }
-
-        // 3. Email Güncelleme
-        if (request.getEmail() != null && !request.getEmail().isBlank()) {
-            String newEmail = request.getEmail().trim();
-            if (!user.getEmail().equals(newEmail) && userRepository.existsByEmail(newEmail)) {
-                throw new BadRequestException("Bu e-posta adresi zaten kullanılıyor.");
-            }
-            user.setEmail(newEmail);
-        }
-
-        // 4. Username Güncelleme
-        if (request.getUsername() != null && !request.getUsername().isBlank()) {
-            String newUsername = request.getUsername().trim();
-            if (!user.getUsername().equals(newUsername) && userRepository.existsByUsername(newUsername)) {
-                throw new BadRequestException("Bu kullanıcı adı zaten alınmış.");
-            }
-            user.setUsername(newUsername);
-        }
-
-    
-
-        // Kaydetme işlemleri (@Transactional sayesinde hata olursa hepsi geri alınır)
-        userRepository.save(user);
-        doctorRepository.save(doctor);
     }
 
     

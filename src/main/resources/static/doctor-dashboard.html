@@ -512,7 +512,7 @@
                         }
 
                         alert("✅ Kullanıcı adı başarıyla güncellendi!");
-                       
+                        this.checkAllInfoUpdated();
                     } else {
                         const error = await response.json();
                         alert("❌ Hata: " + (error.error || "Güncelleme başarısız"));
@@ -565,12 +565,8 @@
 
                     if (response.ok) {
                         this.currentUser.tckn = tckn;
-                        const userData = JSON.parse(localStorage.getItem("user") || '{}');
-                        if (userData.user) userData.user.tckn = tckn;
-                        else userData.tckn = tckn;
-                        localStorage.setItem("user", JSON.stringify(userData));
-
                         this.renderUserDetails();
+
                         if (statusSpan) {
                             statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> Güncellendi!';
                             statusSpan.style.color = '#10b981';
@@ -578,7 +574,7 @@
                         }
 
                         alert("✅ TC Kimlik No başarıyla güncellendi!");
-                       
+                        this.checkAllInfoUpdated();
                     } else {
                         const error = await response.json();
                         alert("❌ Hata: " + (error.error || "Güncelleme başarısız"));

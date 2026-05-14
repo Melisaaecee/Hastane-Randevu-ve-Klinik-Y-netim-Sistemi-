@@ -1,16 +1,12 @@
 package com.hospital.management.Controller;
 
-import com.hospital.management.DTO.DoctorProfileRequest;
 import com.hospital.management.Entity.Doctor;
 import com.hospital.management.Service.DoctorService;
 import com.hospital.management.Service.UserService;
-
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,10 +15,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/doctors")
 @RequiredArgsConstructor
-
+@CrossOrigin(origins = "*")
 public class DoctorController {
 
     private final DoctorService doctorService;
+    private final UserService userService;
 
     // --- LİSTELEME ---
     @GetMapping
@@ -56,13 +53,16 @@ public class DoctorController {
     // --- DOKTOR OLUŞTURMA (SADECE ADMIN) ---
     @PostMapping("/create-with-user")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, Object>> createDoctorWithUser(
+    public ResponseEntity<?> createDoctorWithUser(
             @RequestParam String firstName,
             @RequestParam String lastName,
             @RequestParam(required = false) String specialization,
             @RequestParam Long clinicId) {
-  
+        try {
             return ResponseEntity.ok(doctorService.createDoctorWithUser(firstName, lastName, specialization, clinicId));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     // --- GÜNCELLEME ---
@@ -73,20 +73,29 @@ public class DoctorController {
     }
 
     @PutMapping("/profile")
-    @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<String> updateProfile(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody DoctorProfileRequest request) {
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> updates) {
+        try {
+            String tckn = SecurityContextHolder.getContext().getAuthentication().getName();
+            String email = updates.get("email");
+            String newTckn = updates.get("tckn");
+            String username = updates.get("username");
 
-        doctorService.updateDoctorOwnProfile(userDetails.getUsername(), request);
-
-        return ResponseEntity.ok("Profil başarıyla güncellendi");
+            userService.updateDoctorProfile(tckn, email, newTckn, username);
+            return ResponseEntity.ok(Map.of("message", "Profil başarıyla güncellendi"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteDoctor(@PathVariable Long id) {
-        doctorService.deleteDoctor(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deleteDoctor(@PathVariable Long id) {
+        try {
+            doctorService.deleteDoctor(id);
+            return ResponseEntity.ok(Map.of("message", "Doktor başarıyla silindi"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }
