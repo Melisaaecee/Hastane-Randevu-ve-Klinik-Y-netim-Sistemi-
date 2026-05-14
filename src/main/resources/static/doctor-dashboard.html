@@ -914,12 +914,7 @@
                         const isCompleted = status === 'COMPLETED';
                         const showNotAttendedButton = status === 'APPROVED' && isPast && !isNotAttended && !isCancelled && !isCompleted;
 
-                        console.log("Randevu:", {
-                            status: status,
-                            appointmentDate: appointmentDate,
-                            isPast: isPast,
-                            showButton: showNotAttendedButton
-                        });
+                       
 
                         return `
                 <tr>
