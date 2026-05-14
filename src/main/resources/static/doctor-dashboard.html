@@ -11,152 +11,192 @@
 
     <style>
         /* İkonların genel stili */
-iconify-icon {
-    vertical-align: middle;
-    margin-right: 12px;
-    font-size: 1.25rem; /* İdeal ikon boyutu */
-    display: inline-flex;
-    align-items: center;
-}
+        iconify-icon {
+            vertical-align: middle;
+            margin-right: 12px;
+            font-size: 1.25rem;
+            /* İdeal ikon boyutu */
+            display: inline-flex;
+            align-items: center;
+        }
 
-/* Navigasyon linki içindeki özel ayar */
-li.nav-link, li[onclick] {
-    display: flex;
-    align-items: center;
-    padding: 12px 15px;
-    transition: all 0.2s ease;
-}
+        /* Navigasyon linki içindeki özel ayar */
+        li.nav-link,
+        li[onclick] {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            transition: all 0.2s ease;
+        }
 
-/* Hover olduğunda ikonun hafifçe büyümesi için */
-li:hover iconify-icon {
-    transform: scale(1.1);
-    color: #e11d48; /* MedSoft kırmızısı veya senin tema rengin */
-}
-
-
-/* Sidebar içindeki tüm ikonlar için */
-.nav-icon, svg {
-    vertical-align: middle; /* Metnin tam ortasına hizalar */
-    margin-right: 10px;    /* Metinle ikon arasına boşluk bırakır */
-    flex-shrink: 0;        /* Ekran küçülünce ikonun ezilmesini engeller */
-}
-
-/* Sidebar liste öğelerini hizalamak için (Eğer daha önce yapmadıysan) */
-.sidebar ul li {
-    display: flex;         /* İkon ve yazıyı yan yana paketler */
-    align-items: center;   /* Dikeyde tam merkezler */
-    padding: 12px 15px;    /* Tıklama alanını genişletir */
-    transition: all 0.3s ease;
-}
+        /* Hover olduğunda ikonun hafifçe büyümesi için */
+        li:hover iconify-icon {
+            transform: scale(1.1);
+            color: #e11d48;
+            /* MedSoft kırmızısı veya senin tema rengin */
+        }
 
 
-/* Menü öğesinin üzerine gelince hem yazı hem ikon rengini değiştir */
-.sidebar ul li:hover {
-    color: #e11d48; /* MedSoft kırmızısı */
-    background-color: #f8fafc; /* Hafif bir arka plan rengi */
-}
+        /* Sidebar içindeki tüm ikonlar için */
+        .nav-icon,
+        svg {
+            vertical-align: middle;
+            /* Metnin tam ortasına hizalar */
+            margin-right: 10px;
+            /* Metinle ikon arasına boşluk bırakır */
+            flex-shrink: 0;
+            /* Ekran küçülünce ikonun ezilmesini engeller */
+        }
 
-/* Sadece aktif olan menünün ikonuna renk ver */
-.sidebar ul li.active svg {
-    stroke: #e11d48;
-}
+        /* Sidebar liste öğelerini hizalamak için (Eğer daha önce yapmadıysan) */
+        .sidebar ul li {
+            display: flex;
+            /* İkon ve yazıyı yan yana paketler */
+            align-items: center;
+            /* Dikeyde tam merkezler */
+            padding: 12px 15px;
+            /* Tıklama alanını genişletir */
+            transition: all 0.3s ease;
+        }
 
-.sidebar {
-    background-color: #1e3a8a; /* Görseldeki lacivert tonu */
-    min-height: 100vh;
-}
 
-.medsoft-logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 20px;
-    text-decoration: none;
-}
+        /* Menü öğesinin üzerine gelince hem yazı hem ikon rengini değiştir */
+        .sidebar ul li:hover {
+            color: #e11d48;
+            /* MedSoft kırmızısı */
+            background-color: #f8fafc;
+            /* Hafif bir arka plan rengi */
+        }
 
-.heart-pulse-icon {
-    /* Kalp rengi sabit kırmızı (#e11d48) */
-    color: #e11d48 !important; 
-    width: 40px !important;
-    height: 40px !important;
-    filter: drop-shadow(0 0 2px rgba(225, 29, 72, 0.5));
-    transition: transform 0.3s ease;
-}
+        /* Sadece aktif olan menünün ikonuna renk ver */
+        .sidebar ul li.active svg {
+            stroke: #e11d48;
+        }
 
-.logo-text {
-    font-size: 26px;
-    font-weight: 800;
-    /* Metin rengi lacivert üzerinde beyaz olmalı */
-    color: #ffffff !important; 
-    letter-spacing: -0.5px;
-}
+        .sidebar {
+            background-color: #1e3a8a;
+            /* Görseldeki lacivert tonu */
+            min-height: 100vh;
+        }
 
-/* Hover durumunda sadece ikonun hafif büyümesini sağladık, renk sabit kalır */
-.medsoft-logo:hover .heart-pulse-icon {
-    transform: scale(1.1);
-}
+        .medsoft-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px;
+            text-decoration: none;
+        }
+
+        .heart-pulse-icon {
+            /* Kalp rengi sabit kırmızı (#e11d48) */
+            color: #e11d48 !important;
+            width: 40px !important;
+            height: 40px !important;
+            filter: drop-shadow(0 0 2px rgba(225, 29, 72, 0.5));
+            transition: transform 0.3s ease;
+        }
+
+        .logo-text {
+            font-size: 26px;
+            font-weight: 800;
+            /* Metin rengi lacivert üzerinde beyaz olmalı */
+            color: #ffffff !important;
+            letter-spacing: -0.5px;
+        }
+
+        /* Hover durumunda sadece ikonun hafif büyümesini sağladık, renk sabit kalır */
+        .medsoft-logo:hover .heart-pulse-icon {
+            transform: scale(1.1);
+        }
     </style>
 </head>
 
 <body>
 
-<aside class="sidebar">
-    <div class="medsoft-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="heart-pulse-icon">
-            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-            <path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>
-        </svg>
-        <span class="logo-text">MedSoft</span>
-    </div>
-    
-    <!-- Alt kısımdaki profil ve menü buraya devam edecek -->
+    <aside class="sidebar">
+        <div class="medsoft-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="heart-pulse-icon">
+                <path
+                    d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                <path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" />
+            </svg>
+            <span class="logo-text">MedSoft</span>
+        </div>
+
+        <!-- Alt kısımdaki profil ve menü buraya devam edecek -->
 
         <div class="sidebar-user-info">
             <div id="avatarInitial" class="avatar-circle"></div>
             <p id="doctorNameSidebar" style="color: white; font-weight: 600; margin: 10px 0 5px 0;"></p>
         </div>
         <nav>
-<ul>
-    <!-- Profil Bilgilerim -->
-    <li class="active" onclick="window.doctorApp.showTab('profile', this)">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon" style="margin-right: 10px;">
-            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-        </svg>
-        <span>Profil Bilgilerim</span>
-    </li>
+            <ul>
+                <!-- Profil Bilgilerim -->
+                <li class="active" onclick="window.doctorApp.showTab('profile', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="nav-icon" style="margin-right: 10px;">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    <span>Profil Bilgilerim</span>
+                </li>
 
-    <!-- Randevu Slotları -->
-    <li onclick="window.doctorApp.showTab('slots', this)">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon" style="margin-right: 10px;">
-            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/>
-        </svg>
-        <span>Randevu Slotları</span>
-    </li>
+                <!-- Randevu Slotları -->
+                <li onclick="window.doctorApp.showTab('slots', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="nav-icon" style="margin-right: 10px;">
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                        <line x1="16" x2="16" y1="2" y2="6" />
+                        <line x1="8" x2="8" y1="2" y2="6" />
+                        <line x1="3" x2="21" y1="10" y2="10" />
+                        <path d="M8 14h.01" />
+                        <path d="M12 14h.01" />
+                        <path d="M16 14h.01" />
+                        <path d="M8 18h.01" />
+                        <path d="M12 18h.01" />
+                        <path d="M16 18h.01" />
+                    </svg>
+                    <span>Randevu Slotları</span>
+                </li>
 
-    <!-- Randevularım -->
-    <li onclick="window.doctorApp.showTab('appointments', this)">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon" style="margin-right: 10px;">
-            <rect width="16" height="20" x="4" y="2" rx="2"/><path d="M8 6h8"/><path d="M8 10h8"/><path d="M8 14h5"/>
-        </svg>
-        <span>Randevularım</span>
-    </li>
+                <!-- Randevularım -->
+                <li onclick="window.doctorApp.showTab('appointments', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="nav-icon" style="margin-right: 10px;">
+                        <rect width="16" height="20" x="4" y="2" rx="2" />
+                        <path d="M8 6h8" />
+                        <path d="M8 10h8" />
+                        <path d="M8 14h5" />
+                    </svg>
+                    <span>Randevularım</span>
+                </li>
 
-    <!-- Güvenlik Ayarları -->
-    <li onclick="window.doctorApp.showTab('profile-settings', this)">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon" style="margin-right: 10px;">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
-        </svg>
-        <span>Güvenlik Ayarları</span>
-    </li>
+                <!-- Güvenlik Ayarları -->
+                <li onclick="window.doctorApp.showTab('profile-settings', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="nav-icon" style="margin-right: 10px;">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                    </svg>
+                    <span>Güvenlik Ayarları</span>
+                </li>
 
-    <!-- Çıkış Yap -->
-    <li class="logout-item" onclick="window.doctorApp.logout()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon" style="margin-right: 10px;">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>
-        </svg>
-        <span>Çıkış Yap</span>
-    </li>
-</ul>
+                <!-- Çıkış Yap -->
+                <li class="logout-item" onclick="window.doctorApp.logout()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="nav-icon" style="margin-right: 10px;">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" x2="9" y1="12" y2="12" />
+                    </svg>
+                    <span>Çıkış Yap</span>
+                </li>
+            </ul>
         </nav>
     </aside>
 
@@ -472,7 +512,7 @@ li:hover iconify-icon {
                         }
 
                         alert("✅ Kullanıcı adı başarıyla güncellendi!");
-                        this.checkAllInfoUpdated();
+                       
                     } else {
                         const error = await response.json();
                         alert("❌ Hata: " + (error.error || "Güncelleme başarısız"));
@@ -525,8 +565,12 @@ li:hover iconify-icon {
 
                     if (response.ok) {
                         this.currentUser.tckn = tckn;
-                        this.renderUserDetails();
+                        const userData = JSON.parse(localStorage.getItem("user") || '{}');
+                        if (userData.user) userData.user.tckn = tckn;
+                        else userData.tckn = tckn;
+                        localStorage.setItem("user", JSON.stringify(userData));
 
+                        this.renderUserDetails();
                         if (statusSpan) {
                             statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> Güncellendi!';
                             statusSpan.style.color = '#10b981';
@@ -534,7 +578,7 @@ li:hover iconify-icon {
                         }
 
                         alert("✅ TC Kimlik No başarıyla güncellendi!");
-                        this.checkAllInfoUpdated();
+                       
                     } else {
                         const error = await response.json();
                         alert("❌ Hata: " + (error.error || "Güncelleme başarısız"));

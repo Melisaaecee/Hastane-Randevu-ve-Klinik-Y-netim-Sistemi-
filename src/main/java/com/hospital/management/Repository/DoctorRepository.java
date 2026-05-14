@@ -67,7 +67,9 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
                         "WHERE d.clinic.id = :clinicId")
         List<Doctor> findByClinicIdWithDetails(@Param("clinicId") Long clinicId);
 
-      
         @Query("SELECT d FROM Doctor d WHERE d.user.username = :username")
         Optional<Doctor> findByUserUsername(@Param("username") String username);
+
+        @Query("SELECT d FROM Doctor d WHERE d.user.tckn = :tckn")
+        Optional<Doctor> findByUserTckn(@Param("tckn") String tckn);
 }

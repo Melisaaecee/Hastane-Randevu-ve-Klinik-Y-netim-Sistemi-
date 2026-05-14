@@ -12,12 +12,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/clinics")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+
 public class ClinicController {
 
     private final ClinicService clinicService;
 
-    // --- LİSTELEME VE SORGULAMA (HERKESE AÇIK) ---
+   
 
     // Tüm klinikleri listeler.
     @GetMapping

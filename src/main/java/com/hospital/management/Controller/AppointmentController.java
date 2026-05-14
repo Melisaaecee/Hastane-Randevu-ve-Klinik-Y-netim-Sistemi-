@@ -16,7 +16,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/appointments")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+
 public class AppointmentController {
 
     private final AppointmentService appointmentService;
@@ -25,7 +25,7 @@ public class AppointmentController {
 
     // Randevu oluşturur. Hasta ID ve Slot ID parametreleri ile çalışır. 24 saat
     // kuralı ve uygunluk kontrolü serviste yapılır.
-   @PostMapping
+    @PostMapping
     @PreAuthorize("hasAnyRole('PATIENT', 'ADMIN')")
     public ResponseEntity<?> create(@RequestParam Long userId, @RequestParam Long slotId) {
         try {
@@ -40,13 +40,13 @@ public class AppointmentController {
         }
     }
 
-  @GetMapping
-@PreAuthorize("hasRole('ADMIN')")
-public ResponseEntity<List<AppointmentResponseDTO>> getAll() {
-    // Ham liste yerine DTO listesi dönüyoruz
-    List<Appointment> appointments = appointmentService.getAllAppointments();
-    return ResponseEntity.ok(appointmentService.convertToDtoList(appointments));
-}
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<AppointmentResponseDTO>> getAll() {
+        // Ham liste yerine DTO listesi dönüyoruz
+        List<Appointment> appointments = appointmentService.getAllAppointments();
+        return ResponseEntity.ok(appointmentService.convertToDtoList(appointments));
+    }
 
     // Login olan hastanın kendi randevularını listeler.
     @GetMapping("/my")
@@ -60,9 +60,7 @@ public ResponseEntity<List<AppointmentResponseDTO>> getAll() {
     @GetMapping("/doctor/my")
     @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<List<Appointment>> myDoctorAppointments() {
-        System.out.println("=== /api/appointments/doctor/my çağrıldı ===");
         List<Appointment> appointments = appointmentService.getMyDoctorAppointments();
-        System.out.println("Gönderilen randevu sayısı: " + appointments.size());
         return ResponseEntity.ok(appointments);
     }
     // --- HASTA VE DOKTOR ÖZEL GÖRÜNÜMLERİ (ID BAZLI) ---
@@ -116,6 +114,4 @@ public ResponseEntity<List<AppointmentResponseDTO>> getAll() {
         return ResponseEntity.ok(appointmentService.getClinicAppointments(clinicId));
     }
 
-
-    
 }

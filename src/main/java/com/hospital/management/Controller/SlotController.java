@@ -5,7 +5,7 @@ import com.hospital.management.Entity.Slot;
 import com.hospital.management.Service.SlotService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity; 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,21 +19,20 @@ public class SlotController {
 
     private final SlotService slotService;
 
-   @GetMapping("/doctor/{doctorId}")
-public ResponseEntity<List<Slot>> getAvailable(
-        @PathVariable Long doctorId,
-        @RequestParam(required = false) String date) { // 'date' parametresini opsiyonel yaptık
+    @GetMapping("/doctor/{doctorId}")
+    public ResponseEntity<List<Slot>> getAvailable(
+            @PathVariable Long doctorId,
+            @RequestParam(required = false) String date) { 
+      
+        if (date != null && !date.isEmpty()) {
+            return ResponseEntity.ok(slotService.getSlotsByDoctorAndDate(doctorId, date));
+        }
 
-    // Eğer URL'de ?date=2026-05-15 gibi bir tarih varsa
-    if (date != null && !date.isEmpty()) {
-        return ResponseEntity.ok(slotService.getSlotsByDoctorAndDate(doctorId, date));
+        // Eğer tarih seçilmemişse, mevcut sistemin gibi gelecekteki tüm müsait slotları
+        // döner
+        return ResponseEntity.ok(slotService.getFutureAvailableSlots(doctorId));
     }
-    
-    // Eğer tarih seçilmemişse, mevcut sistemin gibi gelecekteki tüm müsait slotları döner
-    return ResponseEntity.ok(slotService.getFutureAvailableSlots(doctorId));
-}
 
-  // Admin panelindeki tabloyu doldurmak için tüm slotları DTO olarak döner
     @GetMapping
     public ResponseEntity<List<SlotResponseDTO>> getAllSlots() {
         return ResponseEntity.ok(slotService.getAllSlotsAsDto());

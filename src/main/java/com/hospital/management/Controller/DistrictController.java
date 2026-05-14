@@ -12,12 +12,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/districts")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+
 public class DistrictController {
 
     private final DistrictService districtService;
 
-    // --- LİSTELEME VE DOĞRULAMA (HERKESE AÇIK) ---
+  
 
     // Belirli bir şehre (City) ait tüm ilçeleri listeler.
     @GetMapping("/city/{cityId}")

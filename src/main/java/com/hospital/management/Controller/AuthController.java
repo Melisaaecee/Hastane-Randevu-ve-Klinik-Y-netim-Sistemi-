@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class AuthController {
 
     private final AuthService authService;
@@ -46,11 +45,11 @@ public class AuthController {
         return ResponseEntity.ok("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.");
     }
 
-    // --- PANEL İÇİNDEN ŞİFRE GÜNCELLEME 
+    // --- PANEL İÇİNDEN ŞİFRE GÜNCELLEME
     @PostMapping("/reset-password-logged-in")
     public ResponseEntity<?> resetPasswordLoggedIn(@RequestBody Map<String, String> request) {
         try {
-           
+
             userService.updatePassword(
                     request.get("tckn"),
                     request.get("currentPassword"),
@@ -63,40 +62,47 @@ public class AuthController {
         }
     }
 
-    // E-POSTA DOĞRULAMA KODU GÖNDERME
-    @PostMapping("/send-verification-code")
-    public ResponseEntity<?> sendVerificationCode(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
-        String tckn = request.get("tckn"); // Frontend'den TCKN gelmeli
-
-        // MailService artık 2 parametre bekliyor: to ve tckn
-        mailService.sendVerificationCode(email, tckn);
-        return ResponseEntity.ok(Map.of("message", "Kod gönderildi"));
-    }
-
-    // E-POSTA GÜNCELLEME ONAYLAMA 
-    @PostMapping("/verify-email-update")
-    public ResponseEntity<?> verifyEmailUpdate(@RequestBody Map<String, String> request) {
-        String incomingCode = request.get("code");
-        String newEmail = request.get("newEmail");
-        String tckn = request.get("tckn");
-
-        User user = userRepository.findByTckn(tckn)
-                .orElseThrow(() -> new EntityNotFoundException("Kullanıcı bulunamadı"));
-
-        // DB'deki kod ile gelen kodu karşılaştır
-        if (user.getVerificationCode() != null && user.getVerificationCode().equals(incomingCode)) {
-
-            userService.updateEmailByTckn(tckn, newEmail);
-            user.setVerificationCode(null);
-            userRepository.save(user);
-
-            return ResponseEntity.ok(Map.of("message", "E-posta başarıyla güncellendi"));
-        } else {
-            return ResponseEntity.status(400).body(Map.of("message", "Geçersiz veya hatalı doğrulama kodu!"));
-        }
-    }
-
+    /*
+     * // E-POSTA DOĞRULAMA KODU GÖNDERME
+     * 
+     * @PostMapping("/send-verification-code")
+     * public ResponseEntity<?> sendVerificationCode(@RequestBody Map<String,
+     * String> request) {
+     * String email = request.get("email");
+     * String tckn = request.get("tckn"); // Frontend'den TCKN gelmeli
+     * 
+     * // MailService artık 2 parametre bekliyor: to ve tckn
+     * mailService.sendVerificationCode(email, tckn);
+     * return ResponseEntity.ok(Map.of("message", "Kod gönderildi"));
+     * }
+     * 
+     * // E-POSTA GÜNCELLEME ONAYLAMA
+     * 
+     * @PostMapping("/verify-email-update")
+     * public ResponseEntity<?> verifyEmailUpdate(@RequestBody Map<String, String>
+     * request) {
+     * String incomingCode = request.get("code");
+     * String newEmail = request.get("newEmail");
+     * String tckn = request.get("tckn");
+     * 
+     * User user = userRepository.findByTckn(tckn)
+     * .orElseThrow(() -> new EntityNotFoundException("Kullanıcı bulunamadı"));
+     * 
+     * // DB'deki kod ile gelen kodu karşılaştır
+     * if (user.getVerificationCode() != null &&
+     * user.getVerificationCode().equals(incomingCode)) {
+     * 
+     * userService.updateEmailByTckn(tckn, newEmail);
+     * user.setVerificationCode(null);
+     * userRepository.save(user);
+     * 
+     * return ResponseEntity.ok(Map.of("message", "E-posta başarıyla güncellendi"));
+     * } else {
+     * return ResponseEntity.status(400).body(Map.of("message",
+     * "Geçersiz veya hatalı doğrulama kodu!"));
+     * }
+     * }
+     */
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
